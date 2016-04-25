@@ -1,0 +1,78 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: MobileSimulator - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating command line "rc.exe /l 0x804 /fo"Debug/MobileSimulator.res" /d "_DEBUG" /d "_AFXDLL" "F:\happy\手机模拟器\MobileSimulator.rc"" 
+Creating temporary file "C:\DOCUME~1\hp\LOCALS~1\Temp\RSP7.tmp" with contents
+[
+/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /FR"Debug/" /Fp"Debug/MobileSimulator.pch" /Yu"stdafx.h" /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"F:\happy\手机模拟器\Configuration.cpp"
+"F:\happy\手机模拟器\Exception.cpp"
+"F:\happy\手机模拟器\Logger.cpp"
+"F:\happy\手机模拟器\MobileSimulator.cpp"
+"F:\happy\手机模拟器\MobileSimulatorDlg.cpp"
+"F:\happy\手机模拟器\TCPClient.cpp"
+"F:\happy\手机模拟器\WtdpPacket.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\hp\LOCALS~1\Temp\RSP7.tmp" 
+Creating temporary file "C:\DOCUME~1\hp\LOCALS~1\Temp\RSP8.tmp" with contents
+[
+/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /FR"Debug/" /Fp"Debug/MobileSimulator.pch" /Yc"stdafx.h" /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"F:\happy\手机模拟器\StdAfx.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\hp\LOCALS~1\Temp\RSP8.tmp" 
+Creating temporary file "C:\DOCUME~1\hp\LOCALS~1\Temp\RSP9.tmp" with contents
+[
+/nologo /subsystem:windows /incremental:yes /pdb:"Debug/MobileSimulator.pdb" /debug /machine:I386 /out:"Debug/MobileSimulator.exe" /pdbtype:sept 
+".\Debug\Configuration.obj"
+".\Debug\Exception.obj"
+".\Debug\Logger.obj"
+".\Debug\MobileSimulator.obj"
+".\Debug\MobileSimulatorDlg.obj"
+".\Debug\StdAfx.obj"
+".\Debug\TCPClient.obj"
+".\Debug\WtdpPacket.obj"
+".\Debug\MobileSimulator.res"
+]
+Creating command line "link.exe @C:\DOCUME~1\hp\LOCALS~1\Temp\RSP9.tmp"
+<h3>Output Window</h3>
+Compiling resources...
+Compiling...
+StdAfx.cpp
+Compiling...
+Configuration.cpp
+Exception.cpp
+Logger.cpp
+MobileSimulator.cpp
+MobileSimulatorDlg.cpp
+TCPClient.cpp
+F:\happy\手机模拟器\TCPClient.cpp(170) : warning C4018: '==' : signed/unsigned mismatch
+WtdpPacket.cpp
+Generating Code...
+Linking...
+Creating temporary file "C:\DOCUME~1\hp\LOCALS~1\Temp\RSPB.tmp" with contents
+[
+/nologo /o"Debug/MobileSimulator.bsc" 
+".\Debug\StdAfx.sbr"
+".\Debug\Configuration.sbr"
+".\Debug\Exception.sbr"
+".\Debug\Logger.sbr"
+".\Debug\MobileSimulator.sbr"
+".\Debug\MobileSimulatorDlg.sbr"
+".\Debug\TCPClient.sbr"
+".\Debug\WtdpPacket.sbr"]
+Creating command line "bscmake.exe @C:\DOCUME~1\hp\LOCALS~1\Temp\RSPB.tmp"
+Creating browse info file...
+<h3>Output Window</h3>
+
+
+
+<h3>Results</h3>
+MobileSimulator.exe - 0 error(s), 1 warning(s)
+</pre>
+</body>
+</html>

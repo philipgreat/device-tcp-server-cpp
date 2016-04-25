@@ -1,0 +1,475 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" initialize="init()" layout="absolute" width="790" height="550" borderColor="#00656E" title="组织基本信息" color="#F3F5F6" fontSize="15" fontFamily="Arial" xmlns:ns1="*">
+	<mx:Panel width="228" layout="absolute" title="组织菜单" backgroundAlpha="0.36" horizontalScrollPolicy="off" verticalScrollPolicy="off" borderColor="#050520" cornerRadius="7" alpha="0.8" themeColor="#8FD4FF" color="#FFFFFF" fontSize="14" fontWeight="normal" backgroundColor="#DCFBFF" left="0" top="0" bottom="0" borderThicknessBottom="25">
+		<ns1:NormalTreeField id="OrgTree" x="0" y="0" width="208" height="445" fontFamily="Arial" fontSize="12" color="#030303">
+		</ns1:NormalTreeField>
+	</mx:Panel>
+	<mx:Canvas x="236" y="10" width="524" height="41" borderStyle="solid" borderColor="#0B0532" fontSize="12" color="#060606" backgroundColor="#B8AEAE" id="Cavas01">
+		<mx:Button x="8" y="8" label="添加下级组织" click="doAddOrgnization()"/>
+		<mx:Button x="180" y="8" label="删除" click="doDeleteOrgnization()" id="DeleteOrgButton"/>
+		<mx:Button x="120" y="8" label="更新" click="doUpdateOrgnization()"/>
+		<mx:Button x="240" y="8" label="查询" click="doQueryViewOrg()"/>
+	</mx:Canvas>
+	<mx:Canvas x="236" y="69" width="529" height="268" color="#0B0B0B" fontSize="12" backgroundColor="#97E3DB" borderStyle="solid" borderColor="#1B1C1C" id="Cavas02">
+		<mx:Label x="10" y="91" text="编号" fontFamily="Arial" fontSize="12" color="#FE0404"/>
+		<mx:TextInput x="47" y="89" width="92" id="Org_ID" maxChars="10" fontFamily="Arial" fontSize="12" color="#040404" editable="false"/>
+		<mx:Label x="147" y="93" text="名称" fontFamily="Arial" fontSize="12" color="#FE0404"/>
+		<mx:TextInput x="184" y="90" width="333" id="Org_Name" maxChars="32" fontFamily="Arial" fontSize="12" color="#040404"/>
+		<mx:Label x="286" y="127" text="类型"/>
+		<mx:ComboBox x="323" y="123" width="194" id="Org_Type" change="doOrg_TypeChange()" enabled="false"></mx:ComboBox>
+		<mx:Label x="10" y="124" text="邮编"/>
+		<mx:TextInput x="47" y="122" width="92" maxChars="6" id="Zip_Code"/>
+		<mx:Label x="286.5" y="159" text="地址"/>
+		<mx:TextInput x="323.5" y="156" id="Address" maxChars="32" width="193.5"/>
+		<mx:Label x="147" y="124" text="传真"/>
+		<mx:TextInput x="184" y="123" width="93" id="Fax_No" maxChars="15"/>
+		<mx:Label x="10" y="160" text="网址"/>
+		<mx:TextInput x="47" y="156" width="230" id="Website" maxChars="30"/>
+		<mx:Label x="10" y="222" text="描述"/>
+		<mx:Label x="123" y="59" text="创建日期" color="#241C71" fontWeight="normal" fontFamily="Arial" fontSize="12"/>
+		<mx:Label x="333" y="59" text="最新更新" fontWeight="normal" color="#28347E" fontFamily="Arial" fontSize="12"/>
+		<mx:TextInput x="184" y="57" id="Create_Time" editable="false" width="129" fontFamily="Arial" fontSize="12" color="#060606"/>
+		<mx:TextInput x="394" y="56" editable="false" id="Last_Update_Time" width="123" fontFamily="Arial" fontSize="12" color="#060606"/>
+		<mx:Label x="10" y="59" text="状态：" fontSize="12" color="#0D0B5D" fontWeight="bold"/>
+		<mx:Label x="51" y="59" text="未设置" fontSize="12" color="#030303" id="Status"/>
+		<mx:TextInput x="47" y="222" width="470" maxChars="32" id="Notes"/>
+		<mx:Canvas x="10" y="189" width="212" height="30" id="SMX_SMS">
+			<mx:Label x="-1" y="3" text="短信   最多"/>
+			<mx:NumericStepper x="60" y="0" width="74" id="Send_SM_Max_Daily" minimum="0" stepSize="1" maximum="99999"/>
+			<mx:Label x="136" y="4" text="（条/天）"/>
+		</mx:Canvas>
+		<mx:Label x="231" y="10" text="基本信息" fontWeight="bold" fontSize="14"/>
+	</mx:Canvas>
+	<mx:Canvas x="236" y="358" width="529" height="136" fontSize="12" color="#020202" borderStyle="solid" borderColor="#12153B" backgroundColor="#9AD28B" id="Cavas03">
+		<mx:Label x="12" y="60" text="房间数量"/>
+		<mx:NumericStepper x="73" y="57" id="Room_Count" minimum="0" width="74" stepSize="1" maximum="10000"/>
+		<mx:Label x="182" y="59" text="平均房价"/>
+		<mx:NumericStepper x="243" y="56" width="74" minimum="0" stepSize="1" id="Average_Price" maximum="99999"/>
+		<mx:Label x="145" y="59" text="（间）"/>
+		<mx:Label x="315" y="59" text="（元）"/>
+		<mx:Label x="342" y="91" text="酒店级别" color="#FE0404"/>
+		<mx:DateField x="71" y="88" width="103"  monthNames="['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']"
+						  dayNames="['日', '一', '二', '三', '四', '五', '六']" formatString="YYYY-MM-DD"  id="Contract_Date"/>
+		<mx:Label x="182" y="91" text="合同编号"/>
+		<mx:TextInput x="243" y="88" width="91" id="Contract_No"/>
+		<mx:Label x="10" y="92" text="签署日期"/>
+		<mx:ComboBox x="403" y="88" width="113" id="Hotel_Grade"></mx:ComboBox>
+		<mx:Label x="239" y="-24" text="酒店所属信息" fontWeight="bold" color="#F50303" fontSize="14"/>
+		<mx:Label x="216" y="13" text="酒店所属信息" fontWeight="bold" color="#120959" fontSize="14"/>
+	</mx:Canvas>
+	<mx:RemoteObject id="org_service" destination="OrgFlexService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.bean.T_ORG_INFO;
+	 		import cn.ucans.tree.TreeNode;
+	 		import mx.collections.ArrayCollection;
+	 		import cn.ucans.flex.FlexRequest;
+	 		import cn.ucans.flex.FlexReponse;
+	 		import cn.ucans.common.RegularExpression;
+	 		import cn.ucans.common.DataProvider;
+	 		import cn.ucans.common.ArrayFactory;
+	 		
+	 		private var regular:RegularExpression = new RegularExpression();
+			private var dialog_add:AddOrgnizationDialog = null; 
+			private var dialog_confirm:CCSSConfirm = null;
+			private var dialog_view_linkman:ViewLinkManDialog = null;
+			private var dialog_view_org:ViewOrgDialog = null;
+			private var list_reward_array:ArrayCollection = null;
+			
+			private function init():void{
+				this.Org_Type.dataProvider = DataProvider.combobox_array_Org_Type_Edit_Hidden;
+				this.Hotel_Grade.dataProvider = DataProvider.combobox_array_Hotel_Grade_Edit;
+				this.OrgTree.click_Function = this.click_Tree_Handler;
+				this.Cavas03.enabled = false;
+				this.SMX_SMS.visible = false;
+				
+				if(this.parentApplication.LoginRole_ID == "00A"){
+					this.DeleteOrgButton.enabled = true;
+				}else{
+					this.DeleteOrgButton.enabled = false;
+				}
+				
+				this.OrgTree.setRootNodeVisiable(true);
+				
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1005;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.type = 0;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				this.org_service.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			private function click_Tree_Handler():void{
+				var node_selected:TreeNode = this.OrgTree.selectNode;
+				if(node_selected.type == 0){
+					this.SMX_SMS.visible = false;
+					this.Cavas03.enabled = false;
+				}else if(node_selected.type == 2){
+					this.SMX_SMS.visible = false;
+					this.Cavas03.enabled = false;
+				}else if(node_selected.type == 3){
+					this.SMX_SMS.visible = true;
+					this.Cavas03.enabled = true;
+				}else if(node_selected.type == 4){
+					this.SMX_SMS.visible = true;
+					this.Cavas03.enabled = false;
+				}
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1004;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.type = 0;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				var org:T_ORG_INFO = new T_ORG_INFO();
+				org.ORG_ID = node_selected.data;
+				org.ORG_TYPE = ""+node_selected.type;
+				org.TOP_LEVEL = ""+(node_selected.top);
+				request.form.org = org;
+				this.clear();
+				this.org_service.doTransaction(request);
+				this.enabled = false;
+				
+			}
+			
+			private function doAddOrgnization():void{
+				var node:TreeNode = this.OrgTree.selectNode;
+				if(node == null){
+					CCSSAlert.showMessageDialog(this,"请选中当前要添加的上一层组织，再进行本操作！");
+					return;
+				}else{
+					if(node.top+1 >2){
+						CCSSAlert.showMessageDialog(this,"最多能够添加2级组织！");
+						return;
+					}else{
+						this.dialog_add = new AddOrgnizationDialog();
+						this.dialog_add.showDialog(this,node.top+1,node.data,node.type,node.label,this.list_reward_array);
+						this.dialog_add.addEventListener(Event.REMOVED,doAddOrgnizationHandler);
+					}
+				}						
+			}
+			
+			private function doOrg_TypeChange():void{
+				if(this.Org_Type.selectedItem.data == "3"){
+					this.Cavas03.enabled = true;
+				}else{
+					this.Cavas03.enabled = false;
+				}
+			}
+			
+			private function doAddOrgnizationHandler(event:Event):void{
+				if(this.dialog_add.DOOK){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1001;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.type = 0;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.org = this.dialog_add.org;
+					request.form.parm = this.dialog_add.parm;
+					this.org_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doUpdateOrgnization():void{
+				var node:TreeNode = this.OrgTree.selectNode;
+				if(node == null){
+					CCSSAlert.showMessageDialog(this,"请选中要更新的组织，再进行本操作！");
+					return;
+				}else{
+					if(node.top == 0){
+						CCSSAlert.showMessageDialog(this,"不能对根结点进行编辑操作！");
+						return;
+					}else{				
+						var ok:Boolean = true;
+						if(this.regular.trim(this.Org_ID.text) == ""){
+							CCSSAlert.showMessageDialog(this,"组织编号不能为空！");
+							ok = false;
+							this.showView(this.Org_ID);
+							return;
+						}else{
+							if(!regular.isNumberORCharacter(this.Org_ID.text)){
+								CCSSAlert.showMessageDialog(this,"组织编号只能是数字或英文字母！");
+								ok = false;
+								this.showView(this.Org_ID);
+								return;
+							}
+						}
+						
+						if(this.regular.trim(this.Org_Name.text) == ""){
+							CCSSAlert.showMessageDialog(this,"组织名称不能为空！");
+							ok = false;
+							this.showView(this.Org_Name);
+							return;
+						}
+						
+	//					if(this.regular.trim(this.Zip_Code.text) == ""){
+	//						CCSSAlert.showMessageDialog(this,"邮编不能为空！");
+	//						ok = false;
+	//						return;
+	//					}
+	//					
+	//					if(this.regular.trim(this.Fax_No.text) == ""){
+	//						CCSSAlert.showMessageDialog(this,"传真不能为空！");
+	//						ok = false;
+	//						return;
+	//					}
+	//					
+	//					if(this.regular.trim(this.Website.text) == ""){
+	//						CCSSAlert.showMessageDialog(this,"网址不能为空！");
+	//						ok = false;
+	//						return;
+	//					}
+	//					
+	//					if(this.regular.trim(this.Address.text) == ""){
+	//						CCSSAlert.showMessageDialog(this,"地址不能为空！");
+	//						ok = false;
+	//						return;
+	//					}
+						
+						if(ok){
+							var org:T_ORG_INFO = new T_ORG_INFO();
+							org.ORG_ID = regular.trim(this.Org_ID.text);
+							org.ORG_NAME = regular.trim(this.Org_Name.text);
+							org.ZIP_CODE = regular.trim(this.Zip_Code.text);
+							org.FAX_NO = regular.trim(this.Fax_No.text);
+							org.ORG_TYPE = regular.trim(this.Org_Type.selectedItem.data);
+							org.WEBSITE = regular.trim(this.Website.text);
+							org.ADDRESS = regular.trim(this.Address.text);
+							org.NOTES = regular.trim(this.Notes.text);
+		
+							if(this.Org_Type.selectedItem.data == "3"){
+								org.HOTEL_GRADE = ""+this.Hotel_Grade.selectedItem.data;
+								org.ROOM_COUNT = this.Room_Count.data.toString();
+								org.AVERAGE_PRICE = this.Average_Price.data.toString();
+								org.SEND_SM_MAX_DAILY = this.Send_SM_Max_Daily.data.toString();
+								org.CONTRACT_NO = regular.trim(this.Contract_No.text);
+								org.CONTRACT_DATE = this.Contract_Date.text;
+							}
+							org.CREATE_USER_ID = this.parentApplication.LoginUser_ID;
+							org.STATUS = "0";
+							var parentNode:TreeNode = this.OrgTree.getParentNode();
+							org.SUPERIOR_ORG_ID = parentNode.data;
+							org.TOP_LEVEL = node.top+"";
+							var request:FlexRequest = new FlexRequest();
+							request.ope_id = 1002;
+							request.menu_id = this.parentApplication.LoginMenu_ID;
+							request.type = 0;
+							request.org_id = this.parentApplication.LoginORG_ID;
+							request.user_id = this.parentApplication.LoginUser_ID;
+							request.form.org = org;
+							request.form.org_name_old = node.label;
+							this.org_service.doTransaction(request);
+							this.enabled = false;
+						}
+					}
+				}
+			}
+			
+			private function doDeleteOrgnization():void{
+				var node_delete:TreeNode = this.OrgTree.selectNode;
+				if(node_delete == null){
+					CCSSAlert.showMessageDialog(this,"请选中要删除的组织再进行本操作！");
+					return;
+				}else{
+					if(node_delete.top == 0){
+						CCSSAlert.showMessageDialog(this,"不能对根结点进行删除操作！");
+						return;
+					}else{
+						var node_parent:TreeNode = this.OrgTree.getParentNode();
+						var org:T_ORG_INFO = new T_ORG_INFO();
+						org.ORG_ID = node_delete.data;
+						org.SUPERIOR_ORG_ID = node_parent.data;
+						org.TOP_LEVEL = ""+node_delete.top;
+						var request:FlexRequest = new FlexRequest();
+						request.ope_id = 1003;
+						request.menu_id = this.parentApplication.LoginMenu_ID;
+						request.type = 0;
+						request.org_id = this.parentApplication.LoginORG_ID;
+						request.user_id = this.parentApplication.LoginUser_ID;
+						request.form.org = org;
+						this.dialog_confirm = new CCSSConfirm();
+						this.dialog_confirm.showDialog(this,"您确认要删除组织（"+node_delete.data+"，"+node_delete.label+"）吗？",request);
+						this.dialog_confirm.addEventListener(Event.REMOVED,doDeleteOrgnizationCCSSConfirmHandler);
+					}
+				}			
+			}
+			
+			private function doDeleteOrgnizationCCSSConfirmHandler(event:Event):void{
+				if(this.dialog_confirm.YES){
+					var request:FlexRequest = this.dialog_confirm.object as FlexRequest;
+					this.org_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function clear():void{		
+				
+				this.Status.text = "未设置";
+				this.Create_Time.text = "";
+				this.Last_Update_Time.text = "";
+					
+				this.Org_ID.text = "";
+				this.Org_Name.text = "";
+				this.Zip_Code.text = "";
+				this.Fax_No.text = "";
+				this.Org_Type.selectedItem = ArrayFactory.getComboBoxSelectedItemFromArray(DataProvider.combobox_array_Org_Type_Edit_Hidden,"0");;
+				this.Website.text = "";
+				this.Address.text = "";
+				this.Notes.text = "";
+				
+				this.Room_Count.value = 0;
+				this.Average_Price.value = 0;
+				this.Send_SM_Max_Daily.value = 0;
+				this.Contract_No.text = "";
+				this.Contract_Date.text = "";
+			}
+			
+			private function setSelectedOrgValues(map:Object,xml_str:String):void{
+				if(map != null){
+					this.Org_ID.text = map.ORG_ID;
+					this.Org_Name.text = map.ORG_NAME;
+					this.Zip_Code.text = map.ZIP_CODE;
+					this.Fax_No.text = map.FAX_NO;
+					this.Org_Type.selectedItem = ArrayFactory.getComboBoxSelectedItemFromArray(DataProvider.combobox_array_Org_Type_Edit_Hidden,map.ORG_TYPE);
+					this.Website.text = map.WEBSITE;
+					this.Address.text = map.ADDRESS;
+					this.Notes.text = map.NOTES;
+					this.Status.text = ArrayFactory.getValueFromArray(DataProvider.combobox_array_Org_Status_Edit,map.STATUS);
+					this.Create_Time.text = map.CREATE_TIME;
+					this.Last_Update_Time.text = map.LAST_UPDATE_TIME;
+					this.Send_SM_Max_Daily.value = Number(map.SEND_SM_MAX_DAILY);
+					if(map.ORG_TYPE == "3"){
+						this.Hotel_Grade.selectedItem = ArrayFactory.getComboBoxSelectedItemFromArray(DataProvider.combobox_array_Hotel_Grade_Edit,map.HOTEL_GRADE);
+						this.Room_Count.value = Number(map.ROOM_COUNT);
+						this.Average_Price.value = Number(map.AVERAGE_PRICE);
+						
+						this.Contract_No.text = map.CONTRACT_NO;
+						this.Contract_Date.text = map.CONTRACT_DATE;
+					}
+				}
+				
+				if(xml_str != null){
+					var xml:XML = new XML(xml_str);
+					this.OrgTree.updateSelectedItem(xml);
+				}
+			}
+			
+			private function flushOrgList(collection_node:ArrayCollection):void{
+				if(this.OrgTree.hasChildren()){
+					this.OrgTree.removeChildren();
+				}			
+				var array:Array = new Array();
+				for(var index:int=0;index<collection_node.length;index++){
+					var item:Object = collection_node.getItemAt(index);
+					var node:TreeNode = new TreeNode();
+					node.data = item.ORG_ID;
+					node.label = item.ORG_NAME;
+					node.childable = item.HASCHILD;
+					node.top = item.TOP_LEVEL;
+					array.push(node);
+				}
+				//this.OrgTree.addChildren(array);
+			}
+			
+			private function doResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1001:
+						if(reponse.sign == 0){
+							var xml_add:String = reponse.result.xml;
+							this.setSelectedOrgValues(null,xml_add);
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1002:
+						if(reponse.sign == 0){
+							var map_update:Object = reponse.result.map;
+							var xml_update:String = reponse.result.xml;
+							this.setSelectedOrgValues(map_update,xml_update);
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1003:
+						if(reponse.sign == 0){
+							this.clear();
+							this.OrgTree.setParentNodeSelected();
+							var xml_delete:String = reponse.result.xml;
+							this.setSelectedOrgValues(null,xml_delete);			
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1004:
+						if(reponse.sign == 0){
+							var node_select:TreeNode = this.OrgTree.selectNode;
+//							if(node_select.type == 2){
+//								var collection_hotel_list:ArrayCollection = reponse.result.list as ArrayCollection;
+//								this.TableGrid.dataProvider = collection_hotel_list; 
+//							}
+							var map_query:Object = reponse.result.map;
+							var xml_query:String = reponse.result.xml;
+							this.setSelectedOrgValues(map_query,xml_query);
+							
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1005:
+						if(reponse.sign == 0){
+							var xml_org_init:String = reponse.result.xml as String;
+							this.OrgTree.dataProvider = xml_org_init;
+							this.list_reward_array =  reponse.result.list as ArrayCollection;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doQueryViewOrg():void{
+				this.dialog_view_org = new ViewOrgDialog();
+				this.dialog_view_org.showDialog(this);
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			
+			private function showView(object:Object):void{
+				FlashContrl.target = object;
+				FlashContrl.play();
+				object.setFocus();
+			}
+		]]>
+	</mx:Script>
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+ 	</mx:Sequence>
+</mx:Panel>

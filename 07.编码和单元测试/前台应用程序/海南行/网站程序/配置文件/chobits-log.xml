@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<log>
+	<path>E:/chobits_log</path>
+	<level>debug,error,info,fatal,warn</level>
+	<out doPrintScrean="true">
+		<screen PrintScreanEncoded="true">
+			<Encode_Screen_FormatCharSet>GBK</Encode_Screen_FormatCharSet>
+			<Encode_Screen_newCharSet>GBK</Encode_Screen_newCharSet>
+		</screen>
+		<file WritedFileEncoded="true">
+			<Encode_File_FormatCharSet>GBK</Encode_File_FormatCharSet>
+			<Encode_File_newCharSet>ISO-8859-1</Encode_File_newCharSet>
+		</file>
+	</out>
+</log>

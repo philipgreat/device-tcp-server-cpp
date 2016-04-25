@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<DB type='1'>
+	<Single>
+		<Driver>oracle.jdbc.driver.OracleDriver</Driver>
+		<URI>jdbc:oracle:thin:@192.168.1.6:1521:carsmart</URI>
+		<User>han</User>
+		<Password>yong</Password>
+	</Single>
+	<Souce>
+		<LookUP>java:comp/env</LookUP>
+		<Name>jdbc/happy</Name>
+	</Souce>
+</DB>

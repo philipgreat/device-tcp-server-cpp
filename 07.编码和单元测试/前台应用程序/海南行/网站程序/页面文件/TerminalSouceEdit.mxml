@@ -1,0 +1,679 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="intComponenetFoucs()" layout="absolute" width="785" height="488" title="终端资源维护"  fontSize="15"  initialize="init()" backgroundColor="#06FADB" borderColor="#00656E" x="26" y="104" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="1.0">
+	<mx:Panel x="0" y="201" width="231" height="226" layout="absolute" borderColor="#4F7EF6" title="查询向导" color="#F30A2B" fontSize="14">
+		<mx:Label x="2" y="45" text="编    号" color="#0D0C0C" fontSize="12"/>
+		<mx:TextInput x="47" y="43" width="154" maxChars="16" id="QueryTerminal_ID" color="#0D0C0C" fontSize="12"/>
+		<mx:Button x="149" y="10" label="搜索" fillAlphas="[1.0, 1.0]" fillColors="[#859AF3, #F2B2B2]" click="doQuery()" color="#323FC0" fontSize="13"/>
+		<mx:Label x="1" y="79" text="状    态" color="#0D0C0C" fontSize="12"/>
+		<mx:ComboBox x="47" y="76" width="154" id="QueryStatus" color="#0D0C0C" fontSize="12"></mx:ComboBox>
+		<mx:Label x="2" y="14" text="批    次" color="#0D0C0C" fontSize="12"/>
+		<mx:TextInput x="47" y="12" width="81" maxChars="7" id="QueryBatch_SEQ" color="#0D0C0C" fontSize="12"/>
+		<mx:TextInput x="47" y="141" width="154" maxChars="30" id="QueryTerminal_User" color="#0D0C0C" fontSize="12"/>
+		<mx:Label x="2" y="111" text="类    型" color="#0D0C0C" fontSize="12"/>
+		<mx:ComboBox x="47" y="108" width="154" id="QueryTerminal_Type" color="#0D0C0C" fontSize="12"></mx:ComboBox>
+		<mx:Label x="1" y="143" text="代销商" color="#0D0C0C" fontSize="12"/>
+	</mx:Panel>
+	<mx:Panel x="0" y="0" width="231" height="160" layout="absolute" borderColor="#77A4F7" title="终端入库" color="#F30A2B" fontSize="14">
+		<mx:Label x="10" y="42" text="编号" color="#0A0909" fontSize="12"/>
+		<mx:TextInput x="47" y="40" width="154" maxChars="16" id="EditTerminal_ID" color="#0A0909" fontSize="12"/>
+		<mx:Label x="10" y="72" text="类型" color="#0A0909" fontSize="12"/>
+		<mx:ComboBox x="47" y="71" width="154" id="EditTerminal_Type" color="#0A0909" fontSize="12"></mx:ComboBox>
+		<mx:Button x="10" y="10" label="新增" click="doAddSingle()" color="#323FC0" fontSize="13"/>
+		<mx:Button x="123" y="10" label="批量导入" fillAlphas="[1.0, 1.0]" fillColors="[#BDF4B6, #BDF4B6]" click="doAddBatch()" color="#323FC0" fontSize="13"/>
+	</mx:Panel>
+	<mx:RemoteObject id="CBP" destination="dataService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="CCSSAlert.showErrorDialog(this,event.message.toString())">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			import com.ice.RegularExpression;
+			import com.ice.ArrayFactory;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;
+			import com.ice.T_Terminal_Resouce_Info;
+			import mx.collections.ArrayCollection;
+			private var combobox_array_Status:Array = [{label:"全部",data:""},{label:"未分配",data:"0"},{label:"分配给代销商",data:"1"},{label:"已经在用户手中",data:"2"},{label:"停用",data:"3"},{label:"取消",data:"4"}];
+			private var combobox_array_BatchStatus:Array = [{label:"未分配",data:"0"},{label:"分配给代销商",data:"1"},{label:"已经在用户手中",data:"2"},{label:"停用",data:"3"},{label:"取消",data:"4"}];
+			private var combobox_array_Terminal_Type:ArrayCollection = null;
+			private var collection_terminal:ArrayCollection = null;
+			private var collection_Area_Code:ArrayCollection = null;
+			
+			private var pageCount:String = "";
+			private var rowCount:String = "";
+			private var currentPageNo:String = "";
+			
+			private var terminal_query:T_Terminal_Resouce_Info = new T_Terminal_Resouce_Info();
+			private var dialog:LeadTerminalDialog = null;
+			private var regular:RegularExpression = new RegularExpression();
+			
+			private function init():void{
+				this.BatchStatus.dataProvider = this.combobox_array_BatchStatus;
+				this.QueryStatus.dataProvider = this.combobox_array_Status;
+				this.CheckSelectAll.addEventListener(MouseEvent.CLICK,doCheckSelectAllHandler);
+				CBP.getT_TERMINAL_TYPE_PARMList();
+				CBP.getT_TERMINAL_TYPE_PARMList_ForQuery();
+				CBP.queryTCityInfo();
+				this.check01.visible = false;
+				this.check02.visible = false;
+				this.check03.visible = false;
+				this.check04.visible = false;
+				this.check05.visible = false;
+				this.check06.visible = false;
+				this.check07.visible = false;
+				this.check08.visible = false;
+				this.check09.visible = false;
+				this.check10.visible = false;
+			}
+			
+			private function intComponenetFoucs():void{
+				this.EditTerminal_ID.setFocus();
+			}
+			
+			private function doChangeAgentUserNameEnable():void{
+				if(this.BatchStatus.selectedItem.data == "1"){
+					this.BatchTerminal_User.enabled = true;
+					this.BatchesArea_Code.enabled = true;
+				}else{
+					this.BatchTerminal_User.enabled = false;
+					this.BatchTerminal_User.text = "";
+					this.BatchesArea_Code.enabled = false;
+				}
+			}
+			
+			private function doAddSingle():void{
+				var text:String = regular.trim(EditTerminal_ID.text);
+				if(text != ""){
+					if(text.length==16){
+						var terminal:T_Terminal_Resouce_Info = new T_Terminal_Resouce_Info();
+						terminal.Terminal_ID = regular.trim(this.EditTerminal_ID.text);
+						terminal.Terminal_Type = this.EditTerminal_Type.selectedItem.data;
+//						terminal.Area_Code = this.EditArea_Code.selectedItem.data;
+						CBP.addSingleTerminalSouce(terminal);
+						this.enabled = false;
+					}else{
+						CCSSAlert.showMessageDialog(this,"输入的终端编号为16位");
+						this.showFocus(this.EditTerminal_ID);
+						return;
+					}
+				}else{
+					CCSSAlert.showMessageDialog(this,"输入的终端号码不能为空");
+					this.showFocus(this.EditTerminal_ID);
+					return;
+				}
+			}
+			
+			private function doQuery():void{
+				var dook:Boolean = true;
+				var regular:RegularExpression = new RegularExpression();
+				if(this.QueryBatch_SEQ.text != ""){
+					if(!regular.isNumber(this.QueryBatch_SEQ.text)){
+						CCSSAlert.showMessageDialog(this,"批次必须是正整数！");
+						this.showFocus(this.QueryBatch_SEQ);
+						dook = false;
+						return;
+					}
+				}
+//				if(this.QueryTerminal_ID.text != ""){
+//					if(regular.trim(this.QueryTerminal_ID.text).length<=16){
+//						CCSSAlert.showMessageDialog(this,"终端编号不能超过16位！"+this.QueryTerminal_ID.text.length);
+//						this.showFocus(this.QueryTerminal_ID);
+//						dook = false;
+//						return;
+//					}
+//				}
+				if(dook){
+					this.doSelectPage(1);
+				}
+			}
+			
+			private function doAddBatch():void{
+				dialog = new LeadTerminalDialog();
+				dialog.showDialog(this,this.collection_Area_Code);
+			}
+			
+			private function doUpdateSingle():void{
+				var array_items:ArrayCollection = this.getSelectedValuesArray();
+				if(array_items.length>0){
+					var godown:Boolean = true;
+					if(this.BatchStatus.selectedItem.data == "1"){
+						if(this.BatchTerminal_User.text == ""){
+							CCSSAlert.showMessageDialog(this,"如果想将终端分配给代销商，请写入代销商名称！");
+							godown = false;
+							return;
+						}
+					}
+					
+					var message:String = this.checkUpdateStatus(array_items);
+					if(message != "OK"){
+						CCSSAlert.showMessageDialog(this,message);
+						godown = false;
+						return;
+					}
+					
+					if(godown){
+						var request_array:Array = new Array();
+						for(var i:int=0;i<array_items.length;i++){
+							var item:Object = array_items.getItemAt(i);
+							var terminal:T_Terminal_Resouce_Info = new T_Terminal_Resouce_Info();
+							terminal.Terminal_ID = item.Terminal_ID;
+							if(this.BatchStatus.selectedItem.data == "1"){
+								terminal.Area_Code = this.BatchesArea_Code.selectedItem.data;
+							}
+							terminal.Status = this.BatchStatus.selectedItem.data;
+							terminal.Terminal_User =  regular.trim(this.BatchTerminal_User.text);
+							request_array.push(terminal);
+						}
+						CBP.updateBatchTerminalSouce(request_array);
+						this.enabled = false;
+					}					
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在复选框列表中选择一条或多条信息，再进行此操作！");
+					return;
+				}
+			}
+			
+			private function checkUpdateStatus(array_items:ArrayCollection):String{
+				var new_status:String = this.BatchStatus.selectedItem.data;
+				var s0:int = 0;
+				var s1:int = 0;
+				var s2:int = 0;
+				var s3:int = 0;
+				var s4:int = 0;
+				for(var i:int=0;i<array_items.length;i++){
+					var item:Object = array_items.getItemAt(i);
+					var status:String = item.Status;
+					if(status == "0"){
+						s0 ++;
+					}else if(status == "1"){
+						s1 ++;
+					}else if(status == "2"){
+						s2 ++;
+					}else if(status == "3"){
+						s3 ++;
+					}else if(status == "4"){
+						s4 ++;
+					}else{
+					}
+				}
+				var docheck:Boolean = true;
+				var message:String = "OK";
+				if(docheck){
+					if(s0 > 0){
+						if(new_status == "2"){
+							message = "你选择的终端包含了“未分配”的终端，不能执行当前此操作！";
+							docheck = false;
+						}	
+					}					
+				}
+				if(docheck){
+					if(s2 > 0){
+						if(new_status == "3"){
+							message = "你选择的终端里包含了“已在用户手里”的终端，不能执行当前此操作！";
+							docheck = false;
+						}	
+					}					
+				}	
+				
+				if(docheck){
+					if(new_status == "4"){
+						message = "取消操作不能执行！";
+						docheck = false;
+					}					
+				}	
+				
+				if(docheck){
+					if(s3 > 0){
+						message = "你选择的终端里包含了“已停用”的终端，不能执行当前此操作！";
+						docheck = false;
+					}					
+				}				
+				return message;
+			}
+			
+			private function doSelectPage(type:int):void{	
+				terminal_query.Batch_SEQ = regular.trim(this.QueryBatch_SEQ.text);	
+				terminal_query.Terminal_ID = regular.trim(this.QueryTerminal_ID.text);		
+				terminal_query.Terminal_Type = this.QueryTerminal_Type.selectedItem.data;	
+				terminal_query.Status = this.QueryStatus.selectedItem.data;	
+				terminal_query.Terminal_User = regular.trim(this.QueryTerminal_User.text);			
+				if(type == 1){
+					terminal_query.requestPageNo = "1";
+				}else if(type == 2){
+					terminal_query.requestPageNo = (Number(this.currentPageNo)-1).toString();
+				}else if(type == 3){
+					var item:Object = this.ComboBoxSelectPage.selectedItem.data;
+					terminal_query.requestPageNo = item.toString();
+				}else if(type == 4){
+					terminal_query.requestPageNo = (Number(this.currentPageNo)+1).toString();
+				}else if(type == 5){
+					terminal_query.requestPageNo = "9999999";
+				}
+				CBP.queryTerminalSouceList(terminal_query);
+				this.enabled = false;
+				this.clearCheckBox();
+			}
+			
+			private var array_selected:ArrayCollection = new ArrayCollection();
+	        public function selectHandler(checkbox:CheckBox) : void {
+	        	var item:Object = TableTerminal.selectedItem;
+	        	var index:int = Number(item.index);
+	            if(checkbox.selected){
+	                array_selected.addItem(index)
+	            }else{
+	                array_selected.removeItemAt(index - 1);
+	            }
+	        }
+        
+	        public function showSelectedResult() : void {
+//	        	var check_box:CheckBox = this.TableTerminal.getChildByName("checkItem") as CheckBox;
+//				check_box.selected = true;
+//	            CCSSAlert.showMessageDialog(this,":" + array_selected.length);
+	        }
+
+			
+			private function doResult(result:Object):void{
+				this.enabled = true;
+				var type:int = result.m_ReturnType.nReturnType;
+				var code:int = result.m_ReturnType.nReturnCode;
+				
+				switch(type){
+					case 201:
+						if(code == 0){
+							this.collection_Area_Code =  result.m_AddInfo as ArrayCollection;
+//							CCSSAlert.showMessageDialog(this,combobox_array_Terminal_Type.length+"");
+							this.BatchesArea_Code.dataProvider = this.collection_Area_Code;
+//							this.EditArea_Code.dataProvider = this.collection_Area_Code;
+						}else{
+							CCSSAlert.showErrorDialog(this,result.m_ReturnType.nReturnCode + ",错误信息是：" + result.m_ReturnType.strReturnInfo[0]);
+							return;
+						}
+						break;
+					case 172:
+						if(code == 0){
+							this.combobox_array_Terminal_Type =  result.m_AddInfo as ArrayCollection;
+//							CCSSAlert.showMessageDialog(this,combobox_array_Terminal_Type.length+"");
+							this.EditTerminal_Type.dataProvider = this.combobox_array_Terminal_Type
+						}else{
+							CCSSAlert.showErrorDialog(this,result.m_ReturnType.nReturnCode + ",错误信息是：" + result.m_ReturnType.strReturnInfo[0]);
+							return;
+						}
+						break;
+					case 173:
+						if(code == 0){
+							CCSSAlert.showMessageDialog(this,result.m_ReturnType.strReturnInfo[0]);
+							this.doSelectPage(5);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,result.m_ReturnType.strReturnInfo[0]);
+							return;
+						}
+						break;
+					case 178:
+						if(code == 0){
+							this.QueryTerminal_Type.dataProvider =  result.m_AddInfo as ArrayCollection;
+						}else{
+							CCSSAlert.showErrorDialog(this,result.m_ReturnType.nReturnCode + ",错误信息是：" + result.m_ReturnType.strReturnInfo[0]);
+							return;
+						}
+						break;
+					case 176:
+						if(code == 0){
+							CCSSAlert.showMessageDialog(this,result.m_ReturnType.strReturnInfo[0]);
+							this.doSelectPage(3);
+							return;
+						}else{
+							CCSSAlert.showErrorDialog(this,result.m_ReturnType.nReturnCode + ",错误信息是：" + result.m_ReturnType.strReturnInfo[0]);
+							return;
+						}
+						break;
+					case 910:
+						if(code == 0){
+							var strFileName:String = result.m_ReturnType.strReturnInfo[0] as String;	
+							//CCSSAlert.showMessageDialog(this,this.parentApplication.strPubURL + "/XLSTmepFile/" + strFileName);						
+							var request:URLRequest = new URLRequest(this.parentApplication.strPubURL + "/XLSTmepFile/" + strFileName);
+							navigateToURL(request, "_top");
+						}else{
+							CCSSAlert.showErrorDialog(this,result.m_ReturnType.nReturnCode + ",错误信息是：" + result.m_ReturnType.strReturnInfo[0]);
+							return;
+						}
+						break;
+					case 177:
+						if(code == 0){
+							this.collection_terminal = result.m_AddInfo as ArrayCollection;
+							var item:Object = this.collection_terminal.getItemAt(0);
+							this.pageCount = item.pageCount;
+							this.LabelTerminalCount.text = this.rowCount = item.rowCount;
+							this.currentPageNo = item.currentPageNo;
+							this.collection_terminal.removeItemAt(0);
+							var array_pages:Array = this.getSelectComboBoxItems(Number(this.pageCount));
+							this.ComboBoxSelectPage.dataProvider = array_pages;
+							this.ComboBoxSelectPage.selectedItem = ArrayFactory.getComboBoxSelectedItemFromArray(array_pages,this.currentPageNo);
+							this.TableTerminal.dataProvider = collection_terminal;
+							this.showCheckBoxVisible(this.collection_terminal.length);
+//							if(this.collection_terminal.length<1){
+//								CCSSAlert.showMessageDialog(this,"没有找到任何数据！");
+//								return;
+//							}
+						}else{
+							CCSSAlert.showErrorDialog(this,result.m_ReturnType.nReturnCode + ",错误信息是：" + result.m_ReturnType.strReturnInfo[0]);
+							return;
+						}
+						break;
+					default:
+						break;
+				}
+			}
+			
+			private function doTerminal_Type(item:Object,column:DataGridColumn):String{
+				return ArrayFactory.getValueFroamArrayCollection(this.combobox_array_Terminal_Type,item.Terminal_Type);
+			}
+			
+			private function doStatus(item:Object,column:DataGridColumn):String{
+				return ArrayFactory.getValueFromArray(this.combobox_array_Status,item.Status);
+			}
+			
+			private function doArea_Code(item:Object,column:DataGridColumn):String{
+				return ArrayFactory.getValueFroamArrayCollection(this.collection_Area_Code,item.Area_Code);
+			}
+			
+			private function getSelectComboBoxItems(count:int):Array{
+				var array:Array = new Array();
+				for(var i:int=1;i<=count;i++){
+					array.push({label:"第"+i+"页",data:i});
+				}
+				return array;
+			}
+			
+			private function doCheckSelectAllHandler(event:MouseEvent):void{
+				if(this.CheckSelectAll.selected){
+					this.check01.selected = true;
+					this.check02.selected = true;
+					this.check03.selected = true;
+					this.check04.selected = true;
+					this.check05.selected = true;
+					this.check06.selected = true;
+					this.check07.selected = true;
+					this.check08.selected = true;
+					this.check09.selected = true;
+					this.check10.selected = true;
+				}else{
+					this.check01.selected = false;
+					this.check02.selected = false;
+					this.check03.selected = false;
+					this.check04.selected = false;
+					this.check05.selected = false;
+					this.check06.selected = false;
+					this.check07.selected = false;
+					this.check08.selected = false;
+					this.check09.selected = false;
+					this.check10.selected = false;
+				}
+				
+			}
+			
+			private function getSelectedValuesArray():ArrayCollection{
+				var array:ArrayCollection = new ArrayCollection();
+				if(this.check01.visible == true && this.check01.selected){
+					array.addItem(this.collection_terminal.getItemAt(0));
+				}
+				if(this.check02.visible == true && this.check02.selected){
+					array.addItem(this.collection_terminal.getItemAt(1));
+				}
+				if(this.check03.visible == true && this.check03.selected){
+					array.addItem(this.collection_terminal.getItemAt(2));
+				}
+				if(this.check04.visible == true && this.check04.selected){
+					array.addItem(this.collection_terminal.getItemAt(3));
+				}
+				if(this.check05.visible == true && this.check05.selected){
+					array.addItem(this.collection_terminal.getItemAt(4));
+				}
+				if(this.check06.visible == true && this.check06.selected){
+					array.addItem(this.collection_terminal.getItemAt(5));
+				}
+				if(this.check07.visible == true && this.check07.selected){
+					array.addItem(this.collection_terminal.getItemAt(6));
+				}
+				if(this.check08.visible == true && this.check08.selected){
+					array.addItem(this.collection_terminal.getItemAt(7));
+				}
+				if(this.check09.visible == true && this.check09.selected){
+					array.addItem(this.collection_terminal.getItemAt(8));
+				}
+				if(this.check10.visible == true && this.check10.selected){
+					array.addItem(this.collection_terminal.getItemAt(9));
+				}
+				return array;
+			} 
+			
+			private function clearCheckBox():void{
+				this.CheckSelectAll.selected = false;
+				this.check01.selected = false;
+				this.check02.selected = false;
+				this.check03.selected = false;
+				this.check04.selected = false;
+				this.check05.selected = false;
+				this.check06.selected = false;
+				this.check07.selected = false;
+				this.check08.selected = false;
+				this.check09.selected = false;
+				this.check10.selected = false;
+			}
+			
+			private function showCheckBoxVisible(size:int):void{
+				switch(size){
+					case 0:
+						this.check01.visible = false;
+						this.check02.visible = false;
+						this.check03.visible = false;
+						this.check04.visible = false;
+						this.check05.visible = false;
+						this.check06.visible = false;
+						this.check07.visible = false;
+						this.check08.visible = false;
+						this.check09.visible = false;
+						this.check10.visible = false;
+						break;
+					case 1:
+						this.check01.visible = true;
+						this.check02.visible = false;
+						this.check03.visible = false;
+						this.check04.visible = false;
+						this.check05.visible = false;
+						this.check06.visible = false;
+						this.check07.visible = false;
+						this.check08.visible = false;
+						this.check09.visible = false;
+						this.check10.visible = false;
+						break;
+					case 2:
+						this.check01.visible = true;
+						this.check02.visible = true;
+						this.check03.visible = false;
+						this.check04.visible = false;
+						this.check05.visible = false;
+						this.check06.visible = false;
+						this.check07.visible = false;
+						this.check08.visible = false;
+						this.check09.visible = false;
+						this.check10.visible = false;
+						break;
+					case 3:
+						this.check01.visible = true;
+						this.check02.visible = true;
+						this.check03.visible = true;
+						this.check04.visible = false;
+						this.check05.visible = false;
+						this.check06.visible = false;
+						this.check07.visible = false;
+						this.check08.visible = false;
+						this.check09.visible = false;
+						this.check10.visible = false;
+						break;
+					case 4:
+						this.check01.visible = true;
+						this.check02.visible = true;
+						this.check03.visible = true;
+						this.check04.visible = true;
+						this.check05.visible = false;
+						this.check06.visible = false;
+						this.check07.visible = false;
+						this.check08.visible = false;
+						this.check09.visible = false;
+						this.check10.visible = false;
+						break;
+					case 5:
+						this.check01.visible = true;
+						this.check02.visible = true;
+						this.check03.visible = true;
+						this.check04.visible = true;
+						this.check05.visible = true;
+						this.check06.visible = false;
+						this.check07.visible = false;
+						this.check08.visible = false;
+						this.check09.visible = false;
+						this.check10.visible = false;
+						break;
+					case 6:
+						this.check01.visible = true;
+						this.check02.visible = true;
+						this.check03.visible = true;
+						this.check04.visible = true;
+						this.check05.visible = true;
+						this.check06.visible = true;
+						this.check07.visible = false;
+						this.check08.visible = false;
+						this.check09.visible = false;
+						this.check10.visible = false;
+						break;
+					case 7:
+						this.check01.visible = true;
+						this.check02.visible = true;
+						this.check03.visible = true;
+						this.check04.visible = true;
+						this.check05.visible = true;
+						this.check06.visible = true;
+						this.check07.visible = true;
+						this.check08.visible = false;
+						this.check09.visible = false;
+						this.check10.visible = false;
+						break;
+					case 8:
+						this.check01.visible = true;
+						this.check02.visible = true;
+						this.check03.visible = true;
+						this.check04.visible = true;
+						this.check05.visible = true;
+						this.check06.visible = true;
+						this.check07.visible = true;
+						this.check08.visible = true;
+						this.check09.visible = false;
+						this.check10.visible = false;
+						break;
+					case 9:
+						this.check01.visible = true;
+						this.check02.visible = true;
+						this.check03.visible = true;
+						this.check04.visible = true;
+						this.check05.visible = true;
+						this.check06.visible = true;
+						this.check07.visible = true;
+						this.check08.visible = true;
+						this.check09.visible = true;
+						this.check10.visible = false;
+						break;
+					case 10:
+						this.check01.visible = true;
+						this.check02.visible = true;
+						this.check03.visible = true;
+						this.check04.visible = true;
+						this.check05.visible = true;
+						this.check06.visible = true;
+						this.check07.visible = true;
+						this.check08.visible = true;
+						this.check09.visible = true;
+						this.check10.visible = true;
+						break;
+					default:
+						break;
+				}
+			} 
+			
+			private function showFocus(cbbId:Object):void{
+				FlashContrl.target = cbbId;
+				FlashContrl.play();
+				cbbId.setFocus();
+			}	
+			
+			public function fun_Echo():void{
+			}
+			
+			
+			private function doLeadData():void{
+				if(this.collection_terminal == null || this.collection_terminal.length < 1){
+					CCSSAlert.showMessageDialog(this,"请先查询出相关数据，在进行此操作！");
+					return;
+				}else{
+					var title:String = "编号,类型,状态,批次,代销商名称,被分配到的城市,分配给代销商的时间,开始使用时间";
+					var info:T_Terminal_Resouce_Info = new T_Terminal_Resouce_Info();
+					info.Batch_SEQ = regular.trim(this.QueryBatch_SEQ.text);	
+					info.Terminal_ID = regular.trim(this.QueryTerminal_ID.text);		
+					info.Terminal_Type = this.QueryTerminal_Type.selectedItem.data;	
+					info.Status = this.QueryStatus.selectedItem.data;	
+					info.Terminal_User = regular.trim(this.QueryTerminal_User.text);		
+					CBP.leadTerminalDataFile(info,title);
+					this.enabled = false;
+				}
+			}
+		]]>
+	</mx:Script>
+	<mx:DataGrid x="304" y="134" width="451" height="293" textAlign="center" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" borderColor="#A7D9FF" color="#000706" themeColor="#1970A8" alternatingItemColors="[#FFFFFF, #DFF3FF]" fontSize="12" alpha="1.0" fontFamily="Arial" fontWeight="normal" id="TableTerminal">
+		<mx:columns>
+			<mx:DataGridColumn headerText="编号" dataField="Terminal_ID" width="120" />
+			<mx:DataGridColumn headerText="类型" dataField="Terminal_Type" width="80" labelFunction="doTerminal_Type"/>
+			<mx:DataGridColumn headerText="状态" dataField="Status"  width="120"  labelFunction="doStatus"/>
+			<mx:DataGridColumn headerText="批次" dataField="Batch_SEQ" width="80"/>		
+			<mx:DataGridColumn headerText="代销商名称" dataField="Terminal_User" width="130"/>
+			<mx:DataGridColumn headerText="被分配到的城市" dataField="Area_Code" width="100" labelFunction="doArea_Code"/>	
+			<mx:DataGridColumn headerText="分配给代销商的时间" dataField="Give_Date" width="130"/>
+			<mx:DataGridColumn headerText="开始使用时间" dataField="Use_Date" width="130"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Canvas x="242" y="159" width="63" height="268" borderColor="#A7D9FF" borderStyle="solid" backgroundColor="#AFA3A3" fontSize="12">
+		<mx:CheckBox x="22" y="54" id="check03"/>
+		<mx:CheckBox x="22" y="28" id="check02"/>
+		<mx:CheckBox x="22" y="78" id="check04"/>
+		<mx:CheckBox x="22" y="4" id="check01"/>
+		<mx:CheckBox x="22" y="103" id="check05"/>
+		<mx:CheckBox x="22" y="128" id="check06"/>
+		<mx:CheckBox x="22" y="154" id="check07"/>
+		<mx:CheckBox x="22" y="179" id="check08"/>
+		<mx:CheckBox x="22" y="203" id="check09"/>
+		<mx:CheckBox x="22" y="227" id="check10"/>
+	</mx:Canvas>
+	<mx:Canvas x="242" y="134" width="63" height="26" borderStyle="solid" borderColor="#A7D9FF" backgroundColor="#FCF8F8">
+		<mx:CheckBox x="1" y="0" label="全选" color="#080808" fontWeight="normal" id="CheckSelectAll" fontSize="12" borderColor="#A7D9FF" width="58"/>
+	</mx:Canvas>
+	<mx:Label x="243" y="105" text="总数：" fontWeight="bold" color="#F30A2B" fontSize="12"/>
+	<mx:Label x="295" y="105" fontWeight="bold" color="#141212" id="LabelTerminalCount" fontSize="12"/>
+	<mx:Button x="532" y="103" label="上一页" click="this.doSelectPage(2)" color="#141212" fontSize="12"/>
+	<mx:ComboBox x="605" y="102" width="80" id="ComboBoxSelectPage" change="this.doSelectPage(3)" color="#141212" fontSize="12"></mx:ComboBox>
+	<mx:Button x="692" y="103" label="下一页" click="this.doSelectPage(4)" color="#141212" fontSize="12"/>
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+    </mx:Sequence>
+	<mx:Label x="239" y="43" text="终端将要改变的状态" color="#141212" fontSize="12"/>
+	<mx:ComboBox x="352" y="40" width="139" id="BatchStatus" change="doChangeAgentUserNameEnable()" color="#141212" fontSize="12"></mx:ComboBox>
+	<mx:Label x="246" y="74" text="所分配代销商名称" color="#141212" fontSize="12"/>
+	<mx:TextInput x="350" y="72" width="406" id="BatchTerminal_User" enabled="false" color="#141212" fontSize="12" maxChars="30"/>
+	<mx:Button x="675" y="7" label="变更信息" click="doUpdateSingle()" color="#323FC0" fontSize="13"/>
+	<mx:Label x="239" y="9" text="在列表中选择一条或多条记录进行终端信息维护" fontWeight="normal" fontSize="13" color="#F30A2B"/>
+	<mx:Label x="497" y="42" text="终端被分配到的城市" color="#141212" fontSize="12"/>
+	<mx:ComboBox x="615" y="39" id="BatchesArea_Code" enabled="false" width="141" color="#141212" fontSize="12"></mx:ComboBox>
+	<mx:Button x="615" y="8" label="导出" fontSize="12" color="#151297" click="doLeadData()"/>
+</mx:Panel>

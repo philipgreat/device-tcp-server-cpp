@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" initialize="init()" layout="absolute" width="790" height="550" fontSize="15" fontFamily="Arial" color="#F3F5F6" borderColor="#00656E" title="操作员管理" xmlns:ns1="*">
+	<mx:Panel x="203" y="124" width="567" height="380" layout="absolute" borderColor="#101139" title="数据">
+		<mx:DataGrid x="0" y="0" width="547" height="334" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center" id="TableGrid_User" borderColor="#010101" fontSize="12" color="#020202">
+			<mx:columns>
+				<mx:DataGridColumn headerText="用户编号" dataField="USER_ID" width="90"/>
+				<mx:DataGridColumn headerText="用户密码" dataField="PASSWORD" width="90" visible="false"/>
+				<mx:DataGridColumn headerText="用户姓名" dataField="USER_NAME" width="80"/>
+				<mx:DataGridColumn headerText="组织编号" dataField="ORG_ID" width="100" visible="false"/>
+				<mx:DataGridColumn headerText="地区代码" dataField="USER_AREA_CODE" width="70" visible="false"/>
+				<mx:DataGridColumn headerText="地区名称" dataField="AREA_NAME" width="80"/>
+				<mx:DataGridColumn headerText="组织名称" dataField="ORG_NAME" width="120"/>
+				<mx:DataGridColumn headerText="角色编号" dataField="ROLE_ID" width="120" visible="false"/>
+				<mx:DataGridColumn headerText="角色名称" dataField="ROLE_NAME" width="100"/>
+				<mx:DataGridColumn headerText="状态" dataField="STATUS" width="80" labelFunction="doSTATUS"/>
+				<mx:DataGridColumn headerText="注册时间" dataField="CREATE_TIME" width="140"/>
+				<mx:DataGridColumn headerText="最近登陆时间" dataField="LAST_LOGIN_TIME" width="140"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Panel>
+	<mx:Panel x="203" y="0" width="336" height="116" layout="absolute" borderColor="#221F8D" title="查询向导">
+		<mx:Button x="253" y="8" label="查询" click="doQueryHuman()" fontFamily="Arial" fontSize="12" color="#030303"/>
+		<mx:Label x="10" y="10" text="用户账号" fontSize="12" color="#030303"/>
+		<mx:Label x="10" y="40" text="用户姓名" fontSize="12" color="#030303"/>
+		<mx:TextInput x="71" y="8" width="88" maxChars="8" fontSize="12" fontFamily="Arial" color="#010101" id="User_ID"/>
+		<mx:TextInput x="71" y="39" width="88" maxChars="16" fontSize="12" fontFamily="Arial" color="#010101" id="User_Name"/>
+		<mx:Label x="167" y="41" text="用户状态" fontSize="12" color="#050505"/>
+		<mx:ComboBox x="223" y="40" width="82" fontSize="12" color="#010101" id="Status"></mx:ComboBox>
+	</mx:Panel>
+	<mx:Panel x="542" y="0" width="228" height="116" layout="absolute" borderColor="#34452D" title="控制区域">
+		<mx:Button x="10" y="39" label="添加" click="doAddHuman()" fontFamily="Arial" fontSize="12" color="#030303"/>
+		<mx:Button x="79" y="40" label="更新" click="doUpdateHuman()" fontFamily="Arial" fontSize="12" color="#030303"/>
+		<mx:Button x="148" y="40" label="删除" click="doDeleteHuman()" fontFamily="Arial" fontSize="12" color="#030303"/>
+		<mx:Button x="10" y="8" label="修改密码" click="doChangePassword()" fontFamily="Arial" fontSize="12" color="#030303"/>
+		<mx:Button x="96" y="8" label="强制修改密码" id="ForceChangePasswordButton" click="doForceChangePassword()" fontFamily="Arial" fontSize="12" color="#030303"/>
+	</mx:Panel>
+	<mx:RemoteObject id="org_service" destination="OrgFlexService"  
+		result="doOrgResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:RemoteObject id="role_service" destination="UserInfoRoleFlexService"  
+		result="doRoleResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+	 		import cn.ucans.bean.T_ROLE_INFO;
+	 		
+	 		import cn.ucans.bean.T_ORG_INFO;
+	 		import cn.ucans.bean.T_USER_INFO;
+	 		import cn.ucans.tree.TreeNode;
+	 		import mx.collections.ArrayCollection;
+	 		import cn.ucans.flex.FlexRequest;
+	 		import cn.ucans.flex.FlexReponse;
+	 		import cn.ucans.common.RegularExpression;
+	 		import cn.ucans.common.DataProvider;
+	 		import cn.ucans.common.ArrayFactory;
+	 		
+	 		private var regular:RegularExpression = new RegularExpression();
+	 		private var dialog_add_user:AddUserInfoDialog = null; 
+	 		private var dialog_add_role:AddRoleMenuDialog = null; 
+	 		private var dialog_update_role:UpdateRoleMenuDialog = null;
+	 		private var dialog_update_user:UpdateUserInfoDialog = null;
+	 		private var dialog_confirm:CCSSConfirm = null;
+	 		private var dialog_password_user:UserRolePanelChangePasswordDialog = null;
+	 		private var dialog_fouce_change_password_user:UserRolePanelFouceChangePasswordDialog = null;
+	 		
+	 		private function init():void{
+	 			this.Status.dataProvider = DataProvider.combobox_array_UserInfo_Status_Query;
+	 			this.OrgTree.click_Function = this.click_Tree_Handler;
+	 			var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1005;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.type = 3;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				this.org_service.doTransaction(request);
+				this.enabled = false;
+				this.OrgTree.setRootNodeVisiable(true);
+	 		}
+	 		
+	 		private function setSelectedOrgValues(map:Object,xml_str:String):void{
+				if(xml_str != null){
+					var xml:XML = new XML(xml_str);
+					this.OrgTree.updateSelectedItem(xml);
+				}
+			}
+			
+			private function click_Tree_Handler():void{
+				var node_selected:TreeNode = this.OrgTree.selectNode;
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1004;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.type = 3;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				var org:T_ORG_INFO = new T_ORG_INFO();
+				org.ORG_ID = node_selected.data;
+				org.TOP_LEVEL = ""+(node_selected.top);
+				request.form.org = org;
+				this.org_service.doTransaction(request);
+				this.enabled = false;
+				this.doQueryHuman();
+			}
+			
+			private function doAddHuman():void{
+				var node:TreeNode = this.OrgTree.selectNode;
+				if(node == null){
+					CCSSAlert.showMessageDialog(this,"请选中当前要添加人员的组织，再进行本操作！");
+					return;
+				}else{
+					this.dialog_add_user = new AddUserInfoDialog();
+					this.dialog_add_user.showDialog(this,node.data,node.label);
+					this.dialog_add_user.addEventListener(Event.REMOVED,doAddHumanHandler);
+				}
+			}
+			
+			private function doAddHumanHandler(event:Event):void{
+				if(this.dialog_add_user.DOOK){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1010;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.user = this.dialog_add_user.user;
+					this.role_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doUpdateHuman():void{
+				if(this.TableGrid_User.selectedIndex>-1){
+					var item:Object = this.TableGrid_User.selectedItem;
+					if(item.USER_ID != "admin"){
+						this.dialog_update_user = new UpdateUserInfoDialog();
+						this.dialog_update_user.showDialog(this,this.TableGrid_User.selectedItem);
+						this.dialog_update_user.addEventListener(Event.REMOVED,doUpdateHumanHandler);
+					}else{
+						CCSSAlert.showMessageDialog(this,"admin为系统内置账号，不允许修改！");
+						return;
+					}
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在人员列表中选中一条记录，再进行本操作！");
+					return;
+				}
+			}
+			
+			private function doUpdateHumanHandler(event:Event):void{
+				if(this.dialog_update_user.DOOK){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1011;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.user = this.dialog_update_user.user;
+					this.role_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doDeleteHuman():void{
+				if(this.TableGrid_User.selectedIndex>-1){
+					var item:Object = this.TableGrid_User.selectedItem;
+					if(item.USER_ID == "admin"){
+						CCSSAlert.showMessageDialog(this,"系统保护，不能删除系统管理员（"+item.USER_ID+"，"+item.USER_NAME+"）!");
+						return;
+					}else{
+						var request:FlexRequest = new FlexRequest();
+						request.ope_id = 1012;
+						request.menu_id = this.parentApplication.LoginMenu_ID;
+						request.org_id = this.parentApplication.LoginORG_ID;
+						request.user_id = this.parentApplication.LoginUser_ID;
+						var user:T_USER_INFO = new T_USER_INFO();
+						user.USER_ID = item.USER_ID;
+						user.USER_NAME = item.USER_NAME;
+						request.form.user = user;
+						this.dialog_confirm = new CCSSConfirm();
+						this.dialog_confirm.showDialog(this,"您确认要删除该人员（"+item.USER_ID+"，"+item.USER_NAME+"）吗？",request);
+						this.dialog_confirm.addEventListener(Event.REMOVED,doDeleteHumanHandler);
+					}					
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在人员列表中选中一条记录，再进行本操作！");
+					return;
+				}
+			}
+			
+			private function doDeleteHumanHandler(event:Event):void{
+				if(this.dialog_confirm.YES){
+					var request:FlexRequest = this.dialog_confirm.object as FlexRequest;
+					this.role_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doQueryHuman():void{
+				var node:TreeNode = this.OrgTree.selectNode;
+				if(node == null){
+					CCSSAlert.showMessageDialog(this,"请在组织树表中选中一个组织，再进行本操作！");
+					return;
+				}else{
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1013;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					var user:T_USER_INFO = new T_USER_INFO();
+					user.ORG_ID = node.data;
+					user.STATUS = this.Status.selectedItem.data;
+					user.USER_ID = regular.trim(this.User_ID.text);
+					user.USER_NAME = regular.trim(this.User_Name.text);
+					request.form.user = user;
+					this.role_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doChangePassword():void{
+				if(this.TableGrid_User.selectedIndex>-1){
+					var item:Object = this.TableGrid_User.selectedItem;
+					this.dialog_password_user = new UserRolePanelChangePasswordDialog();
+					this.dialog_password_user.showDialog(this,item.USER_ID);
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在人员列表中选中一条记录，再进行本操作！");
+					return;
+				}
+			}
+	 		
+			private function doOrgResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1004:
+						if(reponse.sign == 0){
+							var map_query:Object = reponse.result.map;
+							var xml_query:String = reponse.result.xml;
+							this.setSelectedOrgValues(map_query,xml_query);
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1005:
+						if(reponse.sign == 0){
+							var xml_org_init:String = reponse.result.xml as String;
+							this.OrgTree.dataProvider = xml_org_init;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doRoleResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1010:
+						if(reponse.sign == 0){
+							this.doQueryHuman();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1011:
+						if(reponse.sign == 0){
+							var item:Object = reponse.result.map;
+							this.doQueryHuman();					
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1012:
+						if(reponse.sign == 0){
+							this.doQueryHuman();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1013:
+						if(reponse.sign == 0){
+							var arrayCollection:ArrayCollection = reponse.result.list as ArrayCollection;
+							this.TableGrid_User.dataProvider = arrayCollection;
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doSTATUS(item:Object, column:DataGridColumn):String{
+				return ArrayFactory.getValueFromArray(DataProvider.combobox_array_UserInfo_Status_Edit,item.STATUS);
+			}
+			
+			private function doForceChangePassword():void{
+				if(this.TableGrid_User.selectedIndex>-1){
+					var item:Object = this.TableGrid_User.selectedItem;
+					this.dialog_fouce_change_password_user = new UserRolePanelFouceChangePasswordDialog();
+					this.dialog_fouce_change_password_user.showDialog(this,item.USER_ID);
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在人员列表中选中一条记录，再进行本操作！");
+					return;
+				}
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+	 	]]>
+	 </mx:Script>
+	<mx:Panel width="195" layout="absolute" title="选择组织" backgroundAlpha="0.36" horizontalScrollPolicy="off" verticalScrollPolicy="off" borderColor="#0C0E5D" cornerRadius="7" alpha="0.8" themeColor="#8FD4FF" color="#FFFFFF" fontSize="14" fontWeight="normal" backgroundColor="#DCFBFF" borderThicknessBottom="25" height="504" x="0" y="0">
+		<ns1:NormalTreeField id="OrgTree" x="0" y="0" width="175" height="445" fontFamily="Arial" fontSize="12" color="#030303" borderColor="#130C52">
+		</ns1:NormalTreeField>
+	</mx:Panel>
+		
+</mx:Panel>

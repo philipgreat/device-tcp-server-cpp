@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="528" height="230" fontFamily="Arial" fontSize="15" color="#EFE9F5" borderColor="#170660" title="分发终端">
+	<mx:Canvas x="10" y="51" width="488" height="58" borderStyle="solid" borderColor="#2C3236" backgroundColor="#D8F3F4" fontSize="12" color="#020202">
+		<mx:Label x="247" y="12" text="酒店接领人" fontFamily="Arial"/>
+		<mx:TextInput x="320" y="10" maxChars="8" id="Hotel_Receiver" width="156" fontFamily="Arial"/>
+		<mx:Label x="10" y="14" text="选择酒店" fontFamily="Arial" fontSize="12" color="#030303"/>
+		<mx:ComboBox x="70" y="10" id="Org_ID" width="156" fontFamily="Arial" fontSize="12" color="#030303"></mx:ComboBox>
+	</mx:Canvas>
+	<mx:Button x="161.75" y="133" label="确定" click="doClick()" fontFamily="Arial" fontSize="12" color="#060606"/>
+	<mx:Button x="294.25" y="133" label="取消" click="doCancle()" fontFamily="Arial" fontSize="12" color="#060606"/>
+	<mx:Script>
+		<![CDATA[
+			
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			
+			public var DOOK:Boolean = false;
+			private var regular:RegularExpression = new RegularExpression();
+			
+			public var hotel_id:String = "";
+			public var Receiver:String = "";
+			public var object:Object = null;
+			
+			public function showDialog(parent:DisplayObject,size:int,list_hotel:ArrayCollection,object_input:Object):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				this.SelectCount.text = size+"";
+				this.Org_ID.dataProvider = list_hotel;
+				this.object = object_input;
+			}
+			
+			private function doClick():void{
+				var ok:Boolean = true;
+				if(ok){
+					this.hotel_id = this.Org_ID.selectedItem.data;
+					this.Receiver = this.Hotel_Receiver.text;;
+					this.DOOK = true;
+					PopUpManager.removePopUp(this);
+				}
+			}
+			
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+	<mx:Label x="10" y="14" text="即将分发当前选中的" fontWeight="bold" fontSize="13" color="#050505"/>
+	<mx:Label x="149" y="15" text="未确定" id="SelectCount" fontSize="12" color="#0B1185" fontWeight="bold"/>
+	<mx:Label x="201" y="14" text="个终端到酒店" fontWeight="bold" fontSize="13" color="#040404"/>
+</mx:TitleWindow>

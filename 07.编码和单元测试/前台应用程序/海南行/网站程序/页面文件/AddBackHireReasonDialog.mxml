@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="528" height="184" fontFamily="Arial" fontSize="15" color="#F5F1F9" borderColor="#42356B" title="如有必要，请填写退租原因">
+	<mx:Button x="152.5" y="90" label="确定" click="doClick()" fontFamily="Arial" fontSize="12" color="#050505"/>
+	<mx:Button x="303.5" y="90" label="取消" click="doCancle()" fontFamily="Arial" fontSize="12" color="#050505"/>
+	<mx:Script>
+		<![CDATA[
+			
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.flex.FlexRequest;
+ 			import cn.ucans.flex.FlexReponse;
+			
+			public var DOOK:Boolean = false;
+			private var regular:RegularExpression = new RegularExpression();
+			public var reason:String = null;
+			public var object:Object = null;			
+			
+			public function showDialog(parent:DisplayObject,Msisdn:String,object:Object):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				this.Msisdn.text = Msisdn;
+				this.object = object;
+			}
+			
+			private function doClick():void{
+				var ok:Boolean = true;				
+				if(ok){
+					this.reason = this.regular.trim(this.BackHireReason.text);
+					this.DOOK = true;
+					PopUpManager.removePopUp(this);
+				}
+			}
+			
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label x="27.5" y="19" text="终端手机号码：" fontWeight="bold" fontFamily="Arial" fontSize="12" color="#050505"/>
+	<mx:Label x="131.5" y="19" text="未确定" id="Msisdn" fontFamily="Arial" fontSize="12" color="#050505"/>
+	<mx:Label x="27.5" y="50" text="退租原因" fontFamily="Arial" fontSize="12" color="#050505"/>
+	<mx:TextInput x="88.5" y="48" maxChars="30" id="BackHireReason" width="392" fontFamily="Arial" fontSize="12" color="#050505"/>
+</mx:TitleWindow>

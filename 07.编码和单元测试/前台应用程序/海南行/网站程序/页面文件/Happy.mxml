@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" initialize="init()" layout="absolute" xmlns="*"  width="1050" height="646">
+	<mx:Canvas x="0" y="0" width="1025" height="73" horizontalScrollPolicy="off" verticalScrollPolicy="off" backgroundColor="#3E70CC" backgroundAlpha="0.0" cornerRadius="20">
+	<mx:Button x="815" y="46" label="修改密码" fontSize="12" height="22" color="#004789" fontFamily="Arial" click="updatePassword()"/>
+	<mx:Button x="909" y="46" label="退出系统" fontSize="12" click="exitLogin()" height="22" color="#004789" fontFamily="Arial"/>
+	<mx:Image x="0" y="1" source="img/top.jpg"/>
+	</mx:Canvas>
+	
+	<mx:ViewStack id="storeViews"  x="1" y="97"  width="1024" height="549" creationPolicy="all">
+		<HomePage label="首页" id="FirstPageId"  showEffect="WipeDown" hideEffect="WipeUp"  height="549" horizontalScrollPolicy="off" verticalScrollPolicy="off" width="1025"/>
+		<BusiManagement label="业务管理" id="busiId" effectEnd="busiEnd()"  showEffect="WipeDown" hideEffect="WipeUp"  height="549" horizontalScrollPolicy="off" verticalScrollPolicy="off" width="1025"/>
+		<!--
+		<TerminalManagement label="终端管理" id="TermianlId"  showEffect="WipeDown" hideEffect="WipeUp"  height="549" horizontalScrollPolicy="off" verticalScrollPolicy="off" width="1025"/>
+		<BlackAndWhiteForm label="黑白名单" id="BlackAndWhiteId"  showEffect="Iris" hideEffect="WipeRight"  height="549" horizontalScrollPolicy="off" verticalScrollPolicy="off" width="1025"/>
+		<TaskPublishPanel label="信息发布" id="TaskId"  showEffect="Iris" hideEffect="WipeRight"  height="549" horizontalScrollPolicy="off" verticalScrollPolicy="off" width="1025"/>
+		<ReportTablePanel label="统计报表" id="StatictiseTableId"  showEffect="Iris" hideEffect="WipeUp"  height="549" horizontalScrollPolicy="off" verticalScrollPolicy="off" width="1025"/>
+		<OrgManagement label="组织信息" id="OrgId"  showEffect="Iris" hideEffect="WipeRight"  height="549" horizontalScrollPolicy="off" verticalScrollPolicy="off" width="1025"/>
+		<SystemManagement label="系统管理" id="SystemId"  showEffect="Iris" hideEffect="WipeUp"  height="549" horizontalScrollPolicy="off" verticalScrollPolicy="off" width="1025"/>
+		<BalanceManagement label="账务管理" id="BalanceId"  showEffect="Iris" hideEffect="WipeUp"  height="549" horizontalScrollPolicy="off" verticalScrollPolicy="off" width="1025"/>
+		-->
+	</mx:ViewStack>
+	<mx:RemoteObject id="role_service" destination="UserInfoRoleFlexService"  
+		result="doRoleResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:RemoteObject id="org_service" destination="OrgFlexService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	  <mx:Style>
+        Alert {
+            titleStyleName: "alertTitle";
+            messageStyleName: "alertMessage";
+            buttonStyleName: "alertButton";
+        }
+		ToolTip{
+		     font-size: 12;
+		     font-style: normal;
+		     font-weight: normal;
+		}
+        .alertTitle {
+            letterSpacing: 0;
+            fontSize: 18;
+            color: red;
+        }
+
+        .alertMessage {
+            letterSpacing: 0;
+            fontSize: 18;
+            fontWeight: normal;
+            color: black;
+        }
+
+        .alertButton {
+            letterSpacing: 0;
+            fontSize: 12;
+        }
+    </mx:Style>
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import cn.ucans.bean.T_USER_INFO;
+			import cn.ucans.flex.FlexRequest;
+ 			import cn.ucans.flex.FlexReponse;
+ 			
+			public var LoginUser_ID:String = "admin";
+			public var LoginORG_ID:String = "1";
+			public var LoginSEQ:String = "";
+			public var strPubURL:String = "";
+			public var LoginRole_ID:String = "";
+			public var LoginMenu_ID:String = "";
+			
+			private var dialog_login:LoginDialog = null;
+			private var dialog_password_user:UserRolePanelChangePasswordDialog = null;
+			private var list:ArrayCollection = null;
+			private var MainOrgTreeXML:XML = null;
+			
+			private var dialog_confirm:CCSSConfirm = null;
+			
+			private function init():void{
+				this.dialog_login = new LoginDialog();
+				this.dialog_login.showDialog(this);				
+			}
+			private function busiEnd():void{
+				this.busiId.setProvider(MainOrgTreeXML);
+				this.busiId.mainContext.removeAllChildren();
+			}
+			private function updatePassword():void{
+				this.dialog_password_user = new UserRolePanelChangePasswordDialog();
+				this.dialog_password_user.showDialog(this,this.LoginUser_ID);
+			}
+			
+//			public function setMenuList(list:ArrayCollection,xml_terminal:XML,xml_blackandwhite:XML,xml_task:XML,report_xml:XML,xml_org:XML,xml_system:XML,xml_balance:XML):void{
+//				this.list = list;
+//				if(this.list == null || this.list.length == 0){
+//				}else{
+//					if(this.list.contains("0")){
+//						
+//					}else{
+//						this.storeViews.removeChildAt(0);
+//					}
+//					if(this.list.contains("1")){
+//						this.TermianlId.setProvider(xml_terminal);
+//					}else{
+//						this.storeViews.removeChildAt(1);
+//					}
+//					if(this.list.contains("2")){
+//						this.BlackAndWhiteId.setProvider(xml_blackandwhite);
+//					}else{
+//						this.storeViews.removeChildAt(2);
+//					}
+//					if(this.list.contains("3")){
+//						this.TaskId.setProvider(xml_task);
+//					}else{
+//						this.storeViews.removeChildAt(3);
+//					}
+//					if(this.list.contains("4")){
+//						this.StatictiseTableId.setProvider(report_xml);
+//					}else{
+//						this.storeViews.removeChildAt(4);
+//					}
+//					if(this.list.contains("5")){
+//						this.OrgId.setProvider(xml_org);
+//					}else{
+//						this.storeViews.removeChildAt(5);
+//					}
+//					if(this.list.contains("6")){
+//						this.SystemId.setProvider(xml_system);
+//					}else{
+//						this.storeViews.removeChildAt(6);
+//					}
+//					if(this.list.contains("7")){
+//						this.BalanceId.setProvider(xml_balance);
+//					}else{
+//						this.storeViews.removeChildAt(6);
+//					}
+//				}		
+//			}
+			
+			public function setMenuList(xml:XML):void{
+				MainOrgTreeXML = xml;
+				this.busiId.setProvider(xml);
+			}
+			
+			public function exitLogin():void{
+				//CCSSAlert.showMessageDialog(this,this.LoginUser_ID+","+this.LoginORG_ID+","+this.LoginSEQ);
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1022;
+				request.menu_id = "ONJM8-1W1UN-A544J-PSNK7-PXV95-2D8RT-T3PX8-AJH2Q-L5RNW-PRM7E-W93LA-HZN8D";
+				request.org_id = this.LoginORG_ID;
+				request.user_id = this.LoginUser_ID;
+				request.form.Login_SEQ = this.LoginSEQ;
+				this.dialog_confirm = new CCSSConfirm();
+				this.dialog_confirm.showDialog(this,"您确定要退出吗？",request);
+				this.dialog_confirm.addEventListener(Event.REMOVED,doExitLoginHandler);
+		 	}
+		 	
+		 	private function doExitLoginHandler(event:Event):void{
+		 		if(this.dialog_confirm.YES){
+		 			var request:FlexRequest = this.dialog_confirm.object as FlexRequest;
+		 			this.role_service.doTransaction(request);
+					this.enabled = false;
+		 		}
+		 	}
+		 	
+		 	private function doRoleResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1022:
+						if(reponse.sign == 0){
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							var request:URLRequest = new URLRequest("javascript:window.parent.close()");
+							navigateToURL(request,"_self"); 
+							this.removeAllChildren();
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1005:
+						if(reponse.sign == 0){
+							var xml_org_init:String = reponse.result.xml as String;
+							var new_xml:XML = new XML(xml_org_init);
+							//this.updateOrgTree(new_xml);
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+		]]>
+	</mx:Script>
+	<mx:ToggleButtonBar id="tbbar" styleName="storeButtonBar" height="24" dataProvider="storeViews" width="1024"  fontFamily="Arial" fontSize="17" fontGridFitType="pixel" fontWeight="bold"  x="1"  alpha="1.0" y="74"  color="#0C0E74"/>
+</mx:Application>

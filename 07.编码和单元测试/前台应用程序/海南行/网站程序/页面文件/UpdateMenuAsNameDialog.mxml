@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="450" height="410" title="修改菜单别名" fontSize="15" color="#F0F7F9" borderColor="#130E5B" fontFamily="Arial" xmlns:ns1="*">
+	<ns1:NormalTreeField x="10" y="10" height="344" width="210" fontSize="12" color="#060606" id="RoleTree" borderColor="#090909" borderStyle="solid">
+	</ns1:NormalTreeField>
+	<mx:TextArea x="228" y="186" width="192" height="168" fontFamily="Arial" fontSize="12" color="#060606" borderColor="#030303">
+		<mx:text><![CDATA[        选中左边树节点，在右边表单中显示的值，修改成您想要的值，点更新，即可更新当前选中节点名称，最后一次性提交全部更改。]]></mx:text>
+	</mx:TextArea>
+	<mx:Label x="228" y="157" text="使用说明" fontFamily="Arial" fontSize="13" color="#F60303" fontWeight="bold"/>
+	<mx:Button x="368" y="102" label="更改" fontFamily="Arial" fontSize="12" color="#030303" click="doChange()"/>
+	<mx:Button x="234" y="10" label="提交全部更改" fontFamily="Arial" fontSize="12" color="#030303" click="submitAll()"/>
+	<mx:Button x="346" y="10" label="关闭窗口" fontFamily="Arial" fontSize="12" color="#030303" click="doCancle()"/>
+	<mx:TextInput x="234" y="100" width="126" id="NodeLabel" maxChars="16" color="#010101" fontSize="12"/>
+	<mx:Label x="234" y="69" text="您当前选中的节点的值是：" fontSize="12" color="#050505"/>
+	<mx:RemoteObject id="role_service" destination="UserInfoRoleFlexService"  
+		result="doRoleResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+		
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import cn.ucans.tree.TreeNode;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.bean.T_ROLE_INFO;
+			import cn.ucans.flex.FlexRequest;
+	 		import cn.ucans.flex.FlexReponse;
+			
+			private var regular:RegularExpression = new RegularExpression();
+			
+			private var role_id:String = "";
+			private var dialog_confirm:CCSSConfirm = null;
+			
+			public function showDialog(parent:DisplayObject,role_id:String):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				this.role_id = role_id;
+				this.init(role_id);
+			}
+			
+			private function doChange():void{
+				var node:TreeNode = this.RoleTree.selectNode;
+				if(node == null){
+					CCSSAlert.showMessageDialog(this,"请先在左边的菜单树中选中一个节点，再进行本操作！");
+				}else{
+					if(node.top == 2){
+						node.label = regular.trim(this.NodeLabel.text);
+						this.RoleTree.updateSelectedItem(node.toXML());
+					}else{
+						CCSSAlert.showMessageDialog(this,"您只能更改二级功能菜单的名字！");
+						return;
+					}
+				}
+			}
+			
+			private function submitAll():void{
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1025;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				var role:T_ROLE_INFO = new T_ROLE_INFO();
+				role.ROLE_ID = this.role_id;
+				request.form.role = role;
+				request.form.xml = this.RoleTree.toXML();
+				this.dialog_confirm = new CCSSConfirm();
+				this.dialog_confirm.showDialog(this,"本操作无法恢复，确认要提交全部更改吗？",request);
+				this.dialog_confirm.addEventListener(Event.REMOVED,doSubmitAllHandler);
+			}
+			
+			private function doSubmitAllHandler(event:Event):void{
+				if(this.dialog_confirm.YES){
+					var request:FlexRequest = dialog_confirm.object as FlexRequest;
+					this.role_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function init(role_id:String):void{
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1024;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				var role:T_ROLE_INFO = new T_ROLE_INFO();
+				role.ROLE_ID = role_id;
+				request.form.role = role;
+				this.role_service.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			private function doRoleResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1024:
+						if(reponse.sign == 0){
+							var xml_str:String = reponse.result.xml;
+							var xml:XML = new XML(xml_str);
+							this.RoleTree.dataProvider = xml;
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1025:
+						if(reponse.sign == 0){
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+</mx:TitleWindow>

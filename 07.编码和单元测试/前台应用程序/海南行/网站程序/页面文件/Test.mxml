@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" xmlns:ns1="*">
+<mx:DateFormatter id="df" formatString="YYYY-MM-DD"/> 
+<mx:Script>
+	<![CDATA[
+		public var LoginUser_ID:String = "admin";
+		public var LoginORG_ID:String = "HAPPY";
+		public var LoginSEQ:String = "";
+		public var strPubURL:String = "";
+		public var LoginRole_ID:String = "00A";
+		public var LoginMenu_ID:String = "409";
+		
+		private function doChange():void{
+			var array:Array = this.t1.text.split("-");
+			var date:Date = new Date(Number(array[0]),Number(array[1]),Number(array[2]));
+			var mounth:Number = date.getMonth();
+			var day:Number = date.getDay();
+			date.setMonth(mounth,null);
+			date.setDate(day);
+			//CCSSAlert.showMessageDialog(this,date.toLocaleDateString());
+			this.t2.text = this.df.format(date.toLocaleDateString());
+			
+		}
+	]]>
+</mx:Script>
+<mx:Style>
+		ToolTip{
+		     font-size: 12;
+		     font-style: normal;
+		     font-weight: normal;
+		}
+		Alert {
+            titleStyleName: "alertTitle";
+            messageStyleName: "alertMessage";
+            buttonStyleName: "alertButton";
+        }
+        .alertMessage {
+            letterSpacing: 0;
+            fontSize: 12;
+            fontWeight: normal;
+            color: black;
+        }
+
+        .alertButton {
+            letterSpacing: 0;
+            fontSize: 12;
+        }
+	</mx:Style>
+	<mx:DateField x="115" y="99" id="t1" change="doChange()" width="260" monthNames="['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']"
+								  dayNames="['日', '一', '二', '三', '四', '五', '六']" formatString="YYYY-MM-DD" />
+	<mx:DateField x="115" y="129" id="t2" width="260" monthNames="['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']"
+								  dayNames="['日', '一', '二', '三', '四', '五', '六']" formatString="YYYY-MM-DD" />
+	<ns1:SelectOrgTreeField x="99" y="224">
+	</ns1:SelectOrgTreeField>
+	<ns1:Terminal_Settlement_Hotel_Panel x="0" y="0">
+	</ns1:Terminal_Settlement_Hotel_Panel>
+</mx:Application>

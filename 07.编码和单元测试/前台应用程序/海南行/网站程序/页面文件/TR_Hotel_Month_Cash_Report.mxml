@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="790" height="550" fontSize="15"   creationComplete="init()" backgroundColor="#FFFFFF" borderColor="#00656E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="酒店月报表" xmlns:ns1="*">
+	
+	<mx:RemoteObject id="getDataService" destination="oCashReportManagerFlexService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Panel x="0" y="0" width="425" height="82" layout="absolute" headerHeight="15" title="                                                     查询向导" color="#F21313" fontSize="13">
+		<mx:Canvas x="0" y="0" width="405" height="55" fontSize="12" color="#050505" borderStyle="solid" borderColor="#121313" backgroundColor="#DAD3F6">
+			<mx:Label x="10" y="16" text="开始时间" color="#000000" fontSize="12"/>
+			<mx:Label x="211" y="16" text="结束时间" color="#000000" fontSize="12"/>
+			<mx:DateField x="71" y="14" width="116" id="start_time" monthNames="['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']"
+											  dayNames="['日', '一', '二', '三', '四', '五', '六']"  formatString="YYYY-MM-DD" color="#0D0C0C" fontSize="12" fontWeight="normal" change="onChange()"/>
+			<mx:DateField x="272" y="14" width="116" id="end_time" monthNames="['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']"
+											  dayNames="['日', '一', '二', '三', '四', '五', '六']"  formatString="YYYY-MM-DD" color="#0D0C0C" fontSize="12" fontWeight="normal" enabled="false"/>
+		</mx:Canvas>
+	</mx:Panel>
+	<mx:DataGrid id="dg" x="0" y="90" width="770" height="399" borderColor="#050505" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center" fontSize="12" color="#030303" alternatingItemColors="[#FFFFFF, #FFFFFF]">
+		<mx:columns>
+			<mx:DataGridColumn headerText="操作员" dataField="OPER_USER" width="240" labelFunction="doArrUserCon"/>
+			<mx:DataGridColumn headerText="减免金额（元）" dataField="FREE_CASH" width="240"/>
+			<mx:DataGridColumn headerText="实际金额（元）" dataField="REAL_PAY_CASH" width="240"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Panel x="433" y="0" width="337" height="82" layout="absolute" headerHeight="15" title="                功能列表" fontSize="13" color="#F30A2B">
+		<mx:Canvas x="0" y="0" width="317" height="55" fontSize="12" color="#030303" borderColor="#272D26" backgroundColor="#C8F4C7" borderStyle="solid">
+			<mx:Button x="21" y="10" label="查询" fontFamily="Arial" fontSize="12" color="#040404" click="QueryUserInfo()" width="80"/>
+			<mx:Button x="215" y="10" label="导出" fontFamily="Arial" fontSize="12" color="#040404" click="doExcpot()" width="80"/>
+			<mx:Button x="117.5" y="10" label="打印" fontFamily="Arial" fontSize="12" color="#040404" click="fun_Print()" width="80"/>
+			
+		</mx:Canvas>
+	</mx:Panel>
+	<mx:DateFormatter id="df1" formatString="YYYY-MM-DD JJ:NN:SS"/>
+	<mx:DateFormatter id="df" formatString="YYYY-MM-DD"/>
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+    </mx:Sequence>
+	
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.bean.T_SERVICE_CASH;
+			import cn.ucans.flex.FlexReponse;
+    		import mx.collections.ArrayCollection;
+    		import cn.ucans.common.RegularExpression;
+    		import cn.ucans.bean.T_BLACK_WHITE;
+    		import cn.ucans.flex.FlexRequest;
+    		import cn.ucans.common.ArrayFactory;
+    		import mx.events.CloseEvent;
+    		import mx.controls.Alert;
+    		
+    		
+    		private var orgName:String = "";
+    		private var strFileName:String = "";
+    		private var file: FileReference;
+    		private var reg:RegularExpression = new RegularExpression();
+    		private var arrCon:ArrayCollection = new ArrayCollection();
+    		private var arrCon1:ArrayCollection = new ArrayCollection();
+    		private var arrUserCon:ArrayCollection = new ArrayCollection();
+    		private var arrOrgNameCon:ArrayCollection = new ArrayCollection();
+    		private var UserName:String = "";
+    		
+    		private function doResult(data:Object):void{
+    			this.enabled = true;
+    			var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 2051:
+						if(reponse.sign == 0){
+							arrCon = reponse.result.list as ArrayCollection;
+							dg.dataProvider = arrCon;
+							dg.selectedIndex = arrCon.length;
+							if(arrCon.length <1){
+								CCSSAlert.showMessageDialog(this,"没有查询到数据，请更换查询条件！");
+								return;
+							}
+							return;
+						}else{
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}	
+						break;
+					case 2050:
+						if(reponse.sign == 0){
+							arrUserCon = reponse.result.list as ArrayCollection;
+							arrOrgNameCon = reponse.result.list1 as ArrayCollection;
+							orgName = arrOrgNameCon.getItemAt(0).label;
+							UserName = reponse.result.name as String;
+							return;
+						}
+						break;
+					case 2005:
+						if(reponse.sign == 0)
+						{
+							var downloadURL:URLRequest;
+							strFileName = (reponse.org_id as String);	
+							Alert.show("请问您真的想导出这些数据吗？","确认信息",3,this,fun_DeleteExcel);
+							file.download(downloadURL);
+							return;
+						}
+						else
+						{
+							CCSSAlert.showErrorDialog(this,"生成Execl文件时出错，错误代码是：" + reponse.message);
+							return;
+						}
+						break;
+					case 2006:
+						if(reponse.sign == 0)
+						{
+							return;
+						}
+						else
+						{
+							CCSSAlert.showErrorDialog(this,"删除Execl文件时出错，错误代码是：" + reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;
+				}
+    		}
+    		private function QueryUserInfo():void{
+	    			
+		    			var request:FlexRequest = new FlexRequest();
+		    			var cashReport:T_SERVICE_CASH = new T_SERVICE_CASH();
+		    			request.ope_id = 2051;
+		    			request.menu_id = this.parentApplication.LoginMenu_ID;
+		    			request.user_id = this.parentApplication.LoginUser_ID;
+		    			request.org_id = this.parentApplication.LoginORG_ID;
+		    			cashReport.START_TIME = df.format(start_time.text);
+		    			cashReport.END_TIME = df.format(end_time.text);
+		    			cashReport.HOTEL_ID = this.parentApplication.LoginORG_ID;
+//						cashReport.HOTEL_ID = "NNNNN";
+		    			request.form.cashReport = cashReport;
+		    			this.getDataService.doTransaction(request);
+		    			this.enabled = false;
+    		}
+    		private function fun_Print():void
+			{
+				if(arrCon.length < 1){
+    				CCSSAlert.showMessageDialog(this,"请在列表中选择一条记录，再进行打印！");
+    				FlashContrl.target = dg;
+					FlashContrl.play();
+					dg.setFocus();	
+    				return;
+    			}
+				PrintDataGridView.doPrint(UserName,arrCon,""+start_time.text+"至"+end_time.text+" "+orgName+" 收入月报表",
+						dg.columns);
+			}
+//			private function changeDate(item:Object,column:DataGridColumn):String{
+//    			var dateFormat:String = item.STATIS_DATE;
+//    			return dateFormat.substr(0,7);
+//    		}
+    		private function doArrUserCon(item:Object,column:DataGridColumn):String{
+    			return ArrayFactory.getValueFroamArrayCollection(this.arrUserCon,item.OPER_USER);
+			}
+    		private function init():void{
+    			var request:FlexRequest = new FlexRequest();
+    			request.user_id = this.parentApplication.LoginUser_ID;
+    			request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 2050;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			this.getDataService.doTransaction(request);
+    			this.enabled = false;
+    			var date:Date = new Date();
+    			start_time.text = df.format(new Date(date.getFullYear(),date.getMonth(),1));
+    			end_time.text = df.format(new Date(date.getFullYear(),date.getMonth()+1,0));
+    		}
+    		private function onChange():void{
+    			var year:String = start_time.text.substr(0,4);
+    			var month:String = start_time.text.substr(5,2);
+    			var date:String = start_time.text.substr(8,2);
+//    			Alert.show(date);
+    			end_time.text = df.format(new Date(Number(year),Number(month),(Number(date)-1)));
+    		}
+    		private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			//    		////////////////////////////////////////////////////////////////////////////////////////////////
+    			private function fun_DeleteExcel(event:CloseEvent):void
+			{	
+				switch(event.detail)
+				{
+					case Alert.YES:
+						var downloadURL:URLRequest;
+							downloadURL = new URLRequest(parentApplication.strPubURL + "/TempFile/" + 
+								strFileName);
+							file = new FileReference();
+							file.addEventListener(ProgressEvent.PROGRESS,onProgress);
+							file.addEventListener(Event.COMPLETE, downComplete);
+							file.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+							file.addEventListener(Event.CANCEL,doCancel);
+							file.download(downloadURL);
+						break;
+					case Alert.NO:
+							var request:FlexRequest = new FlexRequest();
+							request.menu_id = this.parentApplication.LoginMenu_ID;
+			    			request.ope_id = 2006;
+			    			request.org_id = this.parentApplication.LoginORG_ID;
+			    			request.user_id = this.parentApplication.LoginUser_ID;
+							getDataService.DeleteExcelFile(strFileName,request);
+							this.enabled = false;
+						break;
+				}
+			}
+//			<mx:DataGridColumn headerText="结账时间" dataField="CREATE_TIME" width="180"/>
+//			<mx:DataGridColumn headerText="操作员" dataField="OPER_USER" width="180"/>
+//			<mx:DataGridColumn headerText="实际金额" dataField="REAL_PAY_CASH" width="200"/>
+//			<mx:DataGridColumn headerText="减免金额" dataField="FREE_CASH" width="180"/>
+//			<mx:DataGridColumn headerText="总金额" dataField="CASH" width="180"/>
+    		private function doExcpot():void{
+    			if(arrCon.length < 1){
+    				CCSSAlert.showMessageDialog(this,"请在列表中选择一条记录，再进行导出！");
+    				FlashContrl.target = dg;
+					FlashContrl.play();
+					dg.setFocus();	
+    				return;
+    			}
+    			var strFileData:String = "操作员||减免金额（元）||实际金额（元）";				
+				for(var n:int = 0;n < this.arrCon.length;n ++){
+					var item:Object = this.arrCon.getItemAt(n);
+					strFileData = strFileData + "&&" + 
+					NVL(ArrayFactory.getValueFroamArrayCollection(this.arrUserCon,item.OPER_USER),"") + "||" + 
+					NVL(item.FREE_CASH,"") + "||" +  
+					NVL(item.REAL_PAY_CASH,"");
+				}
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 2005;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				this.getDataService.CreateExcelFile(strFileData,"",request);
+				this.enabled = false;
+    		}
+    		 private function NVL(strSour:String,strTag:String):String{
+				if(strSour == null){
+					return strTag;
+				}else{
+					return strSour;
+				}
+			}
+    	    private function onProgress(e: ProgressEvent): void
+			{
+				var oProcessBar:ProcessBarCanvas = this.getChildByName("ProcessBarCanvas") as ProcessBarCanvas;
+				
+				if(oProcessBar == null)
+				{
+					oProcessBar = new ProcessBarCanvas();
+					oProcessBar.x = 300;
+					oProcessBar.y = 200;
+					oProcessBar.name = "ProcessBarCanvas";
+					this.addChild(oProcessBar);
+					oProcessBar.onProgress(e);
+				}
+				else
+				{
+					oProcessBar.onProgress(e);
+				}
+				
+			}
+
+			private function downComplete(e:Event): void{
+				var oProcessBar:ProcessBarCanvas = this.getChildByName("ProcessBarCanvas") as ProcessBarCanvas;
+				if(oProcessBar != null)
+				{
+					this.removeChild(oProcessBar);
+				}
+				CCSSAlert.showMessageDialog(this,"生成Excel文件成功");
+				file.removeEventListener(ProgressEvent.PROGRESS, onProgress);
+				file.removeEventListener(Event.COMPLETE, downComplete);
+				file.removeEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				file.removeEventListener(Event.CANCEL,doCancel);
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 2006;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				this.getDataService.DeleteExcelFile(strFileName,request);
+				this.enabled = false;
+			}
+			
+			private function doCancel(event:Event):void
+			{
+				file.removeEventListener(ProgressEvent.PROGRESS, onProgress);
+				file.removeEventListener(Event.COMPLETE, downComplete);
+				file.removeEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				file.removeEventListener(Event.CANCEL,doCancel);
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 2006;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				getDataService.DeleteExcelFile(strFileName,request);
+				this.enabled = false;
+			}
+			
+			private function ioErrorHandler(e:Event): void{
+				CCSSAlert.showErrorDialog(this,"ioErrorHandler: " + e);
+				var oProcessBar:ProcessBarCanvas = this.getChildByName("ProcessBarCanvas") as ProcessBarCanvas;
+				if(oProcessBar != null)
+				{
+					this.removeChild(oProcessBar);
+				}
+				
+				file.removeEventListener(ProgressEvent.PROGRESS, onProgress);
+				file.removeEventListener(Event.COMPLETE, downComplete);
+				file.removeEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				file.removeEventListener(Event.CANCEL,doCancel);
+				
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 2006;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				getDataService.DeleteExcelFile(strFileName,request);
+				CCSSAlert.showErrorDialog(this,"文件下载错误，请联系管理员！");
+				this.enabled = false;
+			}
+		]]>
+	</mx:Script>
+	
+</mx:Panel>

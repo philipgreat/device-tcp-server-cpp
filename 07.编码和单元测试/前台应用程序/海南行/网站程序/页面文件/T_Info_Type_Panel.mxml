@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" initialize="init()" width="790" height="550" fontSize="15"  backgroundColor="#FFFFFF" borderColor="#00656E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="信息类型配置" xmlns:ns1="*">
+	
+	<mx:RemoteObject id="infoType_service" destination="InfoTypeService"  
+		result="doInfoTypeResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import cn.ucans.flex.FlexRequest;
+ 			import cn.ucans.flex.FlexReponse;
+ 			import cn.ucans.bean.T_INFO_TYPE;
+ 			import mx.collections.ArrayCollection;
+ 			
+ 			private var dialog_add:AddInfoTypeDialog = null;
+ 			private var dialog_update:UpdateInfoTypeDialog=null;
+ 			private var dialog_confirm:CCSSConfirm = null;
+ 			
+ 			private var Info_Type_util:T_INFO_TYPE=null;//提供给修改操作时传递数据
+ 			
+			
+			
+			[Bindable]
+			public var tableGridList:ArrayCollection=new ArrayCollection();
+			
+			private function init():void{
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 9070;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id=this.parentApplication.LoginORG_ID;
+				request.user_id=this.parentApplication.LoginUser_ID;
+				
+				this.Info_Type_util=new T_INFO_TYPE();
+				
+				this.infoType_service.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			private function doAddInfoType():void{
+				this.dialog_add = new AddInfoTypeDialog();
+				this.dialog_add.showDialog(this);
+				this.dialog_add.addEventListener(Event.REMOVED,doAddInfoTypeHandler);
+				
+			}
+			
+			
+			private function doAddInfoTypeHandler(event:Event):void{
+				if(this.dialog_add.DOOK){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 9071;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id=this.parentApplication.LoginORG_ID;
+					request.user_id=this.parentApplication.LoginUser_ID;
+					
+					this.dialog_add.infoTypeForAdd.USER_ID=this.parentApplication.LoginUser_ID;
+					request.form.infoTypeForAdd=this.dialog_add.infoTypeForAdd;
+					this.infoType_service.doTransaction(request);
+					this.enabled = false;
+				}
+				
+			}
+			
+			private function doSelectItem():void{
+				if(TableGrid.selectedIndex>-1){
+					var item:Object = this.TableGrid.selectedItem;
+					this.Info_Type_util.INFO_TYPE=item.INFO_TYPE;
+					this.Info_Type_util.INFO_NAME=item.INFO_NAME;
+					this.Info_Type_util.USER_ID=item.USER_ID;
+					this.Info_Type_util.CREATE_TIME=item.CREATE_TIME;
+				}else{
+					this.clear();
+				
+				}
+			}
+			
+			
+			private function doUpdateInfoType():void{
+				if(this.TableGrid.selectedIndex <= -1){
+					CCSSAlert.showMessageDialog(this,"请在数据表中选择要修改的信息类型配置信息，再进行此操作！");
+				}else{
+					this.dialog_update = new UpdateInfoTypeDialog();
+					this.dialog_update.showDialog(this,Info_Type_util);
+					this.dialog_update.addEventListener(Event.REMOVED,doUpdateInfoTypeHandler);
+				}
+				
+			}
+			
+			
+			private function doUpdateInfoTypeHandler(event:Event):void{
+				
+					if(this.dialog_update.DOOK){
+						var request:FlexRequest = new FlexRequest();
+						request.ope_id = 9073;
+						request.menu_id = this.parentApplication.LoginMenu_ID;
+						request.org_id=this.parentApplication.LoginORG_ID;
+						request.user_id=this.parentApplication.LoginUser_ID;
+						
+						request.form.infoTypeForUpdate=this.dialog_update.infoTypeForUpdate;
+						request.form.oldInfoTypeForUpdate=this.Info_Type_util;
+						
+						this.infoType_service.doTransaction(request);
+						this.enabled = false;
+					}
+				
+			}
+			
+			private function doDeleteInfoType():void{
+				if(this.TableGrid.selectedIndex<=-1){
+					CCSSAlert.showMessageDialog(this,"请选择要删除的信息类型配置信息！");
+				}else{
+					
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 9074;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id=this.parentApplication.LoginORG_ID;
+					request.user_id=this.parentApplication.LoginUser_ID;
+					
+					request.form.Info_Type_util = Info_Type_util;
+					
+					this.dialog_confirm = new CCSSConfirm();
+					this.dialog_confirm.showDialog(this,"您确认要删除此信息类型配置吗？",request);
+					this.dialog_confirm.addEventListener(Event.REMOVED,doDeleteInfoTypeHandler);
+				}
+			}
+			
+			private function doDeleteInfoTypeHandler(event:Event):void{
+				if(this.dialog_confirm.YES){
+					var request:FlexRequest = this.dialog_confirm.object as FlexRequest;
+					this.infoType_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			
+			private function clear():void{
+					this.TableGrid.selectedIndex=-1;
+			}
+			
+			private function doInfoTypeResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 9070:
+						if(reponse.sign == 0){
+							tableGridList = reponse.result.list as ArrayCollection;
+							return;
+						}
+						break;
+					case 9071:
+						if(reponse.sign == 0){
+							this.clear();
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 9072:
+						break;
+					case 9073:
+						if(reponse.sign == 0){
+							this.clear();
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 9074:
+						if(reponse.sign == 0){
+							this.clear();
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Panel x="0" y="0" width="770" height="100" layout="absolute" borderColor="#2B21F5" title="控制区域" fontSize="13">
+		<mx:Button x="320" y="17" label="修改" fontFamily="Arial" fontSize="12" color="#040404" click="doUpdateInfoType()"/>
+		<mx:Button x="170" y="17" label="添加" fontFamily="Arial" fontSize="12" color="#040404" click="doAddInfoType()"/>
+		<mx:Button x="470" y="17" label="删除" fontFamily="Arial" fontSize="12" color="#040404" click="doDeleteInfoType()"/>
+	</mx:Panel>
+	
+	
+	<mx:Panel x="0" y="108" width="770" height="381" layout="absolute" borderColor="#3D50C2" fontSize="13" title="数据">
+		<mx:DataGrid x="0" y="0" width="750" height="337" id="TableGrid" borderColor="#050505"  dataProvider="{tableGridList}" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center" click="doSelectItem()" fontSize="12" color="#030303">
+			<mx:columns>
+				<mx:DataGridColumn headerText="信息类型" dataField="INFO_TYPE" width="150"/>
+				<mx:DataGridColumn headerText="信息类型名称" dataField="INFO_NAME" width="180"/>
+				<mx:DataGridColumn headerText="创建用户" dataField="USER_ID" width="180"/>
+				<mx:DataGridColumn headerText="创建/修改日期" dataField="CREATE_TIME" width="180"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Panel>
+	
+	
+</mx:Panel>

@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute"  initialize="init()" width="790" height="550" fontSize="15"  backgroundColor="#FFFFFF" borderColor="#00656E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="终端生产厂商" xmlns:ns1="*">
+	<mx:Panel x="0" y="0" width="496" height="93" layout="absolute" borderColor="#535AF0" title="查询向导" fontSize="13" color="#F9F8F8">
+		<mx:Label x="10" y="14" text="名称" color="#020202" fontSize="12"/>
+		<mx:TextInput x="49" y="12" fontSize="12" color="#070707" width="154" maxChars="30" id="Org_Name_Query"/>
+		<mx:Button x="415" y="11" label="查询" fontFamily="Arial" fontSize="12" color="#000000" click="doQueryTerminalFactory()"/>
+		<mx:Label x="218" y="14" text="状态" fontSize="12" color="#000000"/>
+		<mx:ComboBox x="262" y="11" width="131" color="#040404" fontSize="12" id="Status_Query"></mx:ComboBox>
+	</mx:Panel>
+	<mx:Panel x="0" y="101" width="770" height="388" layout="absolute" fontSize="13" color="#F9F8F8" title="数据" borderColor="#282BAF" backgroundColor="#2F2BB5">
+		<mx:DataGrid x="0" y="0" width="750" height="344" id="TableGrid" textAlign="center" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" fontSize="12" color="#010101" borderColor="#030303">
+			<mx:columns>
+				<mx:DataGridColumn headerText="厂商编号" dataField="ORG_ID" width="120" visible="false"/>
+				<mx:DataGridColumn headerText="厂商名称" dataField="ORG_NAME" width="200"/>
+				<mx:DataGridColumn headerText="状态" dataField="STATUS" width="80" labelFunction="doSTATUS"/>
+				<mx:DataGridColumn headerText="操作员" dataField="CREATE_USER_ID" width="130" />
+				<mx:DataGridColumn headerText="注册时间" dataField="CREATE_TIME" width="130" />
+				<mx:DataGridColumn headerText="最新更新" dataField="LAST_UPDATE_TIME" width="130" />
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Panel>
+	<mx:RemoteObject id="customer_service" destination="CustomerServiceFlexService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.collections.ArrayCollection;
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import cn.ucans.common.ArrayFactory;
+			import cn.ucans.bean.T_ORG_INFO;
+			
+	 		import cn.ucans.flex.FlexRequest;
+ 			import cn.ucans.flex.FlexReponse;
+	 		
+	 		private var point:T_ORG_INFO = null;
+	 		private var dialog_add:AddTerminalFactoryDialog = null;
+	 		private var dialog_update:UpdateTerminalFactoryDialog = null;
+	 		private var dialog_confirm:CCSSConfirm = null;
+	 		private var regular:RegularExpression = new RegularExpression();
+	 		
+	 		private function init():void{
+	 			this.Status_Query.dataProvider = DataProvider.combobox_array_TerminalFactory_Status_Query;
+	 		}
+	 		
+	 		private function doAddTerminalFactory():void{
+	 			this.dialog_add = new AddTerminalFactoryDialog();
+	 			this.dialog_add.showDialog(this);
+	 			this.dialog_add.addEventListener(Event.REMOVED,doAddTerminalFactoryHandler);
+	 		}
+	 		
+	 		private function doAddTerminalFactoryHandler(event:Event):void{
+	 			if(this.dialog_add.DOOK){
+	 				var request:FlexRequest = new FlexRequest();
+					request.ope_id = 8001;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.org = this.dialog_add.org;
+					this.customer_service.doTransaction(request);
+					this.enabled = false;
+	 			}
+	 		}
+	 		
+	 		private function doUpdateTerminalFactory():void{
+	 			if(this.TableGrid.selectedIndex>-1){
+	 				var item:Object = this.TableGrid.selectedItem;
+	 				this.dialog_update = new UpdateTerminalFactoryDialog();
+		 			this.dialog_update.showDialog(this,item);
+		 			this.dialog_update.addEventListener(Event.REMOVED,doUpdateTerminalFactoryHandler);
+	 			}else{
+	 				CCSSAlert.showMessageDialog(this,"请在厂商列表中选中一条记录，再进行此操作！");
+					return;
+	 			}	 			
+	 		}
+	 		
+	 		private function doSTATUS(item:Object,column:DataGridColumn):String{
+	 			return ArrayFactory.getValueFromArray(DataProvider.combobox_array_TerminalFactory_Status_Edit,item.STATUS);
+	 		}
+	 		
+	 		private function doUpdateTerminalFactoryHandler(event:Event):void{
+	 			if(this.dialog_update.DOOK){
+	 				var request:FlexRequest = new FlexRequest();
+					request.ope_id = 8002;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.org = this.dialog_update.org;
+					this.customer_service.doTransaction(request);
+					this.enabled = false;
+	 			}
+	 		}
+	 		
+	 		private function doDeleteTerminalFactory():void{
+	 			if(this.TableGrid.selectedIndex>-1){
+	 				var item:Object = this.TableGrid.selectedItem;
+	 				var org:T_ORG_INFO = new T_ORG_INFO();
+	 				org.ORG_ID = item.ORG_ID;
+	 				org.ORG_NAME = item.ORG_NAME;
+	 				var request:FlexRequest = new FlexRequest();
+					request.ope_id = 8003;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.org = org;
+	 				this.dialog_confirm = new CCSSConfirm();
+		 			this.dialog_confirm.showDialog(this,"您确认要删除该终端厂商（"+item.ORG_NAME+"）吗？",request);
+		 			this.dialog_confirm.addEventListener(Event.REMOVED,doDeleteTerminalFactoryHandler);
+	 			}else{
+	 				CCSSAlert.showMessageDialog(this,"请在厂商列表中选中一条记录，再进行此操作！");
+					return;
+	 			}	 
+	 		}
+	 		
+	 		private function doDeleteTerminalFactoryHandler(event:Event):void{
+	 			if(this.dialog_confirm.YES){
+	 				var request:FlexRequest = this.dialog_confirm.object as FlexRequest;
+	 				this.customer_service.doTransaction(request);
+	 				this.enabled = false;
+	 			}
+	 		}
+	 		
+	 		private function doQueryTerminalFactory():void{
+	 			var org:T_ORG_INFO = new T_ORG_INFO();
+ 				org.ORG_NAME = regular.trim(this.Org_Name_Query.text);
+ 				org.STATUS = this.Status_Query.selectedItem.data;
+ 				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 8004;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				request.form.org = org;
+				this.customer_service.doTransaction(request);
+	 			this.enabled = false;
+	 		}
+	 		
+	 		private function doResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 8001:
+						if(reponse.sign == 0){
+							this.doQueryTerminalFactory();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 8002:
+						if(reponse.sign == 0){
+							this.doQueryTerminalFactory();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 8003:
+						if(reponse.sign == 0){
+							this.doQueryTerminalFactory();			
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 8004:
+						if(reponse.sign == 0){
+							var list:ArrayCollection = reponse.result.list as ArrayCollection;
+							this.TableGrid.dataProvider = list;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			
+			private function showView(object:Object):void{
+				FlashContrl.target = object;
+				FlashContrl.play();
+				object.setFocus();
+			}
+	 		
+		]]>
+	</mx:Script>
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+ 	</mx:Sequence>
+	<mx:Panel x="504" y="0" width="266" height="93" layout="absolute" fontSize="12" color="#F9F8F8" borderColor="#1A1289" title="控制区域">
+		<mx:Button x="97" y="14" label="更新" fontFamily="Arial" fontSize="12" color="#000000" click="doUpdateTerminalFactory()"/>
+		<mx:Button x="157" y="14" label="删除" fontFamily="Arial" fontSize="12" color="#000000" click="doDeleteTerminalFactory()"/>
+		<mx:Button x="37" y="14" label="添加" fontFamily="Arial" fontSize="12" color="#000000" click="doAddTerminalFactory()"/>
+	</mx:Panel>
+</mx:Panel>

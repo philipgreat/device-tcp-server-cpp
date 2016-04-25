@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="626" height="430" fontFamily="Arial" fontSize="12" title="更新角色" borderColor="#8A7AED" xmlns:ns1="*">
+	<mx:Label x="36" y="23" text="角色编号" fontWeight="normal"/>
+	<mx:Label x="36" y="59" text="角色名称" fontWeight="normal"/>
+	<mx:Canvas x="36" y="320" width="530" height="41" backgroundColor="#8E8B8B">
+		<mx:Button x="176" y="9" label="确定" click="doClick()"/>
+		<mx:Button x="302" y="9" label="取消" click="doCancle()"/>
+	</mx:Canvas>
+	<mx:TextInput x="91" y="21" width="156" id="Role_ID" maxChars="16" editable="false"/>
+	<mx:TextInput x="91" y="57" id="Role_Name" maxChars="14" width="156"/>
+	<mx:Label x="36" y="94" text="角色说明"/>
+	<mx:TextArea x="36" y="113" width="211" borderColor="#040404" maxChars="64" id="Role_Notes" height="172"/>
+	<mx:RemoteObject id="role_service" destination="UserInfoRoleFlexService"  
+		result="doRoleResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.bean.T_ROLE_INFO;
+			import cn.ucans.flex.FlexRequest;
+ 			import cn.ucans.flex.FlexReponse;
+			
+			public var DOOK:Boolean = false;
+			private var regular:RegularExpression = new RegularExpression();
+			public var role:T_ROLE_INFO = null;
+			public var XMLRole:String = "";
+			
+			public function showDialog(parent:DisplayObject,item:Object):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				this.role = new T_ROLE_INFO();
+				this.role.ROLE_ID = item.ROLE_ID;
+				this.Role_ID.text = item.ROLE_ID;
+				this.Role_Name.text = item.ROLE_NAME;
+				this.Role_Notes.text = item.ROLE_NOTES;
+				if(item.ROLE_ID == "00A"){
+					this.TreeCavans.enabled = false;
+					this.TreeCavans.toolTip = "不允许修改编号为 00A 的功能菜单！";
+				}
+				this.init();
+			}
+			
+			private function init():void{
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1019;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				request.form.role = this.role;
+				this.role_service.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			private function doClick():void{
+				var ok:Boolean = true;
+				if(this.regular.trim(this.Role_ID.text) == ""){
+					CCSSAlert.showMessageDialog(this,"角色编号不能为空！");
+					ok = false;
+					return;
+				}
+				
+				if(this.regular.trim(this.Role_Name.text) == ""){
+					CCSSAlert.showMessageDialog(this,"角色名称不能为空！");
+					ok = false;
+					return;
+				}
+				
+				if(ok){
+					this.role.ROLE_ID = this.regular.trim(this.Role_ID.text);
+					this.role.ROLE_NAME = this.regular.trim(this.Role_Name.text);
+					this.role.ROLE_NOTES = this.regular.trim(this.Role_Notes.text);
+					this.XMLRole = this.RoleTree.toXML();
+					this.DOOK = true;
+					PopUpManager.removePopUp(this);
+				}
+			}
+			
+			private function doRoleResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1019:
+						if(reponse.sign == 0){
+							var xml_init_role_str:String = reponse.result.xml as String;
+							var xml_init_role_tree:XML = new XML(xml_init_role_str);
+							this.RoleTree.dataProvider = xml_init_role_tree;
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas x="289" y="42" width="266" height="243" borderStyle="solid" borderColor="#010101" backgroundColor="#CEE8F5" id="TreeCavans">
+		<ns1:CheckBoxTree id="RoleTree" x="3" y="3" width="258" height="233">
+		</ns1:CheckBoxTree>
+	</mx:Canvas>
+	<mx:Label x="289" y="16" text="分配功能菜单" fontWeight="bold" color="#FB1403"/>
+</mx:TitleWindow>

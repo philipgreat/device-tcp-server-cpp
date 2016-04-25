@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" initialize="init()" layout="absolute" width="790" height="550" borderColor="#00656E" title="终端管理" color="#F3F5F6" fontSize="15" fontFamily="Arial" xmlns:ns1="*">
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+ 	</mx:Sequence>
+	<mx:Panel x="0" y="0" width="583" height="127" layout="absolute" title="查询向导" borderColor="#251680">
+		<mx:Button x="501" y="46" label="查询" fontFamily="Arial" fontSize="12" color="#070707" click="doQueryTerminal()"/>
+		<mx:Label x="10" y="13" text="终端IMEI号" fontSize="12" color="#080808"/>
+		<mx:TextInput x="75" y="10" width="92" id="Imei_Number" fontFamily="Arial" fontSize="12" color="#040404" maxChars="15"/>
+		<mx:Label x="180" y="15" text="UIM卡号" fontSize="12" color="#050505"/>
+		<mx:TextInput x="230" y="10" width="89" fontFamily="Arial" fontSize="12" color="#040404" id="Uim_Number" maxChars="15"/>
+		<mx:Label x="327" y="13" text="终端型号" fontSize="12" color="#040404"/>
+		<mx:ComboBox x="388" y="10" width="165" maxWidth="350" fontFamily="Arial" fontSize="12" color="#040404" id="Terminal_Type"></mx:ComboBox>
+		<mx:Label x="177" y="50" text="开始时间" fontSize="12" color="#080808"/>
+		<mx:Label x="327" y="50" text="结束时间" fontSize="12" color="#080808"/>
+		<mx:DateField x="388" y="46" fontFamily="Arial" fontSize="12" color="#020202" id="notafter" monthNames="['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']"
+								  dayNames="['日', '一', '二', '三', '四', '五', '六']" formatString="YYYY-MM-DD" />
+		<mx:DateField x="230" y="46" fontFamily="Arial" fontSize="12" color="#020202" id="notbefore" monthNames="['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']"
+								  dayNames="['日', '一', '二', '三', '四', '五', '六']" formatString="YYYY-MM-DD" />
+		<mx:Label x="18" y="50" text="手机号码" fontSize="12" color="#080808"/>
+		<mx:TextInput x="75" y="45" width="92" id="Msisdn" maxChars="14" fontSize="12" color="#000000"/>
+	</mx:Panel>
+	<mx:Panel x="591" y="0" width="179" height="127" layout="absolute" borderColor="#258C2D" title="控制区域">
+		<mx:Button x="11" y="46" label="添加" fontFamily="Arial" fontSize="12" color="#060606" click="doAddTerminal()"/>
+		<mx:Button x="71" y="46" label="批量导入" click="doLeadTerminal()" fontSize="12" color="#070707"/>
+	</mx:Panel>
+	<mx:Panel x="0" y="135" width="770" height="369" layout="absolute" title="数据" fontSize="15" borderColor="#2323E5">
+		<mx:DataGrid x="0" y="0" textAlign="center" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" width="750" height="323" fontSize="12" color="#040404" borderColor="#010101" id="TableGrid">
+			<mx:columns>
+				<mx:DataGridColumn headerText="终端IMEI号" dataField="IMEI_NUMBER" width="100"/>
+				<mx:DataGridColumn headerText="UIM卡号" dataField="UIM_NUMBER" width="130"/>
+				<mx:DataGridColumn headerText="手机号码" dataField="MSISDN" width="100"/>
+				<mx:DataGridColumn headerText="终端型号" dataField="TERMINAL_TYPE" width="130"/>
+				<mx:DataGridColumn headerText="状态" dataField="STATUS" width="100" labelFunction="doSTATUS"/>
+				<mx:DataGridColumn headerText="入库时间" dataField="JOIN_TIME" width="140"/>
+				<mx:DataGridColumn headerText="录入操作员" dataField="JOIN_USER_ID" width="100"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Panel>
+	<mx:RemoteObject id="terminal_service" destination="TerminalServiceFlexService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import cn.ucans.bean.T_TERMINAL_INFO;
+			import cn.ucans.bean.T_ORG_INFO;
+	 		import cn.ucans.tree.TreeNode;
+	 		import mx.collections.ArrayCollection;
+	 		import cn.ucans.flex.FlexRequest;
+	 		import cn.ucans.flex.FlexReponse;
+	 		import cn.ucans.common.RegularExpression;
+	 		import cn.ucans.common.DataProvider;
+	 		import cn.ucans.common.ArrayFactory;
+	 		
+	 		private var regular:RegularExpression = new RegularExpression();
+			private var list_terminal_status:ArrayCollection = null;
+			private var list_terminal_type_edit:ArrayCollection = null;
+			private var list_terminal_type_query:ArrayCollection = null;
+			private var list_org_id:ArrayCollection = null;
+			private var dialog_add:AddTerminalDialog = null;
+			private var dialog_lead:LeadTerminalDialog = null;
+			
+			private var doquery_sign:Boolean = false;
+			
+			private function init():void{	
+				var date:Date = new Date();
+				this.notbefore.data = date;	
+				this.notafter.data = date;	
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1200;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				this.terminal_service.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			private function doSTATUS(item:Object,column:DataGridColumn):String{
+				return ArrayFactory.getValueFroamArrayCollection(this.list_terminal_status,item.STATUS);
+			}
+			
+			private function doAddTerminal():void{
+				this.dialog_add = new AddTerminalDialog();
+				this.dialog_add.showDialog(this,this.list_org_id,this.list_terminal_type_edit);
+				this.dialog_add.addEventListener(Event.REMOVED,doAddTerminalHandler);
+			}
+			
+			private function doAddTerminalHandler(event:Event):void{
+				if(this.dialog_add.DOOK){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1201;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.terminal = this.dialog_add.terminal;
+					doquery_sign = false;
+					this.terminal_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doLeadTerminal():void{
+				this.dialog_lead = new LeadTerminalDialog();
+				this.dialog_lead.showDialog(this);
+			}
+			
+			private function doQueryTerminal():void{
+				var ok:Boolean = true;
+				if(regular.trim(this.Imei_Number.text) != ""){
+					if(!regular.isNumber(this.Imei_Number.text)){
+						CCSSAlert.showMessageDialog(this,"终端IMEI号必须为数字！");
+						ok = false;
+						this.showView(this.Imei_Number);
+						return;
+					}
+					if(!regular.isLengthSizeOK(this.Imei_Number.text,15)){
+						CCSSAlert.showMessageDialog(this,"终端IMEI号必须为15为数字！");
+						ok = false;
+						this.showView(this.Imei_Number);
+						return;
+					}
+				}
+				if(regular.trim(this.Uim_Number.text) != ""){
+					if(!regular.isNumber(this.Uim_Number.text)){
+						CCSSAlert.showMessageDialog(this,"UIM卡号必须为数字！");
+						ok = false;
+						this.showView(this.Uim_Number);
+						return;
+					}
+				}
+				if(regular.trim(this.Msisdn.text) != ""){
+					if(!regular.isChineseMobileTelephone(this.Msisdn.text)){
+						CCSSAlert.showMessageDialog(this,"手机号必须为数字！");
+						ok = false;
+						this.showView(this.Msisdn);
+						return;
+					}
+					if(!regular.isLengthSizeOK(this.Uim_Number.text,15)){
+						CCSSAlert.showMessageDialog(this,"UIM卡号必须为15为数字！");
+						ok = false;
+						this.showView(this.Uim_Number);
+						return;
+					}
+				}
+				if(ok){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1204;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					var terminal:T_TERMINAL_INFO = new T_TERMINAL_INFO();
+					terminal.IMEI_NUMBER = this.regular.trim(this.Imei_Number.text);
+					terminal.UIM_NUMBER = this.regular.trim(this.Uim_Number.text);
+					terminal.MSISDN = this.regular.trim(this.Msisdn.text);
+					terminal.PRODUCT_ORG_ID = this.Terminal_Type.selectedItem.data;
+					request.form.terminal = terminal;
+					request.form.notbefore = this.notbefore.text+" 00:00:00";
+					request.form.notafter = this.notafter.text+" 23:59:59";
+					doquery_sign = true;
+					this.terminal_service.doTransaction(request);
+					this.enabled = false;
+				}				
+			}
+			
+			private function doResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1200:
+						if(reponse.sign == 0){
+							this.list_org_id = reponse.result.list_org_id as ArrayCollection;
+							this.list_terminal_status = reponse.result.list_terminal_status as ArrayCollection;
+							this.list_terminal_type_edit = reponse.result.list_terminal_type_edit as ArrayCollection;
+							this.list_terminal_type_query = reponse.result.list_terminal_type_query as ArrayCollection;
+							this.Terminal_Type.dataProvider = list_terminal_type_query;
+							//CCSSAlert.showMessageDialog(this,this.list_terminal_type_edit.length+","+this.list_terminal_type_query.length);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1201:
+						if(reponse.sign == 0){
+							this.doQueryTerminal();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1204:
+						if(reponse.sign == 0){
+							var list:ArrayCollection = reponse.result.list as ArrayCollection;
+							this.TableGrid.dataProvider = list;
+							if(list.length==0 && this.doquery_sign){
+								CCSSAlert.showMessageDialog(this,"没有找到任何数据！");
+								return;
+							}
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			
+			private function showView(object:Object):void{
+				FlashContrl.target = object;
+				FlashContrl.play();
+				object.setFocus();
+			}
+		]]>
+	</mx:Script>
+</mx:Panel>

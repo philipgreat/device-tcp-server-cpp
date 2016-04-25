@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" backgroundColor="#FFFFFF" 
+    fontFamily="simsun" fontSize="12"
+    paddingTop="50" paddingBottom="50" paddingLeft="30" paddingRight="30" 
+    height="268" width="748">
+
+	<mx:Script>
+        <![CDATA[
+        	import cn.ucans.flex.FlexRequest;
+            import mx.controls.DateField;
+            import mx.core.*
+            import mx.collections.ArrayCollection;
+            import mx.printing.*;
+            
+            [Bindable]
+            private var pageNumber:Number = 1;
+            
+            [Bindable]
+            private var prodTotal:Number = 0;
+            
+            [Bindable]
+            private var reportTitle:String = "报表标题";
+            
+            [Bindable]
+            private var datetime:String = "";
+            [Bindable]
+            private  var orgName:String = "";
+            
+            public static var footerHeight:Number = 20;
+            public static var prodIndex:Number;
+            public static var prodTotal:Number = 0;
+
+            public static function doPrint(name:String,datap:Object,title:String,columns:Array):void {                
+                var printJob:FlexPrintJob = new FlexPrintJob();
+                if (printJob.start()) {                   
+                    var thePrintView:PrintDataGridView = new PrintDataGridView();
+                    Application.application.addChild(thePrintView);      
+                    thePrintView.reportTitle = title;
+                    thePrintView.datetime = mx.controls.DateField.dateToString(new Date(),"YYYY年MM月DD日");
+                    thePrintView.printDataGrid.columns = columns;              
+                    thePrintView.width=printJob.pageWidth;
+                    thePrintView.height=printJob.pageHeight;                    
+                    thePrintView.prodTotal = (datap as ArrayCollection).length; 
+                    thePrintView.printDataGrid.dataProvider = datap;//设置数据v          
+                    thePrintView.showPage("single");
+                    thePrintView.orgName = name;
+                    if(!thePrintView.printDataGrid.validNextPage){
+                        printJob.addObject(thePrintView);
+                    }
+                    else{
+                        thePrintView.showPage("first");
+                        printJob.addObject(thePrintView);
+                        thePrintView.pageNumber++;
+                        while(true){
+                            thePrintView.printDataGrid.nextPage();
+                            thePrintView.showPage("last");    
+                            if(!thePrintView.printDataGrid.validNextPage) {
+                                printJob.addObject(thePrintView);
+                                break;
+                            }
+                            else{
+                                thePrintView.showPage("middle");
+                                printJob.addObject(thePrintView);
+                                thePrintView.pageNumber++;
+                            }
+                        }
+                    }
+                    Application.application.removeChild(thePrintView);
+                }
+                printJob.send();
+            }
+            
+            private function showPage(pageType:String):void {
+                if(pageType == "first" || pageType == "middle") {
+                    footer.includeInLayout=false;
+                    footer.visible = false;
+                }
+                if(pageType == "middle" || pageType == "last") {
+                    header.includeInLayout=false;
+                    header.visible = false;
+                }
+                if(pageType == "last") {
+                    // Show the footer.
+                    footer.includeInLayout=true;
+                    footer.visible = true;
+                }
+                //Update the DataGrid layout to reflect the results.
+                validateNow();
+            }        
+        ]]>
+    </mx:Script>
+
+    <!-- The template for the printed page, with the contents for all pages. -->
+    <mx:VBox width="100%" horizontalAlign="left">
+        <mx:Label text="第 {pageNumber}页" color="#9e9e9e"/>
+        <mx:Label id="header" text="{reportTitle}" fontWeight="bold" fontSize="21" textAlign="center" width="100%"/>
+        <mx:HRule width="100%" height="1" strokeColor="#000000"/>
+    </mx:VBox>
+    
+    <mx:PrintDataGrid id="printDataGrid" fontFamily="微软雅黑" fontSize="8" width="100%" height="100%"/>
+    <mx:VBox width="100%" horizontalAlign="left" id="footer" >
+        <mx:Spacer height="100%"/>
+        <mx:HRule width="100%" height="1" strokeColor="#000000"/>
+        <mx:HBox width="100%">
+            <mx:Label text="打印人:{orgName}"/>
+            <mx:Spacer width="100%"/>
+            <mx:Label text="打印日期:{datetime}"/>
+        </mx:HBox>
+    </mx:VBox>
+
+
+	
+</mx:VBox>

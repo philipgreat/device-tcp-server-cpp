@@ -1,0 +1,226 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Chinese (P.R.C.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+#ifdef _WIN32
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+#pragma code_page(936)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 4, 2\r\n"
+    "#pragma code_page(936)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\MobileSimulator.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""l.chs\\afxres.rc""          // Standard components\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON    DISCARDABLE     "res\\MobileSimulator.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOG DISCARDABLE  0, 0, 306, 121
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "关于 MobileSimulator"
+FONT 9, "宋体"
+BEGIN
+    ICON            IDR_MAINFRAME,IDC_STATIC,11,17,20,20
+    LTEXT           "MobileSimulator 1.0 版",IDC_STATIC,40,10,119,8,
+                    SS_NOPREFIX
+    LTEXT           "版权所有 (C) 2009,北京乾元利恒科技有限公司\r\n\r\n该软件用于模拟商旅无忧客户端,执行和平台交互",
+                    IDC_STATIC,43,30,195,36
+    DEFPUSHBUTTON   "确定",IDOK,123,100,50,14,WS_GROUP
+END
+
+IDD_MOBILESIMULATOR_DIALOG DIALOGEX 0, 0, 408, 311
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "商旅无忧手机模拟器-MobileSimulator"
+FONT 9, "宋体"
+BEGIN
+    PUSHBUTTON      "关闭",IDCANCEL,351,1,50,14
+    LTEXT           "日志/ 当前状态 : 未开通",IDC_STATIC,7,117,93,8
+    PUSHBUTTON      "开通",IDC_BUTTON_HIRE,86,290,50,13
+    PUSHBUTTON      "退租",IDC_BUTTON_FIRE,137,290,50,13
+    PUSHBUTTON      "心跳",IDC_BUTTON_HB,189,290,50,13
+    PUSHBUTTON      "送广告统计",IDC_BUTTON_DELIVER_STATS,240,290,50,13
+    PUSHBUTTON      "时间同步",IDC_BUTTON_TIME_SYNC,291,290,50,13
+    LTEXT           "当前白名单",IDC_STATIC,7,43,44,12
+    LTEXT           "当前黑名单",IDC_STATIC,7,61,44,12
+    EDITTEXT        IDC_WHITELIST,72,41,329,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_BLACKLIST,72,61,329,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_EDIT_LOG,7,131,394,149,ES_MULTILINE | ES_AUTOHSCROLL | 
+                    WS_VSCROLL | WS_HSCROLL
+    LTEXT           "当前系统参数",IDC_STATIC,7,79,58,12
+    EDITTEXT        IDC_PARAMS,72,79,329,12,ES_AUTOHSCROLL | ES_READONLY
+    LTEXT           "终端IMEI+IMSI",IDC_STATIC,7,26,58,12
+    EDITTEXT        IDC_TERMINAL_ID,72,24,329,12,ES_AUTOHSCROLL | 
+                    ES_READONLY
+    PUSHBUTTON      "开机",IDC_BUTTON6,7,3,50,13
+    PUSHBUTTON      "清空日志",IDC_BUTTON_CLEAR_LOG,114,115,47,11
+END
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404b0"
+        BEGIN
+            VALUE "Comments", "版权隶属于北京乾元利恒科技有限公司,任何侵权行为将受到法律范围内的最大控告\0"
+            VALUE "CompanyName", "北京乾元利恒科技有限公司\0"
+            VALUE "FileDescription", "商旅无忧执行程序\0"
+            VALUE "FileVersion", "0, 0, 0, 2\0"
+            VALUE "InternalName", "MobileSimulator\0"
+            VALUE "LegalCopyright", "版权所有 (C) 2009  北京乾元利恒科技有限公司\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "MobileSimulator.EXE\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "商旅无忧终端模拟器\0"
+            VALUE "ProductVersion", "0, 1, 0, 1\0"
+            VALUE "SpecialBuild", "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x804, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 299
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 114
+    END
+
+    IDD_MOBILESIMULATOR_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 401
+        BOTTOMMARGIN, 304
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_ABOUTBOX            "关于 MobileSimulator(&A)..."
+END
+
+#endif    // Chinese (P.R.C.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+#ifdef _WIN32
+LANGUAGE 4, 2
+#pragma code_page(936)
+#endif //_WIN32
+#include "res\MobileSimulator.rc2"  // non-Microsoft Visual C++ edited resources
+#include "l.chs\afxres.rc"          // Standard components
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

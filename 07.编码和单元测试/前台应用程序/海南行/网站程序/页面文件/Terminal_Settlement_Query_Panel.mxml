@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute"  initialize="init()"  creationComplete="setComplete()" width="790" height="550" fontSize="15"  backgroundColor="#FFFFFF" borderColor="#00656E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="账务信息查询" xmlns:ns1="*">
+	<mx:Sequence id="FlashContrl"> 
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+ 	</mx:Sequence>
+	<mx:RemoteObject id="settlement_service" destination="SettlementServiceFlexService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.bean.T_BILL_DETAIL;
+			import cn.ucans.table.RowItem;
+			import cn.ucans.table.XMLTable;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import cn.ucans.common.ArrayFactory;
+			
+			import cn.ucans.bean.T_SERVICE_CASH;
+			
+	 		import cn.ucans.flex.FlexRequest;
+ 			import cn.ucans.flex.FlexReponse;
+	 		
+	 		private var regular:RegularExpression = new RegularExpression();
+	 		
+	 		private var dialog_update:UpdateSettlementHotelDialog = null;
+	 		private var arrayCollection_cash:ArrayCollection = null
+	 		private var arrayCollelction_his:ArrayCollection = null;
+	 		private var telephone_select_number:String = "";
+	 		
+	 		private var array_queryType:Array = [{label:"历史账单",data:"1"},{label:"计费详单",data:"2"}];
+	 		
+	 		private function init():void{
+	 			this.Type.dataProvider = array_queryType;
+	 			this.Status.dataProvider = DataProvider.combobox_service_cash_Status_Query;
+	 			this.Type.selectedIndex = 0;
+	 			this.notbefore.setTime("00:00:00");
+	 			this.notafter.setTime("23:59:59");
+	 		}
+	 		
+	 		private function setComplete():void{	
+	 			
+	 		}
+	 		
+	 		private function doQuery():void{
+	 			var request:FlexRequest = new FlexRequest();
+	 			request.type = Number(this.Type.selectedItem.data);
+				request.ope_id = 1312;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+					
+				var cash:T_SERVICE_CASH = new T_SERVICE_CASH();
+				cash.ROOM_NO = this.regular.trim(this.Room_No.text);
+				cash.MSISDN = this.regular.trim(this.Msisdn.text);
+				cash.STATUS = this.Status.selectedItem.data;
+				request.form.cash = cash;
+				request.form.notbefore = this.notbefore.getTime();
+				request.form.notafter = this.notafter.getTime();
+				this.settlement_service.doTransaction(request);
+				this.enabled = false;	
+	 		}
+	 		
+	 		private function doLead():void{
+	 			var table:XMLTable = new XMLTable();
+	 			if(this.Type.selectedItem.data == "1"){
+	 				
+	 				if(this.arrayCollection_cash != null && this.arrayCollection_cash.length>0){
+		 				table.addTitle("手机号码,房间号码,应缴金额（元）,实缴金额（元）,起租时间,退租时间,最多减免金额（元）,实际减免金额（元）,账单状态,,销账流水号,销账操作员,减免金额操作员");
+		 				for(var m:int=0;m<this.arrayCollection_cash.length;m++){
+		 					var item_m:Object = this.arrayCollection_cash.getItemAt(m);
+		 					var row_m:RowItem = new RowItem();
+		 					row_m.setValue("MSISDN",item_m.MSISDN);
+		 					row_m.setValue("ROOM_NO",item_m.ROOM_NO);
+		 					row_m.setValue("CASH",regular.trackNumber(item_m.CASH,100));
+		 					row_m.setValue("REAL_PAY_CASH",regular.trackNumber(item_m.REAL_PAY_CASH,100));
+		 					row_m.setValue("START_TIME",item_m.START_TIME);
+		 					row_m.setValue("END_TIME",item_m.END_TIME);
+		 					row_m.setValue("MAY_FREE_CASH",regular.trackNumber(item_m.MAY_FREE_CASH,100));
+		 					row_m.setValue("FREE_CASH",regular.trackNumber(item_m.FREE_CASH,100));
+		 					row_m.setValue("STATUS",ArrayFactory.getValueFromArray(DataProvider.combobox_service_cash_Status_Query,item_m.STATUS));
+		 					row_m.setValue("PAY_CASH_SEQ",item_m.PAY_CASH_SEQ);
+		 					row_m.setValue("OPER_USER",item_m.OPER_USER);
+		 					row_m.setValue("ADVANCE_USER",item_m.ADVANCE_USER);
+		 					table.addRowItem(row_m);
+		 				}
+		 			}else{
+		 				CCSSAlert.showMessageDialog(this,"请先查询出数据，再进行本操作！");
+		 				return;
+		 			}
+ 				}else{
+ 					if(this.arrayCollelction_his != null && this.arrayCollelction_his.length>0){
+		 				table.addTitle("房间号码,手机号码,费用类型,费用（元）,开始时间,截止时间,减免标志");
+	//	 				var item_0:Object = this.arrayCollection.getItemAt(0);
+	//	 				CCSSAlert.showMessageDialog(this,regular.trackNumber(item_0.CASH,100));
+		 				for(var i:int=0;i<this.arrayCollelction_his.length;i++){
+		 					var item:Object = this.arrayCollelction_his.getItemAt(i);
+		 					row.setValue("ROOM_NO",item.ROOM_NO);
+		 					var row:RowItem = new RowItem();
+		 					row.setValue("MSISDN",item.MSISDN);		 					
+		 					row.setValue("CASH_TYPE",ArrayFactory.getValueFromArray(DataProvider.combobox_bill_detail_Cash_Type_Query,item.CASH_TYPE));
+		 					row.setValue("CASH",regular.trackNumber(item.CASH,100));	 	
+//		 					row.setValue("STATUS",ArrayFactory.getValueFromArray(DataProvider.combobox_service_cash_Status_Query,item.STATUS));	
+		 					row.setValue("START_TIME",item.START_TIME); 
+		 					row.setValue("END_TIME",item.END_TIME);	 
+		 					row.setValue("FREE_FLAG",ArrayFactory.getValueFromArray(DataProvider.combobox_bill_detail_Free_Flag_Query,item.FREE_FLAG));	 				
+		 					table.addRowItem(row);
+		 				}
+		 			}else{
+		 				CCSSAlert.showMessageDialog(this,"请先查询出数据，再进行本操作！");
+		 				return;
+		 			}
+ 				}
+ 				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1305;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				request.form.xml = table.toXMLString();
+				this.settlement_service.doTransaction(request);
+				this.enabled = false;
+	 		}
+	 		
+	 		private function doPrint():void{
+	 			if(this.Type.selectedItem.data == "1"){
+	 				if(this.arrayCollection_cash != null && this.arrayCollection_cash.length>0){
+		 				PrintDataGridView.doPrint(this.parentApplication.LoginUser_ID,this.arrayCollection_cash,"账单数据表",this.TableCash.columns);	 			
+		 			}else{
+		 				CCSSAlert.showMessageDialog(this,"请先查询出数据，再进行本操作！");
+		 				return;
+		 			}
+ 				}else{
+ 					if(this.arrayCollelction_his != null && this.arrayCollelction_his.length>0){
+	 					PrintDataGridView.doPrint(this.parentApplication.LoginUser_ID,this.arrayCollelction_his,"历史数据表",this.TableHis.columns);	 			
+		 			}else{
+		 				CCSSAlert.showMessageDialog(this,"请先查询出数据，再进行本操作！");
+		 				return;
+		 			}
+ 				} 				
+	 		}
+	 		
+	 
+	 		private function doSTATUS(item:Object,column:DataGridColumn):String{
+	 			return ArrayFactory.getValueFromArray(DataProvider.combobox_service_cash_Status_Query,item.STATUS);
+	 		}
+	 		
+	 		private function doResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1305:
+						if(reponse.sign == 0){
+							var url:String = reponse.result.url as String;
+							var request:URLRequest = new URLRequest(url);
+							navigateToURL(request, "_top");
+							break;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1312:
+						if(reponse.sign == 0){
+							var colelction_query:ArrayCollection = reponse.result.list as ArrayCollection;
+							if(this.Type.selectedItem.data == "1"){
+								this.arrayCollection_cash = colelction_query;
+								this.TableCash.dataProvider = colelction_query;
+							}else{
+								this.arrayCollelction_his = colelction_query;
+								this.TableHis.dataProvider = colelction_query;
+							}
+							break;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function changeShowType():void{
+				if(this.Type.selectedItem.data == "1"){
+					this.TableCash.visible = true;
+					this.TableHis.visible = false;
+					this.Status.dataProvider = DataProvider.combobox_service_cash_Status_Query;
+				}else{
+					this.TableCash.visible = false;
+					this.TableHis.visible = true;
+					this.Status.dataProvider = DataProvider.combobox_bill_detail_Status_Query;
+				}
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			
+			private function showView(object:Object):void{
+				FlashContrl.target = object;
+				FlashContrl.play();
+				object.setFocus();
+			}
+			
+			private function doCASH(item:Object,column:DataGridColumn):String{
+	 			return this.regular.trackNumber(item.CASH,100);
+	 		}
+	 		
+	 		private function doMAY_FREE_CASH(item:Object,column:DataGridColumn):String{
+	 			return this.regular.trackNumber(item.MAY_FREE_CASH,100);
+	 		}
+	 		
+	 		private function doREAL_PAY_CASH(item:Object,column:DataGridColumn):String{
+	 			return this.regular.trackNumber(item.REAL_PAY_CASH,100);
+	 		}
+	 		
+	 		private function doFREE_CASH(item:Object,column:DataGridColumn):String{
+	 			return this.regular.trackNumber(item.FREE_CASH,100);
+	 		}
+	 		
+	 		private function doCASHStatus(item:Object,column:DataGridColumn):String{
+	 			return ArrayFactory.getValueFromArray(DataProvider.combobox_service_cash_Status_Edit,item.STATUS);
+	 		}
+	 		
+	 		private function doBillStatus(item:Object,column:DataGridColumn):String{
+	 			return ArrayFactory.getValueFromArray(DataProvider.combobox_bill_detail_Status_Edit,item.STATUS);
+	 		}
+	 		
+	 		private function doCASH_TYPE(item:Object,column:DataGridColumn):String{
+	 			return ArrayFactory.getValueFromArray(DataProvider.combobox_bill_detail_Cash_Type_Edit,item.CASH_TYPE);
+	 		}
+	 		
+	 		private function doFREE_FLAG(item:Object,column:DataGridColumn):String{
+	 			return ArrayFactory.getValueFromArray(DataProvider.combobox_bill_detail_Free_Flag_Edit,item.FREE_FLAG);
+	 		}
+	 		
+		]]>
+	</mx:Script>
+	<mx:Panel x="0" y="0" width="570" height="147" layout="absolute" title="查询向导" borderColor="#0C0841">
+		<mx:Label x="308.5" y="42" text="房间号码" fontFamily="Arial" fontSize="12" color="#060606"/>
+		<mx:Label x="308.5" y="11" text="手机号码" fontFamily="Arial" fontSize="12" color="#060606"/>
+		<mx:Label x="23" y="42" text="截止时间" fontFamily="Arial" fontSize="12" color="#060606"/>
+		<mx:Label x="23" y="12" text="开始时间" fontFamily="Arial" fontSize="12" color="#060606"/>
+		<ns1:TimeField x="84" y="11" id="notbefore">
+		</ns1:TimeField>
+		<ns1:TimeField x="84" y="41" id="notafter">
+		</ns1:TimeField>
+		<mx:TextInput x="369.5" y="9" fontSize="12" color="#030303" width="158" maxChars="11" id="Msisdn"/>
+		<mx:TextInput x="369.5" y="39" fontSize="12" color="#030303" width="158" maxChars="10" id="Room_No"/>
+		<mx:Label x="46" y="70" text="状态" fontFamily="Arial" fontSize="12" color="#050505"/>
+		<mx:ComboBox x="84" y="70" fontFamily="Arial" fontSize="12" color="#050505" id="Status" width="202"></mx:ComboBox>
+		<mx:Label x="308.5" y="73" text="查询类型" fontSize="12" color="#030303"/>
+		<mx:ComboBox x="369.5" y="69" fontSize="12" color="#000000" width="158" id="Type" change="changeShowType()"></mx:ComboBox>
+	</mx:Panel>
+	<mx:Panel x="0" y="155" width="770" height="334" layout="absolute" title="数据" borderColor="#1D1749">
+		<mx:DataGrid x="0" y="0" width="750" height="288" borderColor="#030303" id="TableCash"  horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center"  fontSize="12" color="#000000" visible="true">
+			<mx:columns>
+				<mx:DataGridColumn headerText="房间号码" dataField="ROOM_NO" width="70"/>
+				<mx:DataGridColumn headerText="手机号码" dataField="MSISDN" width="90"/>				
+				<mx:DataGridColumn headerText="应缴金额（元）" dataField="CASH" width="100" labelFunction="doCASH"/>
+				<mx:DataGridColumn headerText="实缴金额（元）" dataField="REAL_PAY_CASH" width="100" labelFunction="doREAL_PAY_CASH"/>
+				<mx:DataGridColumn headerText="起租时间" dataField="START_TIME" width="130"/>
+				<mx:DataGridColumn headerText="退租时间" dataField="END_TIME" width="130"/>
+				<mx:DataGridColumn headerText="最多减免金额（元）" dataField="MAY_FREE_CASH" width="120" labelFunction="doMAY_FREE_CASH"/>
+				<mx:DataGridColumn headerText="实际减免金额（元）" dataField="FREE_CASH" width="120" labelFunction="doFREE_CASH"/>
+				<mx:DataGridColumn headerText="账单状态" dataField="STATUS" width="100" labelFunction="doCASHStatus"/>
+				<mx:DataGridColumn headerText="销账流水号" dataField="PAY_CASH_SEQ" width="90"/>
+				<mx:DataGridColumn headerText="销账操作员" dataField="OPER_USER" width="100"/>
+				<mx:DataGridColumn headerText="减免金额操作员" dataField="ADVANCE_USER" width="100"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:DataGrid x="0" y="0" width="750" height="288" borderColor="#030303" id="TableHis"  horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center"  fontSize="12" color="#000000" visible="false">
+			<mx:columns>
+				<mx:DataGridColumn headerText="手机号码" dataField="MSISDN" width="90"/>
+				<mx:DataGridColumn headerText="房间号码" dataField="ROOM_NO" width="70"/>
+				<mx:DataGridColumn headerText="费用类型" dataField="CASH_TYPE" width="90" labelFunction="doCASH_TYPE"/>
+				<mx:DataGridColumn headerText="费用（元）" dataField="CASH" width="80" labelFunction="doCASH"/>
+				<!--<mx:DataGridColumn headerText="当前状态" dataField="STATUS"  width="100" labelFunction="doBillStatus"/>-->
+				<mx:DataGridColumn headerText="开始时间" dataField="START_TIME"  width="130"/>
+				<mx:DataGridColumn headerText="截止时间" dataField="END_TIME"  width="130"/>
+				<mx:DataGridColumn headerText="减免标志" dataField="FREE_FLAG"  width="100" labelFunction="doFREE_FLAG"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Panel>
+	<mx:Button x="708" y="122" label="打印" fontSize="12" color="#000000" click="doPrint()"/>
+	<mx:Button x="643" y="122" label="导出" fontSize="12" color="#000000" click="doLead()"/>
+	<mx:Button x="578" y="122" label="查询" fontSize="12" color="#000000" click="doQuery()"/>
+</mx:Panel>

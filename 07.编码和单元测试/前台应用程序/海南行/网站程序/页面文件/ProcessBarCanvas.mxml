@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="84" fontSize="14">
+
+<mx:VBox width="100%" horizontalAlign="center" height="84" borderColor="#FFFF80" backgroundColor="#004080" borderStyle="solid">
+            <mx:Label id="lbProgress" text="传送中……" color="#FFFFFF"/>
+             <mx:ProgressBar id="bar" labelPlacement="bottom" themeColor="#F20D7A"
+                minimum="0" visible="true" maximum="100" label="当前进度: 0%" color="#FFFFFF" 
+                direction="right" mode="manual" width="200"  height="34" borderColor="#FFFF80" barColor="#FF8040"/>            
+       </mx:VBox>
+
+
+<mx:Script>	
+	<![CDATA[
+		
+		import mx.controls.Alert;
+		import mx.events.ItemClickEvent;
+		
+		
+		public function onProgress(e: ProgressEvent): void
+		{
+			lbProgress.text = " 已传输 " + e.bytesLoaded 
+				+ " 字节，共 " + e.bytesTotal + " 字节";
+			var proc: uint = e.bytesLoaded / e.bytesTotal * 100;
+				bar.setProgress(proc, 100);
+			bar.label= "当前进度: " + " " + proc + "%";
+		}
+   		
+   		
+	]]>
+</mx:Script>
+
+</mx:Canvas>

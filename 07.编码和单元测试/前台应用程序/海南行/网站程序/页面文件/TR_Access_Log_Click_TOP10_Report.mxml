@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" initialize="init()" width="790" height="550" fontSize="15"  backgroundColor="#FFFFFF" borderColor="#00656E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="旅客点击次数TOP10" xmlns:ns1="*">
+	<mx:DataGrid x="0" id="dg" y="170" width="770" height="319" color="#000706" fontSize="12" borderColor="#01090E">
+		<mx:columns>
+			
+			<mx:DataGridColumn headerText="名次" dataField="NAMECOUNT"/>
+			<mx:DataGridColumn headerText="类型" dataField="CONTENT_PREFIX"/>
+			<mx:DataGridColumn headerText="语言" dataField="LANGUAGE"/>
+			<mx:DataGridColumn headerText="内容" dataField="CONTENT_PATH" width="250"/>
+			<mx:DataGridColumn headerText="点击次数" dataField="CLICK_COUNT"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Panel x="0" y="0" width="565" height="162" layout="absolute" headerHeight="15" title="                                                     查询向导" color="#F21313" fontSize="13">
+		<mx:Canvas x="0" y="0" width="545" height="135" fontSize="12" color="#050505" borderStyle="solid" borderColor="#121313" backgroundColor="#DAD3F6">
+			<mx:Label x="10" y="51" text="代销商名称"/>
+			<mx:Label x="22" y="92" text="语言类型"/>
+			<mx:Label x="274" y="93" text="内容"/>
+			<mx:Label id="hotelName" x="22" y="13" text="酒店名称"/>
+			<mx:Label id="hotelName0" x="274" y="12" text="开始时间"/>
+			<mx:Label id="hotelName1" x="274" y="49" text="结束时间"/>
+			<mx:ComboBox id="cbbHotelId" x="83" y="10" width="171"></mx:ComboBox>
+			<mx:ComboBox id="cbbBusinessId" x="83" y="47" width="171"></mx:ComboBox>
+			<mx:ComboBox id="cbbLanguageId" x="83" y="89" width="171"></mx:ComboBox>
+			<mx:DateField x="335" y="10" width="116" id="insertStartTimeId" monthNames="['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']"
+											  dayNames="['日', '一', '二', '三', '四', '五', '六']" creationComplete="fun_setInitValue(insertStartTimeId,0)" formatString="YYYY-MM-DD" color="#0D0C0C" fontSize="12" fontWeight="normal"/>
+			<mx:DateField x="335" y="47" width="116" id="insertEndTimeId" monthNames="['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']"
+											  dayNames="['日', '一', '二', '三', '四', '五', '六']" creationComplete="fun_setInitValue(insertEndTimeId,1)" formatString="YYYY-MM-DD" color="#0D0C0C" fontSize="12" fontWeight="normal"/>
+			<mx:TextArea x="311" y="79" width="222" maxChars="256" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)" id="taContextId"/>
+		</mx:Canvas>
+	</mx:Panel>
+	<mx:Panel x="573" y="0" width="197" height="162" layout="absolute" headerHeight="15" title="             功能列表" fontSize="13" color="#F30A2B">
+		<mx:Canvas x="0" y="0" width="177" height="135" fontSize="12" color="#030303" borderColor="#272D26" backgroundColor="#C8F4C7" borderStyle="solid">
+			<mx:Button x="47.5" y="30" label="查询" fontFamily="Arial" fontSize="12" color="#040404" click="QueryTerminalHireInfo()" width="80"/>
+			<mx:Button x="47.5" y="83" label="导出" fontFamily="Arial" fontSize="12" color="#040404" click="doExcpot()" width="80"/>
+			
+		</mx:Canvas>
+	</mx:Panel>
+	<mx:RemoteObject id="getDataService" destination="oHotelTerminalReportService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	
+	<mx:DateFormatter id="df" formatString="YYYY-MM-DD JJ:NN:SS"/>
+	<mx:DateFormatter id="df1" formatString="YYYY-MM-DD"/>
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+    </mx:Sequence>
+    <mx:Script>
+    	<![CDATA[
+    		import cn.ucans.bean.T_ACCESS_LOG;
+    		import cn.ucans.bean.TR_TERMINAL_HIRED;
+    		import mx.controls.TextInput;
+    		import cn.ucans.flex.FlexReponse;
+    		import mx.collections.ArrayCollection;
+    		import cn.ucans.common.RegularExpression;
+    		import cn.ucans.flex.FlexRequest;
+    		import cn.ucans.common.ArrayFactory;
+    		import mx.events.CloseEvent;
+    		import mx.controls.Alert;
+    		
+    		
+    		private	var	strAlertCode:String = "";
+    		private var strFileName:String = "";
+    		private var file: FileReference;
+    		private var reg:RegularExpression = new RegularExpression();
+    		private var arrCon:ArrayCollection = new ArrayCollection();
+    		private var arrConHotelName:ArrayCollection = new ArrayCollection();
+    		private var arrConBusiName:ArrayCollection = new ArrayCollection();
+    		private var arrConLanguage:ArrayCollection = new ArrayCollection();
+    		private var whiteDialog:WhiteTypeDialog = null;
+    		private var dialog_confirm:CCSSConfirm = null;
+    		
+    		private function doResult(data:Object):void{
+    			this.enabled = true;
+    			var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 2048:
+						if(reponse.sign == 0){
+							arrConHotelName = reponse.result.list as ArrayCollection;
+							cbbHotelId.dataProvider = arrConHotelName;
+							arrConBusiName = reponse.result.list1 as ArrayCollection;
+							cbbBusinessId.dataProvider = arrConBusiName;
+							arrConLanguage = reponse.result.list2 as ArrayCollection;
+							cbbLanguageId.dataProvider = arrConLanguage;
+							return;
+						}else{
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}	
+						break;
+					case 2049:
+						if(reponse.sign == 0){
+							arrCon = reponse.result.list as ArrayCollection;
+							dg.dataProvider = arrCon;
+							if(arrCon.length < 1){
+								CCSSAlert.showMessageDialog(this,"没有查询到数据，请更换查询条件！");
+							}
+							return;
+						}else{
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}	
+						break;
+					
+					case 2042:
+						if(reponse.sign == 0)
+						{
+							var downloadURL:URLRequest;
+							strFileName = (reponse.org_id as String);	
+							dialog_confirm = new CCSSConfirm();	
+							Alert.show("请问您真的想导出这些数据吗？","确认信息",3,this,fun_DeleteExcel);
+							file.download(downloadURL);
+							return;
+						}
+						else
+						{
+							CCSSAlert.showErrorDialog(this,"生成Execl文件时出错，错误代码是：" + reponse.message);
+							return;
+						}
+						break;
+					case 2043:
+						if(reponse.sign == 0)
+						{
+							return;
+						}
+						else
+						{
+							CCSSAlert.showErrorDialog(this,"删除Execl文件时出错，错误代码是：" + reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;
+				}
+    		}
+    		
+    		private function QueryTerminalHireInfo():void{
+    			
+    			var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 2049;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+    			var termenal:T_ACCESS_LOG = new T_ACCESS_LOG();
+    			termenal.HOTEL_ID = cbbHotelId.selectedItem.data;
+    			termenal.CONTENT_PATH = reg.trim(taContextId.text);
+    			termenal.LANGUAGE = cbbLanguageId.selectedItem.data;
+    			termenal.IMEI_NUMBER = cbbBusinessId.selectedItem.data;
+    			termenal.CREATE_TIME = insertStartTimeId.text;
+    			termenal.MSISDN = insertEndTimeId.text;
+    			request.form.termenal = termenal;
+				getDataService.doTransaction(request);
+				this.enabled = false;
+    		
+    		}
+    		private function changeDate(item:Object,column:DataGridColumn):String{
+    			var dateFormat:String = item.STATIS_DATE;
+    			return dateFormat.substr(0,4).concat("-").concat(dateFormat.substr(4,2)).concat("-").concat(dateFormat.substr(6,2));
+    		}
+    		private function fun_setInitValue(oObject:DateField,oType:int):void
+			{	
+				var d:Date = new Date();
+				if(oType == 0)
+				{
+					oObject.data = new Date(d.getFullYear(),d.getMonth(),1);
+				}
+				else
+				{
+					oObject.data = new Date();
+				}
+			}
+//    		////////////////////////////////////////////////////////////////////////////////////////////////
+    			private function fun_DeleteExcel(event:CloseEvent):void
+			{	
+				switch(event.detail)
+				{
+					case Alert.YES:
+						var downloadURL:URLRequest;
+							downloadURL = new URLRequest(parentApplication.strPubURL + "/TempFile/" + 
+								strFileName);
+							file = new FileReference();
+							file.addEventListener(ProgressEvent.PROGRESS,onProgress);
+							file.addEventListener(Event.COMPLETE, downComplete);
+							file.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+							file.addEventListener(Event.CANCEL,doCancel);
+							file.download(downloadURL);
+						break;
+					case Alert.NO:
+							var request:FlexRequest = new FlexRequest();
+							request.menu_id = this.parentApplication.LoginMenu_ID;
+			    			request.ope_id = 2043;
+			    			request.org_id = this.parentApplication.LoginORG_ID;
+			    			request.user_id = this.parentApplication.LoginUser_ID;
+							getDataService.DeleteExcelFile(strFileName,request);
+							this.enabled = false;
+						break;
+				}
+			}
+//			<mx:DataGridColumn headerText="日期" dataField="CREATE_TIME"/>
+//			<mx:DataGridColumn id="hotelId" headerText="酒店名称" dataField="ORG_NAME" width="80"/>
+//			<mx:DataGridColumn headerText="所属代销商" dataField="BROKER_ID" width="130"/>
+//			<mx:DataGridColumn headerText="类型" dataField="CONTENT_PREFIX"/>
+//			<mx:DataGridColumn headerText="语言" dataField="LANGUAGE"/>
+//			<mx:DataGridColumn headerText="内容" dataField="CONTENT_PATH"/>
+//			<mx:DataGridColumn headerText="点击次数" dataField="CLICK_COUNT"/>
+    		private function doExcpot():void{
+    			if(arrCon.length < 1){
+    				CCSSAlert.showMessageDialog(this,"请在列表中选择一条记录，再进行导出！");
+    				FlashContrl.target = dg;
+					FlashContrl.play();
+					dg.setFocus();	
+    				return;
+    			}
+    			var strFileData:String = "名次||类型||语言||内容||点击次数";				
+				for(var n:int = 0;n < this.arrCon.length;n ++){
+					var item:Object = this.arrCon.getItemAt(n);
+					strFileData = strFileData + "&&" + 	 
+					NVL(item.NAMECOUNT,"") + "||" +  
+					NVL(item.CONTENT_PREFIX,"") + "||" + 
+					NVL(item.LANGUAGE,"") + "||" + 
+					NVL(item.CONTENT_PATH,"") + "||" + 
+					NVL(item.CLICK_COUNT,"");
+				}
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 2042;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				this.getDataService.CreateExcelFile(strFileData,"",request);
+				this.enabled = false;
+    		}
+    		 private function NVL(strSour:String,strTag:String):String{
+				if(strSour == null){
+					return strTag;
+				}else{
+					return strSour;
+				}
+			}
+    	    private function onProgress(e: ProgressEvent): void
+			{
+				var oProcessBar:ProcessBarCanvas = this.getChildByName("ProcessBarCanvas") as ProcessBarCanvas;
+				
+				if(oProcessBar == null)
+				{
+					oProcessBar = new ProcessBarCanvas();
+					oProcessBar.x = 300;
+					oProcessBar.y = 200;
+					oProcessBar.name = "ProcessBarCanvas";
+					this.addChild(oProcessBar);
+					oProcessBar.onProgress(e);
+				}
+				else
+				{
+					oProcessBar.onProgress(e);
+				}
+				
+			}
+
+			private function downComplete(e:Event): void{
+				var oProcessBar:ProcessBarCanvas = this.getChildByName("ProcessBarCanvas") as ProcessBarCanvas;
+				if(oProcessBar != null)
+				{
+					this.removeChild(oProcessBar);
+				}
+				CCSSAlert.showMessageDialog(this,"生成Excel文件成功");
+				file.removeEventListener(ProgressEvent.PROGRESS, onProgress);
+				file.removeEventListener(Event.COMPLETE, downComplete);
+				file.removeEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				file.removeEventListener(Event.CANCEL,doCancel);
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 2043;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				this.getDataService.DeleteExcelFile(strFileName,request);
+				this.enabled = false;
+			}
+			
+			private function doCancel(event:Event):void
+			{
+				file.removeEventListener(ProgressEvent.PROGRESS, onProgress);
+				file.removeEventListener(Event.COMPLETE, downComplete);
+				file.removeEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				file.removeEventListener(Event.CANCEL,doCancel);
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 2043;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				getDataService.DeleteExcelFile(strFileName,request);
+				this.enabled = false;
+			}
+			
+			private function ioErrorHandler(e:Event): void{
+				CCSSAlert.showErrorDialog(this,"ioErrorHandler: " + e);
+				var oProcessBar:ProcessBarCanvas = this.getChildByName("ProcessBarCanvas") as ProcessBarCanvas;
+				if(oProcessBar != null)
+				{
+					this.removeChild(oProcessBar);
+				}
+				
+				file.removeEventListener(ProgressEvent.PROGRESS, onProgress);
+				file.removeEventListener(Event.COMPLETE, downComplete);
+				file.removeEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				file.removeEventListener(Event.CANCEL,doCancel);
+				
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 2043;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				getDataService.DeleteExcelFile(strFileName,request);
+				CCSSAlert.showErrorDialog(this,"文件下载错误，请联系管理员！");
+				this.enabled = false;
+			}
+//			/////////////////////////////////////////////////////////////////////////////////////
+    		
+    		private function init():void{
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 2048;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				getDataService.doTransaction(request);
+				this.enabled = false;
+    		}
+    		private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+    	]]>
+    </mx:Script>
+</mx:Panel>

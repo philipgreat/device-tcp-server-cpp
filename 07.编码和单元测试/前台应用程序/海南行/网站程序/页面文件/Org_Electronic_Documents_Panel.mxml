@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute"  initialize="init()" width="790" height="550" fontSize="15"  backgroundColor="#FFFFFF" borderColor="#00656E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="电子文档" xmlns:ns1="*">
+	<mx:Panel x="0" y="128" width="770" height="361" layout="absolute" title="数据" borderColor="#272791">
+		<mx:DataGrid x="0" y="0" width="750" height="315" id="TableGrid" fontSize="12" color="#0B0A0A" borderColor="#040404" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center" >
+			<mx:columns>
+				<mx:DataGridColumn headerText="序列标识" dataField="ID" visible="false"/>
+				<mx:DataGridColumn headerText="组织名称" dataField="ORG_ID" width="100" labelFunction="doORG_ID"/>
+				<mx:DataGridColumn headerText="文档类型" dataField="DOCUMENT_TYPE" width="100"/>
+				<mx:DataGridColumn headerText="文档名字" dataField="DOCUMENT_NAME" width="120"/>
+				<mx:DataGridColumn headerText="录入人员" dataField="CREATE_USER_ID" width="100"/>
+				<mx:DataGridColumn headerText="最近更新时间" dataField="LAST_UPDATE_TIME" width="130"/>
+				<mx:DataGridColumn headerText="注释" dataField="NOTES" width="150">
+					<mx:itemRenderer>
+						<mx:Component>
+							<mx:Label text="{data.NOTES}" textAlign="left"/>
+						</mx:Component>
+					</mx:itemRenderer>
+				</mx:DataGridColumn>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Panel>
+	<mx:Panel x="0" y="0" width="640" height="120" layout="absolute" title="查询向导" borderColor="#83466E">
+		<mx:Label x="10" y="10" text="开始时间" fontFamily="Arial" fontSize="12" color="#020202"/>
+		<mx:Label x="281" y="11" text="截止时间" fontFamily="Arial" fontSize="12" color="#020202"/>
+		<ns1:TimeField x="71" y="10" fontFamily="Arial" fontSize="12" color="#060606" id="notbefore">
+		</ns1:TimeField>
+		<ns1:TimeField x="342" y="10" fontFamily="Arial" fontSize="12" color="#060606" id="notafter">
+		</ns1:TimeField>
+		<mx:Label x="10" y="41" text="选择组织" fontFamily="Arial" fontSize="12" color="#020202"/>
+		<mx:Label x="466" y="43" text="文档类型" fontFamily="Arial" fontSize="12" color="#020202"/>
+		<mx:Label x="303" y="43" text="文档名称" fontFamily="Arial" fontSize="12" color="#020202"/>
+		<ns1:SelectOrgTreeField x="71" y="40" id="Org_ID">
+		</ns1:SelectOrgTreeField>
+		<mx:TextInput x="364" y="39" width="94" fontFamily="Arial" fontSize="12" color="#050505" id="Document_Name"/>
+		<mx:TextInput x="523" y="39" width="88" fontFamily="Arial" fontSize="12" color="#050505" id="Document_Type"/>
+		<mx:Button x="559" y="9" label="查询" fontSize="12" color="#0B0B0B" fillAlphas="[1.0, 1.0]" fillColors="[#F7E8E8, #F7E8E8]" click="doQueryDocument()"/>
+	</mx:Panel>
+	<mx:Button x="648" y="62" label="添加" fontFamily="Arial" fontSize="12" color="#010101" click="doAddDocument()"/>
+	<mx:Button x="648" y="95" label="查看" fontFamily="Arial" fontSize="12" color="#010101" click="doViewDocument()"/>
+	<mx:Button x="708" y="62" label="删除" fontFamily="Arial" fontSize="12" color="#010101" click="doDeleteDocument()"/>
+	<mx:Button x="708" y="95" label="更新" fontFamily="Arial" fontSize="12" color="#010101" click="doUpdateDocument()"/>
+	<mx:Label x="651" y="19" text="相关文档操作" color="#171784" fontWeight="bold"/>
+	<mx:RemoteObject id="org_service" destination="OrgFlexService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import cn.ucans.bean.T_ORG_DOCUMENT;
+			
+			import cn.ucans.bean.T_ORG_INFO;
+	 		import cn.ucans.tree.TreeNode;
+	 		import mx.collections.ArrayCollection;
+	 		import cn.ucans.flex.FlexRequest;
+	 		import cn.ucans.flex.FlexReponse;
+	 		import cn.ucans.common.RegularExpression;
+	 		import cn.ucans.common.DataProvider;
+	 		import cn.ucans.common.ArrayFactory;
+	 		
+	 		private var regular:RegularExpression = new RegularExpression();
+	 		private var dialog_add:AddDocumentDialog = null;
+	 		private var dialog_confirm:CCSSConfirm = null;
+	 		private var dialog_update:UpdateDocumentDialog = null;
+			
+			private var list_org_edit:ArrayCollection = null;
+			
+			private function init():void{
+				this.notbefore.setTime("00:00:00");
+				this.notafter.setTime("23:59:59");
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1010;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				this.org_service.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			private function doORG_ID(item:Object,column:DataGridColumn):String{
+				return ArrayFactory.getValueFroamArrayCollection(this.list_org_edit,item.ORG_ID);
+			}
+			
+			private function doAddDocument():void{
+				this.dialog_add = new AddDocumentDialog();
+				this.dialog_add.showDialog(this);
+				this.dialog_add.addEventListener(Event.REMOVED,doAddDocumentHandler);
+			}
+			private var index:int = 0;
+			private function doAddDocumentHandler(event:Event):void{
+				//CCSSAlert.showMessageDialog(this,this.dialog_add.DOOK.toString());
+				if(this.dialog_add.DOOK){	index++;
+					CCSSAlert.showMessageDialog(this,"添加文档成功！");
+					//CCSSAlert.showMessageDialog(this,"添加文档成功！");
+//					var request:FlexRequest = new FlexRequest();
+//					request.ope_id = 1011;
+//					request.menu_id = this.parentApplication.LoginMenu_ID;
+//					request.org_id = this.parentApplication.LoginORG_ID;
+//					request.user_id = this.parentApplication.LoginUser_ID;
+//					request.form.document = this.dialog_add.document_org;
+//					this.org_service.doTransaction(request);
+//					this.enabled = false;
+					this.doQueryDocument();
+					dialog_add.removeEventListener(Event.REMOVED,doAddDocumentHandler);
+				}
+			}
+			
+			private function doUpdateDocument():void{
+				if(this.TableGrid.selectedIndex>-1){
+					var item:Object = this.TableGrid.selectedItem;
+					this.dialog_update = new UpdateDocumentDialog();
+					this.dialog_update.showDialog(this,item);
+					this.dialog_update.addEventListener(Event.REMOVED,doUpdateDocumentHandler);
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在表中选中一条记录，再进行本操作！");
+					return;
+				}
+			}
+			
+			private function doUpdateDocumentHandler(event:Event):void{
+				if(this.dialog_update.DOOK){
+					CCSSAlert.showMessageDialog(this,"更新文档成功！");
+//					var request:FlexRequest = new FlexRequest();
+//					request.ope_id = 1012;
+//					request.menu_id = this.parentApplication.LoginMenu_ID;
+//					request.org_id = this.parentApplication.LoginORG_ID;
+//					request.user_id = this.parentApplication.LoginUser_ID;
+//					request.form.document = this.dialog_update.document_org;
+//					this.org_service.doTransaction(request);
+//					this.enabled = false;
+					this.doQueryDocument();
+					this.dialog_update.removeEventListener(Event.REMOVED,doUpdateDocumentHandler);
+				}
+			}
+			
+			private function doDeleteDocument():void{
+				if(this.TableGrid.selectedIndex>-1){
+					var item:Object = this.TableGrid.selectedItem;
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1013;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					var document:T_ORG_DOCUMENT = new T_ORG_DOCUMENT();
+					document.ID = item.ID;
+					request.form.document = document;
+					this.dialog_confirm = new CCSSConfirm();
+					this.dialog_confirm.showDialog(this,"您确实要删除本文档吗？",request);
+					this.dialog_confirm.addEventListener(Event.REMOVED,doDeleteDocumentHandler);
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在表中选中一条记录，再进行本操作！");
+					return;
+				}
+			}
+			
+			private function doDeleteDocumentHandler(event:Event):void{
+				if(this.dialog_confirm.YES){
+					var request:FlexRequest = this.dialog_confirm.object as FlexRequest;
+					this.org_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doQueryDocument():void{
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1014;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				var document:T_ORG_DOCUMENT = new T_ORG_DOCUMENT();
+				document.DOCUMENT_NAME = regular.trim(this.Document_Name.text);
+				document.DOCUMENT_TYPE = regular.trim(this.Document_Type.text);
+				document.ORG_ID = this.Org_ID.org_id;
+				request.form.notbefore = this.notbefore.getTime();
+				request.form.notafter = this.notafter.getTime();
+				request.form.document = document;
+				this.org_service.doTransaction(request);
+				//this.enabled = false;
+			}
+			
+			private function doViewDocument():void{
+				if(this.TableGrid.selectedIndex>-1){
+					var item:Object = this.TableGrid.selectedItem;
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1015;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					var document:T_ORG_DOCUMENT = new T_ORG_DOCUMENT();
+					document.ID = item.ID;
+					request.form.document = document;
+					this.org_service.doTransaction(request);
+					this.enabled = false;
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在表中选中一条记录，再进行本操作！");
+					return;
+				}
+			}
+			
+			private function doResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1010:
+						if(reponse.sign == 0){
+							this.list_org_edit = reponse.result.list_org_edit as ArrayCollection;
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1013:
+						if(reponse.sign == 0){
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							this.doQueryDocument();
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1014:
+						if(reponse.sign == 0){
+							var list:ArrayCollection = reponse.result.list;
+							this.TableGrid.dataProvider = list;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1015:
+						if(reponse.sign == 0){
+							var url:String = reponse.result.url as String;
+							var request:URLRequest = new URLRequest(url);
+							navigateToURL(request, "_top");
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+		]]>
+	</mx:Script>
+</mx:Panel>

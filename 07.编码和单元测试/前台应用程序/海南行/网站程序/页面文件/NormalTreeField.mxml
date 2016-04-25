@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="200" height="400" xmlns:ns1="*">
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.treeClasses.ITreeDataDescriptor;
+			import mx.controls.listClasses.ListBase;
+			import cn.ucans.tree.TreeNode;
+			import mx.managers.CursorManager;
+			import mx.collections.ICollectionView;
+            import mx.events.ListEvent;
+			[Embed(source="img/Hand.gif")]
+			private var linkCursorSymbol:Class;
+//			[Bindable]       
+//		    [Embed("img/foldericon.png")]  
+//		    public var myFolderClosedIcon:Class;    
+//		    [Bindable]         
+//		    [Embed("img/pass.png")]  
+//		    public var myFolderOpenIcon:Class;  
+////			[Bindable]          
+////			[Embed("img/Dial.png")]      
+////			public var pdfIcon:Class;          
+////			[Bindable]        
+////			[Embed("img/hang.png")]  
+////			public var docIcon:Class;                  
+
+			
+			private var xml:XML= null;
+			
+			public var click_Function:Function = null;
+			
+			private function tree_itemClick(evt:ListEvent):void { 
+                this.click_Function();
+            } 
+            
+            public function setRootNodeVisiable(visable:Boolean):void{
+            	this.tree.showRoot = visable;
+            }
+  
+            private function doLabel(item:XML):String { 
+//            	var haschild:int = Number(item.@childable);
+//            	
+//               	if(haschild == 1){
+//               		return "(▼) "+item[tree.labelField];
+//               	}else{
+//               		return item[tree.labelField];
+//               	}
+               	var suffix:String = ""; 
+               	var children:ICollectionView; 
+                if (tree.dataDescriptor.isBranch(item)) { 
+                    children = tree.dataDescriptor.getChildren(item); 
+                    suffix = " (" + children.length + ")"; 
+                }
+                return suffix+item[tree.labelField]; 
+            } 
+            
+            public function setParentNodeSelected():void{
+            	if(this.tree.selectedIndex>-1){
+            		var selectedNode:XML = this.tree.selectedItem as XML;  
+            		var parent:XML = selectedNode.parent(); 
+            		this.tree.selectedItem = parent;
+            	}
+            }
+			
+			private function addNode(node:TreeNode):Boolean{
+				var ok:Boolean = false;
+				if(this.tree.selectedIndex>-1){
+					var selectedNode:XML = this.tree.selectedItem as XML;   
+	                selectedNode.appendChild(node.toXML());   
+					ok = true;
+				}
+				return ok;
+			}
+			
+			public function updateNode(node:TreeNode):Boolean{
+				var ok:Boolean = false;
+				if(this.tree.selectedIndex>-1){
+					var selectedNode:XML = this.tree.selectedItem as XML; 
+					selectedNode = node.toXML();
+	                ok = true;
+				}
+				return ok;
+			}
+			
+			public function deleteNode():XML{
+				var selectedNode:XML = null;
+				if(this.tree.selectedIndex>-1){
+					selectedNode = this.tree.selectedItem as XML; 
+	                this.tree.dataDescriptor.removeChildAt(this.tree.selectedItem.parent(),this.tree.selectedItem,this.tree.selectedItem.childIndex(),tree.dataProvider);
+				}
+				return selectedNode;
+			}
+			
+			public function get selectNode():TreeNode{
+				var node:TreeNode = null;
+				if(this.tree.selectedIndex>-1){
+					var item:XML = this.tree.selectedItem as XML;				
+					node = new TreeNode();
+					node.label = item.@label; 
+					node.data = item.@data; 
+					node.top = Number(item.@top); 
+					node.isSelect = Number(item.@isSelect); 
+					node.type = Number(item.@type); 
+					node.id = item.@id; 
+				}
+				return node;
+			}
+			
+			public function getParentNode():TreeNode{
+				var node:TreeNode = null;
+				if(this.tree.selectedIndex>-1){
+					var object:XML = this.tree.selectedItem as XML;
+					var item:XML = object.parent();
+					//CCSSAlert.showMessageDialog(this,item.toXMLString());
+					node = new TreeNode();
+					node.label = item.@label; 
+					node.data = item.@data; 
+					node.top = Number(item.@top); 
+					node.isSelect = Number(item.@isSelect); 
+					node.type = Number(item.@type); 
+					node.id = item.@id; 
+				}
+				return node;
+			}
+			
+			public function get selectItem():Object{
+				if(this.tree.selectedIndex>-1){
+					return this.tree.selectedItem;
+				}else{
+					return null;
+				}
+			}
+			
+			public function updateSelectedNode(xml:XML):void{
+				if(this.tree.selectedIndex>-1){
+					var xml_select:XML = this.tree.selectedItem as XML;					
+					xml_select.@data = xml.@data;
+					xml_select.@label = xml.@label;
+					xml_select.@top = xml.@top;
+					xml_select.@isSelect = xml.@isSelect;
+					xml_select.@type = xml.@type;
+					xml_select.@id = xml.@id;
+				}
+			}
+			
+			public function updateSelectedItem(xml:XML):void{
+				
+				if(this.tree.selectedIndex>-1){
+					this.removeChildren();
+					this.addChildren(xml.children());
+					var xml_select:XML = this.tree.selectedItem as XML;
+					
+					xml_select.@data = xml.@data;
+					xml_select.@label = xml.@label;
+					xml_select.@top = xml.@top;
+					xml_select.@isSelect = xml.@isSelect;
+					xml_select.@type = xml.@type;
+					xml_select.@id = xml.@id;
+				}				
+			}
+			
+			public function set dataProvider(value:Object):void{
+				if(value is XML){
+					this.xml = value as XML;
+				}
+				this.tree.dataProvider = value;
+				this.tree.selectedIndex = 0;			
+			}
+			
+			public function expandSelectedNodeChildren():void{
+				if(this.tree.selectedIndex>-1){
+					var open:Boolean = false;
+					if(this.tree.isItemOpen(this.tree.selectedItem)){
+						open = false;
+					}else{
+						open = true;
+					}
+					//CCSSAlert.showMessageDialog(this,open.toString());
+					this.tree.expandItem(this.tree.selectedItem,true);
+				}
+				
+			}
+			
+			public function removeChildren():void{				
+				if(this.tree.selectedIndex>-1){
+					var index:int = this.tree.selectedIndex;
+					var selectedNode:XML = this.tree.selectedItem as XML;
+					var xmllist:XMLList = selectedNode.children();
+					var length_list:int = xmllist.length();
+					
+					if(length_list>0){
+						for(var i:int=0;i<length_list;i++){
+							var item:XML = xmllist[i] as XML;
+							//CCSSAlert.showMessageDialog(this,item.toXMLString()+"\n");
+							this.tree.dataDescriptor.removeChildAt(this.tree.selectedItem,item,item.childIndex(),tree.dataProvider);
+						}
+						
+					}	
+									
+				}				
+			}
+			
+			public function hasChildren():Boolean{
+				if(this.tree.selectedIndex>-1){
+					return this.tree.dataDescriptor.hasChildren(this.tree.selectedItem);
+				}else{
+					return false;
+				}
+			}
+			
+			public function addChildren(xmllist:XMLList):void{
+				//CCSSAlert.showMessageDialog(this,""+xmllist.length());
+				if(xmllist.length()>0){
+					var selectedNode:XML = this.tree.selectedItem as XML;
+					for(var k:int=0;k<xmllist.length();k++){
+						var item_xml:XML = xmllist[k] as XML;
+						selectedNode.appendChild(item_xml);
+					}
+				}				
+			}
+			private function fun_MouseOut(e:Event):void 
+			{
+			
+				CursorManager.removeAllCursors();
+
+			}
+			private function fun_MouseIn(e:Event):void 
+			{
+				if(e.target.name.substr(0,2) != "UI")
+				{
+					return;
+				}
+				var node:TreeNode = this.selectNode;
+				var strMoveCode:String = node.data;
+				
+				if((strMoveCode != "")&&(strMoveCode != null))
+				{
+					CursorManager.setCursor(linkCursorSymbol);
+				}
+			}
+			public function toXML():String{
+				return this.xml.toXMLString();
+			}
+		]]>
+	</mx:Script>
+	<mx:Tree id="tree" 
+            showRoot="false"  
+            labelField="@label" 
+            width="100%" 
+            mouseOver="fun_MouseIn(event)"
+            mouseOut="fun_MouseOut(event)"
+            rowCount="6" 
+            itemClick="tree_itemClick(event);"  y="0" height="100%" fontFamily="Arial" fontSize="12" x="0"  color="#050505"/> 
+</mx:Canvas>

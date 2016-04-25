@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="224" height="26" fontFamily="Arial" fontSize="12" borderStyle="solid" borderColor="#7D7676" color="#040404" backgroundColor="#DEDEF7">
+	<mx:TextInput x="0" y="0" width="116" id="org_name_input" editable="false" height="26"/>
+	<mx:Button x="118" y="0" label="选择" click="doClick()" fontWeight="normal" width="53"/>
+	<mx:Script>
+		<![CDATA[
+		
+			import cn.ucans.bean.T_ORG_INFO;
+	 		import cn.ucans.tree.TreeNode;
+	 		import mx.collections.ArrayCollection;
+	 		import cn.ucans.common.RegularExpression;
+	 		import cn.ucans.common.DataProvider;
+	 		import cn.ucans.common.ArrayFactory;
+			
+			private var xml_org_init:String = "";
+			private var dialog:OrgTreeDialog = null;
+			
+			public var org_id:String = "";
+			public var org_name:String = "";
+			public var org_type:int = -1;
+			
+			public var click_Function:Function = null;
+			
+			public function clear():void{
+				this.org_name_input.text = "";
+				this.org_type = -1;
+				this.org_id = "";
+				this.org_name = "";
+			}
+			
+			public function setOrgInfo(id:String,name:String):void{
+				this.org_id = id;
+				this.org_name = name;
+				this.org_name_input.text = name;
+			}
+			
+			private function doClick():void{
+				this.dialog = new OrgTreeDialog();
+				this.dialog.showDialog(this,this.xml_org_init);
+				this.dialog.addEventListener(Event.REMOVED,doOrgTreeDialogHandler);
+			}
+			
+			private function doOrgTreeDialogHandler(event:Event):void{
+				if(this.dialog.DOOK){					
+					this.org_name_input.text = this.dialog.org_name;
+					this.org_type = this.dialog.org_type;
+					this.org_id = this.dialog.org_id;
+					this.org_name = this.org_name_input.text;
+				}
+			}
+		]]>
+	</mx:Script>
+	<mx:Button x="169" y="0" label="清空" width="53" fontWeight="normal" click="clear()"/>
+</mx:Canvas>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="434" height="174" title="结账信息" fontSize="15" fontFamily="Arial" color="#F0F6F7" borderColor="#2B135B">
+	<mx:Button x="24.5" y="77" label="结账" fontFamily="Arial" fontSize="12" color="#030303" click="doCheckSettlement()"/>
+	<mx:Button x="323.9" y="77" label="取消" fontFamily="Arial" fontSize="12" color="#030303" click="doCancle()"/>
+	<mx:RemoteObject id="settlement_service" destination="SettlementServiceFlexService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import cn.ucans.common.ArrayFactory; 
+			import cn.ucans.bean.T_BILL_DETAIL;
+			
+			import cn.ucans.flex.FlexRequest;
+ 			import cn.ucans.flex.FlexReponse;
+			
+			import cn.ucans.bean.T_SERVICE_CASH;
+			
+			public var cash_edit:T_SERVICE_CASH = null;
+			public var DOOK:Boolean = false;
+			
+			public function showDialog(parent:DisplayObject,item:Object):void{
+             	PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				this.cash_edit = new T_SERVICE_CASH();
+				
+				this.Msisdn.text = item.MSISDN;
+				this.Cash.text = ""+Number(item.CASH)/100;
+        	}
+        	
+        	public function doCheckSettlement():void{
+        		this.cash_edit.MSISDN = this.Msisdn.text;
+        		this.cash_edit.CASH = ""+Number(this.Cash.text)*100;
+        		this.DOOK = true;
+        		PopUpManager.removePopUp(this);
+        	}
+        	
+        	private function doViewPaymentBillDetailList():void{
+	 			var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1304;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				var bill:T_BILL_DETAIL = new T_BILL_DETAIL();
+				bill.MSISDN = this.Msisdn.text;
+				request.form.bill = bill;
+				this.settlement_service.doTransaction(request);
+				this.enabled = false;
+	 		}
+        	
+			public function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function doResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1304:
+						if(reponse.sign == 0){
+							var list_bill:ArrayCollection = reponse.result.list as ArrayCollection;
+							if(list_bill.length>0){
+								var dialog_bill_detail_list:ViewBillDetailDialog = new ViewBillDetailDialog();
+								dialog_bill_detail_list.showDialog(this,"终端手机号: "+this.Msisdn.text,list_bill);
+							}else{
+								CCSSAlert.showMessageDialog(this,"没有可供查看的详单！");
+								return;
+							}
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label x="23.5" y="20" text="手机号码" fontFamily="Arial" fontSize="12" color="#000000" fontWeight="normal"/>
+	<mx:Label x="84.5" y="20" text="未设置" id="Msisdn" fontFamily="Arial" fontSize="12" color="#492CB4"/>
+	<mx:Label x="223.9" y="20" text="总金额（元）" fontFamily="Arial" fontSize="12" color="#000000" fontWeight="normal"/>
+	<mx:Label x="308.9" y="20" text="未设置" id="Cash" fontFamily="Arial" fontSize="12" color="#492CB4"/>
+	<mx:Button x="168" y="77" label="查看详单" fontSize="12" fontFamily="Arial" color="#020202" click="doViewPaymentBillDetailList()"/>
+</mx:TitleWindow>

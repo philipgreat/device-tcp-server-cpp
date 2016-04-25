@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="390" height="424" title="添加终端型号" fontSize="12" fontFamily="Arial" borderColor="#14105A">
+	
+	<mx:Label x="10" y="21" text="终端生产厂家"/>
+		<mx:Label x="34" y="71" text="终端型号"/>
+		<mx:Label x="34" y="121" text="终端名字"/>
+		<mx:Label x="34" y="171" text="标配说明"/>
+		<mx:Label x="34" y="221" text="特性说明"/>
+		<mx:Label x="58" y="271" text="备注"/>
+		<mx:ComboBox x="104" y="21" width="140" id="query_by_org_id"></mx:ComboBox>
+		<mx:TextInput x="104" y="71" width="140" maxChars="16" id="Terminal_Type_Id" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)"/>
+		<mx:TextInput x="105" y="221" width="255" maxChars="128" id="Performance_Id" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)"/>
+		<mx:TextInput x="104" y="121" width="143" maxChars="32" id="Terminal_Name_Id" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)"/>
+		<mx:TextInput x="104" y="271" width="255" maxChars="128" id="Notes_Id" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)"/>
+		<mx:TextInput x="105" y="171" width="255" maxChars="128" id="Base_Config_Id" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)"/>
+	<mx:Button x="104" y="331" label="确定" fontFamily="Arial" fontSize="12" color="#040404" click="doClick()"/>
+	<mx:Button x="216.5" y="331" label="取消" fontFamily="Arial" fontSize="12" color="#040404" click="doCancle()"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.bean.T_TERMINAL_TYPE;
+			import mx.controls.List;
+		
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.common.RegularExpression;
+			
+			private var regular:RegularExpression = new RegularExpression();
+			public var DOOK:Boolean = false;
+			
+			
+			public var terminalType:T_TERMINAL_TYPE= null;
+			
+			public function showDialog(parent:DisplayObject,orgNameList:ArrayCollection):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				terminalType = new T_TERMINAL_TYPE();
+				this.query_by_org_id.dataProvider = orgNameList;
+			}
+			
+			private function doClick():void{
+				var ok:Boolean = true;
+				
+				if(this.regular.trim(this.Terminal_Type_Id.text) == ""){
+					CCSSAlert.showMessageDialog(this,"终端型号不能为空！");
+					ok = false;
+					this.showView(this.Terminal_Type_Id);
+					return;
+				}
+				
+				if(this.regular.trim(this.Terminal_Name_Id.text) == ""){
+					CCSSAlert.showMessageDialog(this,"终端名字不能为空！");
+					ok = false;
+					return;
+				}
+				if(ok){
+					this.terminalType.ORG_ID=this.query_by_org_id.selectedItem.data;
+		
+					this.terminalType.TERMINAL_TYPE=this.Terminal_Type_Id.text;
+					this.terminalType.TERMINAL_NAME=this.Terminal_Name_Id.text;
+					this.terminalType.BASE_CONFIG=this.Base_Config_Id.text;
+					this.terminalType.PERFORMANCE=this.Performance_Id.text;
+					this.terminalType.NOTES=this.Notes_Id.text;
+					this.DOOK = true;
+					PopUpManager.removePopUp(this);
+				}
+			}
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function showView(object:Object):void{
+				FlashContrl.target = object;
+				FlashContrl.play();
+				object.setFocus();
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+ </mx:Sequence>
+</mx:TitleWindow>

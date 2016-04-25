@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow creationComplete="initParam()" xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="386" height="260" fontSize="15" fontFamily="Arial" color="#F7F1F1" title="登陆窗口" borderColor="#100639" backgroundImage="@Embed(source='img/login.jpg')">
+	<mx:Canvas x="35.5" y="20" width="295" height="117" borderStyle="solid" backgroundColor="#CDF8D7" fontSize="12" color="#080808">
+		<mx:Label x="31" y="57" text="用户密码"/>
+		<mx:Label x="31" y="15" text="用户账号"/>
+		<mx:TextInput x="92" y="15" id="User_ID"/>
+		<mx:TextInput x="92" y="53" id="Password" displayAsPassword="true"/>
+		<mx:CheckBox x="138" y="87" label="启用角色菜单显示模式" fontSize="12" fontFamily="Arial" color="#F91C0B" fontWeight="bold" id="MenuShowType" selected="true" visible="false"/>
+	</mx:Canvas>
+	<mx:Button x="93.5" y="160" label="确定" fontFamily="Arial" fontSize="13" color="#000000" click="doClick()"/>
+	<mx:Button x="214.5" y="160" label="取消" fontFamily="Arial" fontSize="13" color="#000000" click="doCancle()"/>
+	<mx:RemoteObject id="role_service" destination="UserInfoRoleFlexService"  
+		result="doRoleResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import cn.ucans.common.MD5;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.bean.T_USER_INFO;
+			import cn.ucans.flex.FlexRequest;
+ 			import cn.ucans.flex.FlexReponse;
+ 			import mx.controls.Alert;
+			
+			public var DOOK:Boolean = false;
+			private var regular:RegularExpression = new RegularExpression();
+			public var user:T_USER_INFO = null;
+			
+			public var xml_busi:XML = null;
+			public var xml_param:XML = null;
+			public var xml_service:XML = null;
+			
+			public function showDialog(parent:DisplayObject):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				this.user = new T_USER_INFO();
+			}
+			
+			private function doClick():void{
+				var ok:Boolean = true;
+				if(this.regular.trim(this.User_ID.text) == ""){
+					Alert.show("用户编号不能为空！","错误提示");
+					ok = false;
+					return;
+				}
+				if(this.regular.trim(this.Password.text) == ""){
+					Alert.show("用户密码不能为空！","错误提示");
+					ok = false;
+					return;
+				}
+				
+				if(ok){
+					this.user.USER_ID = this.regular.trim(this.User_ID.text);
+					this.user.PASSWORD = MD5.encrypt(this.regular.trim(this.Password.text));
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1020;
+					request.form.user = this.user;
+					request.menu_id = "ONJM8-1W1UN-A544J-PSNK7-PXV95-2D8RT-T3PX8-AJH2Q-L5RNW-PRM7E-W93LA-HZN8D";
+					if(this.MenuShowType.selected){
+						request.form.type = "1";
+					}else{
+						request.form.type = "0";
+					}
+					this.role_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doCancle():void{
+				var request:URLRequest = new URLRequest("javascript:window.parent.close()");
+				navigateToURL(request,"_self"); 
+			}
+			
+			private function doRoleResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1020:
+						if(reponse.sign == 0){
+							this.parentApplication.LoginUser_ID = reponse.user_id;
+							this.parentApplication.LoginORG_ID = reponse.org_id;
+							this.parentApplication.LoginSEQ = reponse.result.LoginSEQ;
+							this.parentApplication.strPubURL = reponse.result.strPubURL;
+							this.parentApplication.LoginRole_ID = reponse.result.LoginRole_ID;
+							//CCSSAlert.showMessageDialog(this,this.parentApplication.LoginUser_ID+","+this.parentApplication.LoginORG_ID+","+this.parentApplication.LoginSEQ);
+							var Role_XML:String = reponse.result.Role_XML as String;
+							var xml_role:XML = new XML(Role_XML);
+							this.parentApplication.setMenuList(xml_role);
+							
+							PopUpManager.removePopUp(this);
+						}else{
+							Alert.show(reponse.message,"错误提示");
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doFault(event:Event):void{ 
+				Alert.show(event.toString(),"错误提示");
+				return;
+			}
+			 internal function initParam():void
+			{
+				User_ID.setFocus();
+				User_ID.addEventListener(KeyboardEvent.KEY_DOWN,CurrGoToLogin);
+				Password.addEventListener(KeyboardEvent.KEY_DOWN,CurrGoToLogin);
+			}
+			private function CurrGoToLogin(e:KeyboardEvent):void
+			{
+				if(e.keyCode.toString()  == '13')
+				{
+					doClick();
+				}
+			}
+		]]>
+	</mx:Script>
+</mx:TitleWindow>

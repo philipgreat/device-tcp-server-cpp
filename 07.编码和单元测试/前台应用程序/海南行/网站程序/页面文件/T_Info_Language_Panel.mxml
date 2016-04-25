@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" initialize="init()" width="790" height="550" fontSize="15"  backgroundColor="#FFFFFF" borderColor="#00656E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="语言类型配置" xmlns:ns1="*">
+	
+	<mx:RemoteObject id="infoLanguageType_service" destination="InfoLanguageService"  
+		result="doInfoTypeResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import cn.ucans.flex.FlexRequest;
+ 			import cn.ucans.flex.FlexReponse;
+ 			import cn.ucans.bean.T_INFO_LANGUAGE_LIST;
+ 			import mx.collections.ArrayCollection;
+ 			
+ 			private var dialog_add:AddLanguageInfoTypeDialog = null;
+ 			private var dialog_update:UpdateLanguageInfoTypeDialog=null;
+ 			private var dialog_confirm:CCSSConfirm = null;
+ 			
+ 			private var info_Language_util:T_INFO_LANGUAGE_LIST=null;//提供给修改操作时传递数据
+ 			
+			
+			
+			[Bindable]
+			public var tableGridList:ArrayCollection=new ArrayCollection();
+			
+			private function init():void{
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 9080;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id=this.parentApplication.LoginORG_ID;
+				request.user_id=this.parentApplication.LoginUser_ID;
+				
+				this.info_Language_util=new T_INFO_LANGUAGE_LIST();
+				
+				this.infoLanguageType_service.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			private function doAddLanguageInfoType():void{
+				this.dialog_add = new AddLanguageInfoTypeDialog();
+				this.dialog_add.showDialog(this);
+				this.dialog_add.addEventListener(Event.REMOVED,doAddLanguageInfoTypeHandler);
+				
+			}
+			
+			
+			private function doAddLanguageInfoTypeHandler(event:Event):void{
+				if(this.dialog_add.DOOK){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 9081;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id=this.parentApplication.LoginORG_ID;
+					request.user_id=this.parentApplication.LoginUser_ID;
+					
+					
+					this.dialog_add.languageInfoTypeForAdd.USER_ID=this.parentApplication.LoginUser_ID;
+					request.form.infoLanguageTypeForAdd=this.dialog_add.languageInfoTypeForAdd;
+					this.infoLanguageType_service.doTransaction(request);
+					this.enabled = false;
+				}
+				
+			}
+			
+			private function doSelectItem():void{
+				if(TableGrid.selectedIndex>-1){
+					var item:Object = this.TableGrid.selectedItem;
+					this.info_Language_util.LANGUAGE=item.LANGUAGE;
+					this.info_Language_util.LANGUAGE_NO=item.LANGUAGE_NO;
+					this.info_Language_util.LANGUAGE_NAME=item.LANGUAGE_NAME;
+					this.info_Language_util.USER_ID=item.USER_ID;
+					this.info_Language_util.INSERT_TIME=item.INSERT_TIME;
+				}else{
+					this.clear();
+				
+				}
+			}
+			
+			
+			private function doUpdateLanguageInfoType():void{
+				if(this.TableGrid.selectedIndex <= -1){
+					CCSSAlert.showMessageDialog(this,"请在数据表中选择要修改的语言类型配置，再进行此操作！");
+				}else{
+					this.dialog_update = new UpdateLanguageInfoTypeDialog();
+					this.dialog_update.showDialog(this,info_Language_util);
+					this.dialog_update.addEventListener(Event.REMOVED,doUpdateLanguageInfoTypeHandler);
+				}
+				
+			}
+			
+			
+			private function doUpdateLanguageInfoTypeHandler(event:Event):void{
+				
+					if(this.dialog_update.DOOK){
+						var request:FlexRequest = new FlexRequest();
+						request.ope_id = 9083;
+						request.menu_id = this.parentApplication.LoginMenu_ID;
+						request.org_id=this.parentApplication.LoginORG_ID;
+						request.user_id=this.parentApplication.LoginUser_ID;
+						
+						this.dialog_update.languageInfoTypeForUpdate.USER_ID=this.parentApplication.LoginUser_ID;
+						
+						request.form.languageInfoTypeForUpdate=this.dialog_update.languageInfoTypeForUpdate;
+						request.form.oldLanguageInfoTypeForUpdate=this.info_Language_util;
+						
+						this.infoLanguageType_service.doTransaction(request);
+						this.enabled = false;
+					}
+				
+			}
+			
+			private function doDeleteLanguageInfoType():void{
+				if(this.TableGrid.selectedIndex<=-1){
+					CCSSAlert.showMessageDialog(this,"请选择要删除的语言类型配置！");
+				}else{
+					
+					var item:Object = this.TableGrid.selectedItem;
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 9084;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id=this.parentApplication.LoginORG_ID;
+					request.user_id=this.parentApplication.LoginUser_ID;
+					
+
+					request.form.languageInfoTypeForDel = info_Language_util;
+					
+					this.dialog_confirm = new CCSSConfirm();
+					this.dialog_confirm.showDialog(this,"您确认要删除此语言类型配置吗？",request);
+					this.dialog_confirm.addEventListener(Event.REMOVED,doDeleteLanguageInfoTypeHandler);
+				}
+			}
+			
+			private function doDeleteLanguageInfoTypeHandler(event:Event):void{
+				if(this.dialog_confirm.YES){
+					var request:FlexRequest = this.dialog_confirm.object as FlexRequest;
+					this.infoLanguageType_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			
+			private function clear():void{
+					this.TableGrid.selectedIndex=-1;
+			}
+			
+			private function doInfoTypeResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 9080:
+						if(reponse.sign == 0){
+							tableGridList = reponse.result.list as ArrayCollection;
+							return;
+						}
+						break;
+					case 9081:
+						if(reponse.sign == 0){
+							this.clear();
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 9082:
+						break;
+					case 9083:
+						if(reponse.sign == 0){
+							this.clear();
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							this.clear();
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 9084:
+						if(reponse.sign == 0){
+							this.clear();
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							this.clear();
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Panel x="0" y="0" width="770" height="102" layout="absolute" borderColor="#0C21BA" title="控制区域" fontSize="13">
+		<mx:Button x="320" y="17" label="修改" fontFamily="Arial" fontSize="12" color="#040404" click="doUpdateLanguageInfoType()"/>
+		<mx:Button x="170" y="17" label="添加" fontFamily="Arial" fontSize="12" color="#040404" click="doAddLanguageInfoType()"/>
+		<mx:Button x="470" y="17" label="删除" fontFamily="Arial" fontSize="12" color="#040404" click="doDeleteLanguageInfoType()"/>
+	</mx:Panel>
+	
+	
+	<mx:Panel x="0" y="110" width="770" height="379" layout="absolute" borderColor="#321567" fontSize="13" title="数据">
+		<mx:DataGrid x="0" y="0" width="750" height="335" id="TableGrid" borderColor="#050505"  dataProvider="{tableGridList}" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center" click="doSelectItem()" fontSize="12" color="#030303">
+			<mx:columns>
+				<mx:DataGridColumn headerText="语言ID" dataField="LANGUAGE_NO" width="100"/>
+				<mx:DataGridColumn headerText="语言类型" dataField="LANGUAGE" width="150"/>
+				<mx:DataGridColumn headerText="语言类型名称" dataField="LANGUAGE_NAME" width="160"/>
+				<mx:DataGridColumn headerText="创建用户" dataField="USER_ID" width="150"/>
+				<mx:DataGridColumn headerText="创建时间" dataField="INSERT_TIME" width="160"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Panel>
+	
+	
+</mx:Panel>

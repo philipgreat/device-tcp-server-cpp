@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" initialize="init()" layout="absolute" width="790" height="550" fontSize="15" fontFamily="Arial" color="#F3F5F6" borderColor="#00656E" title="登陆情况查询（平台角色）" xmlns:ns1="*">
+	<mx:Panel x="0" y="132" width="770" height="372" layout="absolute" borderColor="#101139" title="数据">
+		<mx:DataGrid x="0" y="0" width="750" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center"  height="326" id="TableGrid" borderColor="#040404" color="#020202" fontSize="12">
+			<mx:columns>
+				<mx:DataGridColumn headerText="操作员ID" dataField="USER_ID" width="100"/>
+				<mx:DataGridColumn headerText="操作员名字" dataField="USER_NAME" width="130"/>				
+				<mx:DataGridColumn headerText="所属组织" dataField="ORG_NAME" width="140"/>
+				<mx:DataGridColumn headerText="角色名称" dataField="ROLE_NAME" width="120"/>
+				<mx:DataGridColumn headerText="登录时间" dataField="LOGIN_TIME" width="140"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Panel>
+	<mx:Panel x="0" y="0" width="770" height="124" layout="absolute" borderColor="#221F8D" title="查询向导">
+		<mx:Button x="688" y="10" label="查询" click="doQueryLoginHis()" fontFamily="Arial" fontSize="12" color="#030303" fillAlphas="[1.0, 1.0]" fillColors="[#F1A4A4, #F5E4E4]"/>
+		<mx:Label x="521" y="12" text="操作员名字" fontSize="12" color="#030303"/>
+		<mx:TextInput x="594" y="10" width="86" maxChars="8" fontSize="12" fontFamily="Arial" color="#020202" id="User_Name"/>
+		<mx:Label x="10" y="10" text="组织类型" fontSize="12" color="#050505"/>
+		<mx:ComboBox x="71" y="8" fontSize="12" color="#020202" width="114" id="Org_Type" fontFamily="Arial"></mx:ComboBox>
+		<mx:ComboBox x="250" y="8" fontSize="12" color="#020202" width="114" fontFamily="Arial" id="Role_ID"></mx:ComboBox>
+		<mx:ComboBox x="71" y="41" fontSize="12" color="#020202" width="114" id="Org_ID" fontFamily="Arial" maxWidth="300"></mx:ComboBox>
+		<mx:Label x="10" y="44" text="组织名称" fontSize="12" color="#050505"/>
+		<mx:Label x="213" y="11" text="角色" fontSize="12" color="#050505"/>
+		<mx:Label x="372" y="12" text="帐户ID" fontSize="12" color="#050505"/>
+		<mx:ComboBox x="418" y="9" fontSize="12" color="#020202" width="95" fontFamily="Arial" id="User_ID"></mx:ComboBox>
+		<ns1:TimeField x="250" y="43" fontFamily="Arial" fontSize="12" color="#020202" id="notbefore">
+		</ns1:TimeField>
+		<mx:Label x="193" y="44" text="开始时间" fontSize="12" color="#050505"/>
+		<mx:Label x="477" y="44" text="截止时间" fontSize="12" color="#050505"/>
+		<ns1:TimeField x="538" y="43" fontFamily="Arial" fontSize="12" color="#020202" id="notafter">
+		</ns1:TimeField>
+	</mx:Panel>
+	<mx:RemoteObject id="role_service" destination="UserInfoRoleFlexService"  
+		result="doRoleResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+	 		import cn.ucans.bean.T_ROLE_INFO;
+	 		
+	 		import cn.ucans.bean.T_ORG_INFO;
+	 		import cn.ucans.bean.T_USER_INFO;
+	 		import cn.ucans.tree.TreeNode;
+	 		import mx.collections.ArrayCollection;
+	 		import cn.ucans.flex.FlexRequest;
+	 		import cn.ucans.flex.FlexReponse;
+	 		import cn.ucans.common.RegularExpression;
+	 		import cn.ucans.common.DataProvider;
+	 		import cn.ucans.common.ArrayFactory;
+	 		
+	 		private var regular:RegularExpression = new RegularExpression();
+			
+			private function init():void{
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1027;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				this.role_service.doTransaction(request);
+				this.enabled = false;
+				this.notbefore.setTime("00:00:00");
+				this.notafter.setTime("23:59:59");
+				this.Org_Type.dataProvider = DataProvider.combobox_array_Org_Type_Edit_Normal;
+			}
+			
+			private function doQueryLoginHis():void{
+				var org:T_ORG_INFO = new T_ORG_INFO();
+				org.ORG_ID = this.Org_ID.selectedItem.data;
+				org.ORG_TYPE = this.Org_Type.selectedItem.data;
+				
+				var user:T_USER_INFO = new T_USER_INFO();
+				user.ROLE_ID = this.Role_ID.selectedItem.data;
+				user.USER_ID = this.User_ID.selectedItem.data;
+				user.USER_NAME = regular.trim(this.User_Name.text);
+				
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1026;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				request.form.org = org;
+				request.form.user = user;
+				request.form.notbefore = this.notbefore.getTime();
+				request.form.notafter = this.notafter.getTime();
+				this.role_service.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			private function doRoleResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1026:
+						if(reponse.sign == 0){
+							var collection:ArrayCollection = reponse.result.list as ArrayCollection;
+							this.TableGrid.dataProvider = collection;
+							if(collection.length==0){
+								CCSSAlert.showMessageDialog(this,"没有找到任何数据！");
+								return;
+							}
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1027:
+						if(reponse.sign == 0){
+							var list_role_id:ArrayCollection = reponse.result.list_role_id as ArrayCollection;
+							var list_org_id:ArrayCollection = reponse.result.list_org_id as ArrayCollection;
+							var list_user_id:ArrayCollection = reponse.result.list_user_id as ArrayCollection;
+							this.Role_ID.dataProvider = list_role_id;
+							this.Org_ID.dataProvider = list_org_id;
+							this.User_ID.dataProvider = list_user_id;
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+	 	]]>
+	 </mx:Script>
+		
+</mx:Panel>

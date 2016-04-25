@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="364" height="398" title="添加终端生产厂商维修点" fontSize="12" fontFamily="Arial" borderColor="#14105A">
+	
+	<mx:Label x="34" y="27" text="终端厂家"/>
+		<mx:Label x="34" y="68" text="所在省份"/>
+		<mx:Label x="34" y="110" text="所在地市"/>
+		<mx:Label x="34" y="155" text="联系电话"/>
+		<mx:Label x="34" y="199" text="邮政编码"/>
+		<mx:Label x="58" y="247" text="地址"/>
+		<mx:ComboBox x="104" y="24" width="140" id="query_by_org_id" enabled="false"></mx:ComboBox>
+		<mx:TextInput x="104" y="66" width="140" maxChars="6" id="Prov_Name_Id" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)"/>
+		<mx:TextInput x="105" y="199" width="192" maxChars="6" id="Zip_Code_Id" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)"/>
+		<mx:TextInput x="104" y="110" width="143" maxChars="8" id="Area_Name_Id" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)"/>
+		<mx:TextInput x="104" y="245" width="193" maxChars="64" id="Address_Id" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)"/>
+		<mx:TextInput x="105" y="155" width="192" maxChars="64" id="Tele_No_Id" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)"/>
+	<mx:Button x="104" y="305" label="确定" fontFamily="Arial" fontSize="12" color="#040404" click="doClick()"/>
+	<mx:Button x="216.5" y="305" label="取消" fontFamily="Arial" fontSize="12" color="#040404" click="doCancle()"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.bean.T_TERMINAL_SERVICE_POINT;
+			import mx.controls.List;
+			import cn.ucans.common.ArrayFactory;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.common.RegularExpression;
+			
+			private var regular:RegularExpression = new RegularExpression();
+			public var DOOK:Boolean = false;
+			
+			
+			public var terminalServiePoint:T_TERMINAL_SERVICE_POINT= null;
+			
+			public function showDialog(parent:DisplayObject,orgNameList:ArrayCollection,terminalServiceP:T_TERMINAL_SERVICE_POINT):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				
+				terminalServiePoint=new T_TERMINAL_SERVICE_POINT();
+				
+				terminalServiePoint.ID = terminalServiceP.ID;
+				terminalServiePoint.ORG_ID = terminalServiceP.ORG_ID;
+				terminalServiePoint.PROV_NAME = terminalServiceP.PROV_NAME;
+				terminalServiePoint.AREA_NAME = terminalServiceP.AREA_NAME;
+				terminalServiePoint.TELE_NO = terminalServiceP.TELE_NO;
+				terminalServiePoint.ZIP_CODE = terminalServiceP.ZIP_CODE;
+				terminalServiePoint.ADDRESS = terminalServiceP.ADDRESS;
+				
+				this.query_by_org_id.dataProvider = orgNameList;
+				
+				this.query_by_org_id.selectedItem=ArrayFactory.getComboBoxSelectedItemFromArrayCollection(orgNameList,terminalServiePoint.ORG_ID);
+				this.Prov_Name_Id.text=terminalServiePoint.PROV_NAME;
+				this.Area_Name_Id.text=terminalServiePoint.AREA_NAME;
+				this.Tele_No_Id.text=terminalServiePoint.TELE_NO;
+				this.Zip_Code_Id.text=terminalServiePoint.ZIP_CODE;
+				this.Address_Id.text=terminalServiePoint.ADDRESS;
+				
+			}
+			
+			private function doClick():void{
+				var ok:Boolean = true;
+				
+				if(this.regular.trim(this.Prov_Name_Id.text) == ""){
+					CCSSAlert.showMessageDialog(this,"所在省份不能为空！");
+					ok = false;
+					this.showView(this.Prov_Name_Id);
+					return;
+				}
+				
+				if(this.regular.trim(this.Area_Name_Id.text) == ""){
+					CCSSAlert.showMessageDialog(this,"所在地市不能为空！");
+					ok = false;
+					return;
+				}
+				
+				if(this.regular.trim(this.Tele_No_Id.text) == ""){
+					CCSSAlert.showMessageDialog(this,"联系电话不能为空！");
+					ok = false;
+					return;
+				}
+				
+//				if(!this.regular.isNumber(this.Tele_No_Id.text)){
+//					CCSSAlert.showMessageDialog(this,"联系电话格式不正确！");
+//					ok = false;
+//					return;
+//				}
+				
+				if(!this.regular.isChinaPostCode(this.Zip_Code_Id.text)){
+					CCSSAlert.showMessageDialog(this,"邮政编码格式不正确！");
+					ok = false;
+					return;
+				}
+				
+				if(this.regular.trim(this.Zip_Code_Id.text) == ""){
+					CCSSAlert.showMessageDialog(this,"邮政编码不能为空！");
+					ok = false;
+					return;
+				}
+				
+				if(this.regular.trim(this.Address_Id.text) == ""){
+					CCSSAlert.showMessageDialog(this,"地址不能为空！");
+					ok = false;
+					return;
+				}
+				
+				
+				if(ok){
+					this.terminalServiePoint.ORG_ID=this.query_by_org_id.selectedItem.data;
+					this.terminalServiePoint.PROV_NAME=this.Prov_Name_Id.text;
+					this.terminalServiePoint.AREA_NAME=this.Area_Name_Id.text;
+					this.terminalServiePoint.TELE_NO=this.Tele_No_Id.text;
+					this.terminalServiePoint.ZIP_CODE=this.Zip_Code_Id.text;
+					this.terminalServiePoint.ADDRESS=this.Address_Id.text;
+					this.DOOK = true;
+					PopUpManager.removePopUp(this);
+				}
+			}
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function showView(object:Object):void{
+				FlashContrl.target = object;
+				FlashContrl.play();
+				object.setFocus();
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+ </mx:Sequence>
+</mx:TitleWindow>

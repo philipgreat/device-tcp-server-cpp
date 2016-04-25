@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="258" height="326" fontFamily="Arial" fontSize="12" xmlns:ns1="*" borderColor="#08036A" headerHeight="10">
+	<ns1:NormalTreeField x="10" y="42" width="218" height="251" borderStyle="solid" borderColor="#040404" id="OrgTree">
+	</ns1:NormalTreeField>
+	<mx:Button x="116" y="10" label="确定" click="doClick()"/>
+	<mx:Button x="176" y="10" label="取消" click="doCancle()"/>
+	<mx:RemoteObject id="org_service" destination="OrgFlexService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.tree.TreeNode;
+			import cn.ucans.flex.FlexRequest;
+	 		import cn.ucans.flex.FlexReponse;
+			
+			public var DOOK:Boolean = false;
+			private var regular:RegularExpression = new RegularExpression();
+			
+			public var org_type:int = -1;
+			public var org_name:String = "";
+			public var org_id:String = "";
+			
+			public function showDialog(parent:DisplayObject,tree_str_xml:String):void{
+				PopUpManager.addPopUp(this,parent,false);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1005;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.type = 0;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				this.org_service.doTransaction(request);
+				this.enabled = false;	
+			}
+			
+			private function doResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1005:
+						if(reponse.sign == 0){
+							var xml_org_init:String = reponse.result.xml as String;
+							var xml:XML = new XML(xml_org_init);
+							//CCSSAlert.showMessageDialog(this,xml_org_init);
+							this.OrgTree.dataProvider = xml;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			
+			
+			private function doClick():void{
+				var node:TreeNode = this.OrgTree.selectNode;
+				if(node != null){
+					this.org_type = node.type;
+					this.org_id = node.data;
+					this.org_name = node.label;								
+				}				
+				this.DOOK = true;	
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+	<mx:Label x="10" y="12" text="选择组织"/>
+</mx:TitleWindow>

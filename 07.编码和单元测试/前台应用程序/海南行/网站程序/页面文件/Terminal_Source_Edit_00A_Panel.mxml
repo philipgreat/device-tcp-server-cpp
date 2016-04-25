@@ -1,0 +1,917 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" initialize="init()" layout="absolute" width="790" height="550" borderColor="#00656E" title="终端管理" color="#F3F5F6" fontSize="15" fontFamily="Arial" xmlns:ns1="*" backgroundColor="#B0C1F0">
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+ 	</mx:Sequence>
+	<mx:RemoteObject id="terminal_service" destination="TerminalServiceFlexService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.table.RowItem;
+			import cn.ucans.table.XMLTable;
+			import cn.ucans.bean.T_TERMINAL_INFO;
+			import cn.ucans.bean.T_ORG_INFO;
+	 		import cn.ucans.tree.TreeNode;
+	 		import mx.collections.ArrayCollection;
+	 		import cn.ucans.flex.FlexRequest;
+	 		import cn.ucans.flex.FlexReponse;
+	 		import cn.ucans.common.RegularExpression;
+	 		import cn.ucans.common.DataProvider;
+	 		import cn.ucans.common.ArrayFactory;
+	 		
+	 		private var NextPageNO:int = 0;
+	 		private var CurrentPageNO:int = 0;
+	 		private var SuperPageNO:int = 0;
+			
+			private var list_factory_edit:ArrayCollection = null;
+			private var list_factory_query:ArrayCollection = null;
+			private var list_hotel_query:ArrayCollection = null;
+			private var list_hotel_edit:ArrayCollection = null;
+			private var list_terminal_status_edit:ArrayCollection = null;
+			private var list_terminal_status_query:ArrayCollection = null;
+			private var list_terminal_type_edit:ArrayCollection = null;
+			private var list_terminal_type_query:ArrayCollection = null;
+		
+			private var regular:RegularExpression = new RegularExpression();
+			private var collection_terminal:ArrayCollection = null;
+			private var dialog_update:UpdateTerminal00ADialog = null;
+			private var dialog_fenfa:FenFaTerminalDialog = null;
+			private var arrayCollection:ArrayCollection = null;
+			
+			private function init():void{	
+				this.TableGrid.addEventListener(MouseEvent.CLICK,doTableGridClickHandler);
+				var date:Date = new Date();
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1203;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				this.terminal_service.doTransaction(request);
+				this.enabled = false;
+				
+				this.check01.visible = false;
+				this.check02.visible = false;
+				this.check03.visible = false;
+				this.check04.visible = false;
+				this.check05.visible = false;
+				this.check06.visible = false;
+				this.check07.visible = false;
+				this.check08.visible = false;
+				this.check09.visible = false;
+				this.check10.visible = false;
+			}
+			
+			private function doUpdateTerminalInfo():void{
+				var collection:ArrayCollection = this.getSelectedValuesArray();
+				if(collection.length > 0){
+					if(collection.length==1){
+						this.dialog_update = new UpdateTerminal00ADialog();
+						this.dialog_update.showDialog(this,collection.getItemAt(0),this.list_terminal_status_edit,this.list_terminal_type_edit,this.list_factory_edit,this.list_hotel_edit);
+						this.dialog_update.addEventListener(Event.REMOVED,doUpdateTerminalInfoHandler);
+					}else{
+						CCSSAlert.showMessageDialog(this,"最多一次更新一条记录！");
+						return;
+					}
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在列表中选中一条记录，再进行本操作！");
+					return;
+				}
+			}
+			
+			private function showViewTerminalDialog(message:String,list:ArrayCollection):void{
+				var dialog:ViewTerminalListDialog = new ViewTerminalListDialog();
+				dialog.showDialog(this,message,list,this.list_terminal_status_edit);
+			}
+			
+			private function doUpdateTerminalInfoHandler(event:Event):void{
+				if(this.dialog_update.DOOK){
+				    var item:Object = this.TableGrid.selectedItem;
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1202;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.terminal = this.dialog_update.terminal;
+					request.form.item = this.dialog_update.old_selected_item;
+					this.terminal_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doTableGridClickHandler(event:MouseEvent):void{
+				if(this.TableGrid.selectedIndex>-1){
+					var item:Object = this.TableGrid.selectedItem;
+//					this.Join_Time.text = item.JOIN_TIME;
+//					this.Distribute_Time.text = item.DISTRIBUTE_TIME;
+//					this.Hotel_Receiver.text = item.HOTEL_RECEIVER;
+//					this.Label_TERMINAL_TYPE.text = item.TERMINAL_TYPE;
+					this.doClickSingleSelectedForCheckBox(this.TableGrid.selectedIndex);
+				}
+			}
+			
+			private function doQueryTerminal(type:int):void{
+				var requestPgeNo:int = 1;
+				if(type == 1){
+					requestPgeNo = 1;
+				}else if(type == 2){
+					requestPgeNo = this.SuperPageNO;
+				}else if(type == 3){
+					this.CurrentPageNO = Number(this.SelectPage.selectedItem.data)
+					requestPgeNo = this.CurrentPageNO;
+				}else if(type == 4){
+					requestPgeNo = this.NextPageNO;
+				}else if(type == 5){
+					requestPgeNo = 99999999;
+				}
+				
+				var ok:Boolean = true;
+				if(regular.trim(this.Imei_Number.text) != ""){
+					if(!regular.isNumber(this.Imei_Number.text)){
+						CCSSAlert.showMessageDialog(this,"终端IMEI号必须为数字！");
+						ok = false;
+						this.showView(this.Imei_Number);
+						return;
+					}
+					if(!regular.isLengthSizeOK(this.Imei_Number.text,15)){
+						CCSSAlert.showMessageDialog(this,"终端IMEI号必须为15为数字！");
+						ok = false;
+						this.showView(this.Imei_Number);
+						return;
+					}
+				}
+				if(regular.trim(this.Uim_Number.text) != ""){
+					if(!regular.isNumber(this.Uim_Number.text)){
+						CCSSAlert.showMessageDialog(this,"UIM卡号必须为数字！");
+						ok = false;
+						this.showView(this.Uim_Number);
+						return;
+					}
+					if(!regular.isLengthSizeOK(this.Uim_Number.text,15)){
+						CCSSAlert.showMessageDialog(this,"UIM卡号必须为15为数字！");
+						ok = false;
+						this.showView(this.Imei_Number);
+						return;
+					}
+				}
+				if(regular.trim(this.Msisdn.text) != ""){
+					if(!regular.isChineseMobileTelephone(this.Msisdn.text)){
+						CCSSAlert.showMessageDialog(this,"手机号格式错误！");
+						ok = false;
+						this.showView(this.Msisdn);
+						return;
+					}
+				}
+				if(ok){
+					var request:FlexRequest = new FlexRequest();
+					request.form.CURRENT_PAGE_NO = ""+requestPgeNo;
+					request.ope_id = 1205;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					var terminal:T_TERMINAL_INFO = new T_TERMINAL_INFO();
+					terminal.IMEI_NUMBER = this.regular.trim(this.Imei_Number.text);
+					terminal.UIM_NUMBER = this.regular.trim(this.Uim_Number.text);
+					terminal.STATUS = this.Status.selectedItem.data;
+					terminal.MSISDN = this.regular.trim(this.Msisdn.text);
+					terminal.TERMINAL_TYPE = this.Terminal_Type.selectedItem.data;
+					terminal.HOTEL_ID = this.Hotel_ID.selectedItem.data;
+					request.form.terminal = terminal;
+					this.terminal_service.doTransaction(request);
+					this.enabled = false;
+				}				
+			}
+	        
+	        private function doStatus(item:Object,column:DataGridColumn):String{
+				return ArrayFactory.getValueFroamArrayCollection(this.list_terminal_status_query,item.STATUS);
+			}
+			
+			private function doHotel_ID(item:Object,column:DataGridColumn):String{
+				if(item.HOTEL_ID == null || regular.trim(item.HOTEL_ID).length==0){
+					return "";
+				}else{
+					return ArrayFactory.getValueFroamArrayCollection(this.list_hotel_query,item.HOTEL_ID);
+				}
+			}
+			
+			private function doProduct_Org_ID(item:Object,column:DataGridColumn):String{
+				if(item.PRODUCT_ORG_ID == null || regular.trim(item.PRODUCT_ORG_ID).length==0){
+					return "";
+				}else{
+					return ArrayFactory.getValueFroamArrayCollection(this.list_factory_query,item.PRODUCT_ORG_ID);
+				}
+			}
+			
+			private function doTERMINAL_TYPE(item:Object,column:DataGridColumn):String{
+				return ArrayFactory.getValueFroamArrayCollection(this.list_terminal_type_query,item.TERMINAL_TYPE);
+			}
+
+			private function doResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1202:
+						if(reponse.sign == 0){
+							this.doQueryTerminal(3);
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1203:
+						if(reponse.sign == 0){
+							this.list_factory_edit = reponse.result.list_factory_edit as ArrayCollection;
+							this.list_factory_query = reponse.result.list_factory_query as ArrayCollection;
+							this.list_hotel_query = reponse.result.list_hotel_query as ArrayCollection;
+							this.list_hotel_edit = reponse.result.list_hotel_edit as ArrayCollection;
+							this.list_terminal_status_edit = reponse.result.list_terminal_status_edit as ArrayCollection;
+							this.list_terminal_status_query = reponse.result.list_terminal_status_query as ArrayCollection;
+							this.list_terminal_type_edit = reponse.result.list_terminal_type_edit as ArrayCollection;
+							this.list_terminal_type_query = reponse.result.list_terminal_type_query as ArrayCollection;
+							
+							this.Terminal_Type.dataProvider = this.list_terminal_type_query;
+							this.Hotel_ID.dataProvider = this.list_hotel_query;
+							this.Product_Org_ID.dataProvider = this.list_factory_query;
+							this.Status.dataProvider = this.list_terminal_status_query;
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1205:
+						if(reponse.sign == 0){
+							var CURRENT_PAGE_NO:int = reponse.result.map.CURRENT_PAGE_NO as int;
+							var PAGE_COUNT:int = reponse.result.map.PAGE_COUNT as int;
+							var ROW_COUNT:int = reponse.result.map.ROW_COUNT as int;
+							this.collection_terminal = reponse.result.map.DATA_LIST as ArrayCollection;
+							this.setPageTableControl(CURRENT_PAGE_NO,PAGE_COUNT,ROW_COUNT,this.collection_terminal);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1206:
+						if(reponse.sign == 0){
+							this.doQueryTerminal(3);
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else if(reponse.sign == -100){
+							var message_fenfa:String = reponse.message;
+							var list_fenfa:ArrayCollection = reponse.result.list;
+							this.showViewTerminalDialog(message_fenfa,list_fenfa);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1207:
+						if(reponse.sign == 0){
+							this.doQueryTerminal(3);
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else if(reponse.sign == -100){
+							var message_recover:String = reponse.message;
+							var list_recover:ArrayCollection = reponse.result.list;
+							this.showViewTerminalDialog(message_recover,list_recover);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1208:
+						if(reponse.sign == 0){
+							this.doQueryTerminal(3);
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else if(reponse.sign == -100){
+							var message_revoke:String = reponse.message;
+							var list_revoke:ArrayCollection = reponse.result.list;
+							this.showViewTerminalDialog(message_revoke,list_revoke);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1209:
+						if(reponse.sign == 0){
+							var list_lead:ArrayCollection = reponse.result.list as ArrayCollection;
+							this.leadData(list_lead);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1210:
+						if(reponse.sign == 0){
+							var url:String = reponse.result.url as String;
+							var request:URLRequest = new URLRequest(url);
+							navigateToURL(request, "_top");
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function leadData(collection:ArrayCollection):void{
+				var table:XMLTable = new XMLTable();
+				table.addTitle("手机号码,状态,终端型号,酒店,生产厂家");
+				//CCSSAlert.showMessageDialog(this,collection.getItemAt(0).STATUS+","+collection.getItemAt(0).HOTEL_ID);
+				for(var i:int=0;i<collection.length;i++){
+					var item:Object = collection.getItemAt(i);
+					
+					var row:RowItem = new RowItem();
+//					IMEI_NUMBER,UIM_NUMBER,MSISDN,HOTEL_ID,PRODUCT_ORG_ID,TERMINAL_TYPE,STATUS
+					row.setValue("MSISDN",item.MSISDN);					
+					row.setValue("STATUS",ArrayFactory.getValueFroamArrayCollection(this.list_terminal_status_query,item.STATUS));
+					row.setValue("TERMINAL_TYPE",ArrayFactory.getValueFroamArrayCollection(this.list_terminal_type_query,item.TERMINAL_TYPE));	
+					row.setValue("HOTEL_ID",ArrayFactory.getValueFroamArrayCollection(this.list_hotel_edit,item.HOTEL_ID));									
+					row.setValue("PRODUCT_ORG_ID",ArrayFactory.getValueFroamArrayCollection(this.list_factory_query,item.PRODUCT_ORG_ID));					
+					table.addRowItem(row);
+				}
+				
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1210;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				request.form.xml = table.toXMLString();
+//				CCSSAlert.showMessageDialog(this,"获得数据\n"+table.toXMLString());
+//				return;
+				this.terminal_service.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			private function setPageTableControl(CURRENT_PAGE_NO:int,PAGE_COUNT:int,ROW_COUNT:int,arrayCollection:ArrayCollection):void{
+				//CCSSAlert.showMessageDialog(this,CURRENT_PAGE_NO+","+PAGE_COUNT+","+ROW_COUNT+","+arrayCollection.length);
+				this.SuperPageNO = CURRENT_PAGE_NO - 1;
+				this.CurrentPageNO = CURRENT_PAGE_NO - 1;
+				this.NextPageNO = CURRENT_PAGE_NO + 1;
+				this.TableGrid.dataProvider = arrayCollection;
+				var array:Array = new Array();
+				for(var i:int=1;i<=PAGE_COUNT;i++){
+					array.push({label:"第"+i+"页",data:""+i});
+				}
+				this.SelectPage.dataProvider = array;
+				if(CURRENT_PAGE_NO>0){
+					this.SelectPage.selectedItem = ArrayFactory.getComboBoxSelectedItemFromArray(array,""+CURRENT_PAGE_NO);
+				}			
+				this.TableRowCount.text = ROW_COUNT+"";
+				this.showCheckBoxVisible(arrayCollection.length);
+				this.clearAllCheckBoxSelected();
+			}
+			
+			private function doFenFaTerminal():void{
+				var array_items:ArrayCollection = this.getSelectedValuesArray();
+				if(array_items.length>0){
+					this.dialog_fenfa = new FenFaTerminalDialog();
+					this.dialog_fenfa.showDialog(this,array_items.length,this.list_hotel_edit,array_items);
+					this.dialog_fenfa.addEventListener(Event.REMOVED,doFenFaTerminalHandler);					
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在数据表中选中一条或多条记录，再进行本操作！");
+					return;
+				}
+			}
+			
+			private function doFenFaTerminalHandler(event:Event):void{
+				if(this.dialog_fenfa.DOOK){
+					var collection:ArrayCollection = this.dialog_fenfa.object as ArrayCollection;
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1206;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.list = collection;
+					request.form.hotel_id = this.dialog_fenfa.hotel_id;
+					request.form.Receiver = this.dialog_fenfa.Receiver;
+					this.terminal_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doRecoverTerminal():void{
+				var collection:ArrayCollection = this.getSelectedValuesArray();
+				if(collection.length>0){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1207;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.list = collection;
+					this.terminal_service.doTransaction(request);
+					this.enabled = false;
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在数据表中选中一条或多条记录，再进行本操作！");
+				}
+			}
+			
+			private function doRevokeTerminal():void{
+				var collection:ArrayCollection = this.getSelectedValuesArray();
+				if(collection.length>0){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1208;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.list = collection;
+					this.terminal_service.doTransaction(request);
+					this.enabled = false;
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在数据表中选中一条或多条记录，再进行本操作！");
+				}
+			}
+			
+			private function doLeadTerminal():void{
+				if(this.collection_terminal == null || this.collection_terminal.length>0){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1209;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					var terminal:T_TERMINAL_INFO = new T_TERMINAL_INFO();
+					terminal.IMEI_NUMBER = this.regular.trim(this.Imei_Number.text);
+					terminal.UIM_NUMBER = this.regular.trim(this.Uim_Number.text);
+					terminal.STATUS = this.Status.selectedItem.data;
+					terminal.MSISDN = this.regular.trim(this.Msisdn.text);
+					terminal.TERMINAL_TYPE = this.Terminal_Type.selectedItem.data;
+					terminal.HOTEL_ID = this.Hotel_ID.selectedItem.data;
+					request.form.terminal = terminal;
+					this.terminal_service.doTransaction(request);
+					this.enabled = false;
+				}else{
+					CCSSAlert.showMessageDialog(this,"请先查询出数据，再进行本操作！");
+					return;
+				}
+			}
+			
+			private function doViewSingleTerminal():void{
+				var collection:ArrayCollection = this.getSelectedValuesArray();
+				if(collection.length>0){
+					if(collection.length == 1){							
+						var dialog:ViewSingle00ATerminalDialog = new ViewSingle00ATerminalDialog();
+						dialog.showDialog(this,collection.getItemAt(0),this.list_terminal_status_edit,this.list_terminal_type_edit,this.list_factory_edit,this.list_hotel_edit);
+					}else{
+						CCSSAlert.showMessageDialog(this,"一次只能查看一个终端的详细信息！");
+						return;
+					}
+				}else{
+					CCSSAlert.showMessageDialog(this,"请先在数据表中选中一条数据，再进行本操作！");
+					return;
+				}
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			
+			private function showView(object:Object):void{
+				FlashContrl.target = object;
+				FlashContrl.play();
+				object.setFocus();
+			}
+			
+			
+			
+			private function doCheckSelectAllHandler():void{
+				if(this.CheckSelectAll.selected){
+					this.check01.selected = true;
+					this.check02.selected = true;
+					this.check03.selected = true;
+					this.check04.selected = true;
+					this.check05.selected = true;
+					this.check06.selected = true;
+					this.check07.selected = true;
+					this.check08.selected = true;
+					this.check09.selected = true;
+					this.check10.selected = true;
+				}else{
+					this.check01.selected = false;
+					this.check02.selected = false;
+					this.check03.selected = false;
+					this.check04.selected = false;
+					this.check05.selected = false;
+					this.check06.selected = false;
+					this.check07.selected = false;
+					this.check08.selected = false;
+					this.check09.selected = false;
+					this.check10.selected = false;
+				}
+				
+			}
+			
+			private function clearAllCheckBoxSelected():void{
+				this.CheckSelectAll.selected = false;
+				this.check01.selected = false;
+				this.check02.selected = false;
+				this.check03.selected = false;
+				this.check04.selected = false;
+				this.check05.selected = false;
+				this.check06.selected = false;
+				this.check07.selected = false;
+				this.check08.selected = false;
+				this.check09.selected = false;
+				this.check10.selected = false;				
+			}
+			
+			private function getSelectedValuesArray():ArrayCollection{
+				var array:ArrayCollection = new ArrayCollection();
+				if(this.check01.visible == true && this.check01.selected){
+					array.addItem(this.collection_terminal.getItemAt(0));
+				}
+				if(this.check02.visible == true && this.check02.selected){
+					array.addItem(this.collection_terminal.getItemAt(1));
+				}
+				if(this.check03.visible == true && this.check03.selected){
+					array.addItem(this.collection_terminal.getItemAt(2));
+				}
+				if(this.check04.visible == true && this.check04.selected){
+					array.addItem(this.collection_terminal.getItemAt(3));
+				}
+				if(this.check05.visible == true && this.check05.selected){
+					array.addItem(this.collection_terminal.getItemAt(4));
+				}
+				if(this.check06.visible == true && this.check06.selected){
+					array.addItem(this.collection_terminal.getItemAt(5));
+				}
+				if(this.check07.visible == true && this.check07.selected){
+					array.addItem(this.collection_terminal.getItemAt(6));
+				}
+				if(this.check08.visible == true && this.check08.selected){
+					array.addItem(this.collection_terminal.getItemAt(7));
+				}
+				if(this.check09.visible == true && this.check09.selected){
+					array.addItem(this.collection_terminal.getItemAt(8));
+				}
+				if(this.check10.visible == true && this.check10.selected){
+					array.addItem(this.collection_terminal.getItemAt(9));
+				}
+				return array;
+			} 
+			
+			private function clearCheckBox():void{
+				this.CheckSelectAll.selected = false;
+				this.check01.selected = false;
+				this.check02.selected = false;
+				this.check03.selected = false;
+				this.check04.selected = false;
+				this.check05.selected = false;
+				this.check06.selected = false;
+				this.check07.selected = false;
+				this.check08.selected = false;
+				this.check09.selected = false;
+				this.check10.selected = false;
+			}
+			
+			private function doClickSingleSelectedForCheckBox(index:int):void{
+				this.CheckSelectAll.selected = false;
+				switch(index){
+					case 0:
+						this.check01.selected = true;
+						this.check02.selected = false;
+						this.check03.selected = false;
+						this.check04.selected = false;
+						this.check05.selected = false;
+						this.check06.selected = false;
+						this.check07.selected = false;
+						this.check08.selected = false;
+						this.check09.selected = false;
+						this.check10.selected = false;
+						break;
+					case 1:
+						this.check01.selected = false;
+						this.check02.selected = true;
+						this.check03.selected = false;
+						this.check04.selected = false;
+						this.check05.selected = false;
+						this.check06.selected = false;
+						this.check07.selected = false;
+						this.check08.selected = false;
+						this.check09.selected = false;
+						this.check10.selected = false;
+						break;
+					case 2:
+						this.check01.selected = false;
+						this.check02.selected = false;
+						this.check03.selected = true;
+						this.check04.selected = false;
+						this.check05.selected = false;
+						this.check06.selected = false;
+						this.check07.selected = false;
+						this.check08.selected = false;
+						this.check09.selected = false;
+						this.check10.selected = false;
+						break;
+					case 3:
+						this.check01.selected = false;
+						this.check02.selected = false;
+						this.check03.selected = false;
+						this.check04.selected = true;
+						this.check05.selected = false;
+						this.check06.selected = false;
+						this.check07.selected = false;
+						this.check08.selected = false;
+						this.check09.selected = false;
+						this.check10.selected = false;
+						break;
+					case 4:
+						this.check01.selected = false;
+						this.check02.selected = false;
+						this.check03.selected = false;
+						this.check04.selected = false;
+						this.check05.selected = true;
+						this.check06.selected = false;
+						this.check07.selected = false;
+						this.check08.selected = false;
+						this.check09.selected = false;
+						this.check10.selected = false;
+						break;
+					case 5:
+						this.check01.selected = false;
+						this.check02.selected = false;
+						this.check03.selected = false;
+						this.check04.selected = false;
+						this.check05.selected = false;
+						this.check06.selected = true;
+						this.check07.selected = false;
+						this.check08.selected = false;
+						this.check09.selected = false;
+						this.check10.selected = false;
+						break;
+					case 6:
+						this.check01.selected = false;
+						this.check02.selected = false;
+						this.check03.selected = false;
+						this.check04.selected = false;
+						this.check05.selected = false;
+						this.check06.selected = false;
+						this.check07.selected = true;
+						this.check08.selected = false;
+						this.check09.selected = false;
+						this.check10.selected = false;
+						break;
+					case 7:
+						this.check01.selected = false;
+						this.check02.selected = false;
+						this.check03.selected = false;
+						this.check04.selected = false;
+						this.check05.selected = false;
+						this.check06.selected = false;
+						this.check07.selected = false;
+						this.check08.selected = true;
+						this.check09.selected = false;
+						this.check10.selected = false;
+						break;
+					case 8:
+						this.check01.selected = false;
+						this.check02.selected = false;
+						this.check03.selected = false;
+						this.check04.selected = false;
+						this.check05.selected = false;
+						this.check06.selected = false;
+						this.check07.selected = false;
+						this.check08.selected = false;
+						this.check09.selected = true;
+						this.check10.selected = false;
+						break;
+					case 9:
+						this.check01.selected = false;
+						this.check02.selected = false;
+						this.check03.selected = false;
+						this.check04.selected = false;
+						this.check05.selected = false;
+						this.check06.selected = false;
+						this.check07.selected = false;
+						this.check08.selected = false;
+						this.check09.selected = false;
+						this.check10.selected = true;
+						break;
+					case 10:
+						this.check01.selected = false;
+						this.check02.selected = false;
+						this.check03.selected = false;
+						this.check04.selected = false;
+						this.check05.selected = false;
+						this.check06.selected = false;
+						this.check07.selected = false;
+						this.check08.selected = false;
+						this.check09.selected = false;
+						this.check10.selected = false;
+						break;
+					default:
+						break;
+				}
+			}
+			
+			private function showCheckBoxVisible(size:int):void{
+				switch(size){
+					case 0:
+						this.check01.visible = false;
+						this.check02.visible = false;
+						this.check03.visible = false;
+						this.check04.visible = false;
+						this.check05.visible = false;
+						this.check06.visible = false;
+						this.check07.visible = false;
+						this.check08.visible = false;
+						this.check09.visible = false;
+						this.check10.visible = false;
+						break;
+					case 1:
+						this.check01.visible = true;
+						this.check02.visible = false;
+						this.check03.visible = false;
+						this.check04.visible = false;
+						this.check05.visible = false;
+						this.check06.visible = false;
+						this.check07.visible = false;
+						this.check08.visible = false;
+						this.check09.visible = false;
+						this.check10.visible = false;
+						break;
+					case 2:
+						this.check01.visible = true;
+						this.check02.visible = true;
+						this.check03.visible = false;
+						this.check04.visible = false;
+						this.check05.visible = false;
+						this.check06.visible = false;
+						this.check07.visible = false;
+						this.check08.visible = false;
+						this.check09.visible = false;
+						this.check10.visible = false;
+						break;
+					case 3:
+						this.check01.visible = true;
+						this.check02.visible = true;
+						this.check03.visible = true;
+						this.check04.visible = false;
+						this.check05.visible = false;
+						this.check06.visible = false;
+						this.check07.visible = false;
+						this.check08.visible = false;
+						this.check09.visible = false;
+						this.check10.visible = false;
+						break;
+					case 4:
+						this.check01.visible = true;
+						this.check02.visible = true;
+						this.check03.visible = true;
+						this.check04.visible = true;
+						this.check05.visible = false;
+						this.check06.visible = false;
+						this.check07.visible = false;
+						this.check08.visible = false;
+						this.check09.visible = false;
+						this.check10.visible = false;
+						break;
+					case 5:
+						this.check01.visible = true;
+						this.check02.visible = true;
+						this.check03.visible = true;
+						this.check04.visible = true;
+						this.check05.visible = true;
+						this.check06.visible = false;
+						this.check07.visible = false;
+						this.check08.visible = false;
+						this.check09.visible = false;
+						this.check10.visible = false;
+						break;
+					case 6:
+						this.check01.visible = true;
+						this.check02.visible = true;
+						this.check03.visible = true;
+						this.check04.visible = true;
+						this.check05.visible = true;
+						this.check06.visible = true;
+						this.check07.visible = false;
+						this.check08.visible = false;
+						this.check09.visible = false;
+						this.check10.visible = false;
+						break;
+					case 7:
+						this.check01.visible = true;
+						this.check02.visible = true;
+						this.check03.visible = true;
+						this.check04.visible = true;
+						this.check05.visible = true;
+						this.check06.visible = true;
+						this.check07.visible = true;
+						this.check08.visible = false;
+						this.check09.visible = false;
+						this.check10.visible = false;
+						break;
+					case 8:
+						this.check01.visible = true;
+						this.check02.visible = true;
+						this.check03.visible = true;
+						this.check04.visible = true;
+						this.check05.visible = true;
+						this.check06.visible = true;
+						this.check07.visible = true;
+						this.check08.visible = true;
+						this.check09.visible = false;
+						this.check10.visible = false;
+						break;
+					case 9:
+						this.check01.visible = true;
+						this.check02.visible = true;
+						this.check03.visible = true;
+						this.check04.visible = true;
+						this.check05.visible = true;
+						this.check06.visible = true;
+						this.check07.visible = true;
+						this.check08.visible = true;
+						this.check09.visible = true;
+						this.check10.visible = false;
+						break;
+					case 10:
+						this.check01.visible = true;
+						this.check02.visible = true;
+						this.check03.visible = true;
+						this.check04.visible = true;
+						this.check05.visible = true;
+						this.check06.visible = true;
+						this.check07.visible = true;
+						this.check08.visible = true;
+						this.check09.visible = true;
+						this.check10.visible = true;
+						break;
+					default:
+						break;
+				}
+			} 
+		]]>
+	</mx:Script>
+	<mx:Panel x="0" y="0" width="550" height="142" layout="absolute" borderColor="#4F7EF6" title="查询向导" color="#F8F5F5" fontSize="14">
+		<mx:Label x="215" y="5" text="UIM卡号" color="#0D0C0C" fontSize="12"/>
+		<mx:TextInput x="271" y="5" width="140" maxChars="15" id="Uim_Number" color="#0D0C0C" fontSize="12"/>
+		<mx:Button x="468" y="5" label="查询" fillAlphas="[1.0, 1.0]" fillColors="[#859AF3, #F2B2B2]" click="doQueryTerminal(1)" color="#040404" fontSize="12"/>
+		<mx:Label x="8" y="68" text="酒店名称" color="#0D0C0C" fontSize="12"/>
+		<mx:ComboBox x="67" y="66" width="128" id="Hotel_ID" color="#0D0C0C" fontSize="12"></mx:ComboBox>
+		<mx:Label x="8.5" y="7" text="IMEI编号" color="#0D0C0C" fontSize="12"/>
+		<mx:TextInput x="68.5" y="5" width="126.5" maxChars="15" id="Imei_Number" color="#0D0C0C" fontSize="12"/>
+		<mx:TextInput x="67" y="35" width="128" maxChars="11" id="Msisdn" color="#0D0C0C" fontSize="12"/>
+		<mx:Label x="214" y="37" text="终端厂家" color="#0D0C0C" fontSize="12"/>
+		<mx:ComboBox x="272" y="34" width="248" id="Product_Org_ID" color="#0D0C0C" fontSize="12"></mx:ComboBox>
+		<mx:Label x="10" y="38" text="手机号码" color="#0D0C0C" fontSize="12"/>
+		<mx:Label x="375" y="68" text="型号" color="#0D0C0C" fontSize="12"/>
+		<mx:ComboBox x="409" y="64" width="111" id="Terminal_Type" color="#0D0C0C" fontSize="12"></mx:ComboBox>
+		<mx:ComboBox x="249" y="64" width="117" id="Status" fontSize="12" color="#070707"></mx:ComboBox>
+		<mx:Label x="216" y="68" text="状态" color="#0D0C0C" fontSize="12"/>
+	</mx:Panel>
+	<mx:DataGrid x="72" y="201" width="686" height="293" textAlign="center" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" borderColor="#010101" color="#000706" themeColor="#1970A8" alternatingItemColors="[#FFFFFF, #DFF3FF]" fontSize="12" alpha="1.0" fontFamily="Arial" fontWeight="normal" id="TableGrid">
+		<mx:columns>
+			<mx:DataGridColumn headerText="手机号码" dataField="MSISDN" width="90" />				
+			<mx:DataGridColumn headerText="状态" dataField="STATUS" width="100" labelFunction="doStatus"/>
+			<mx:DataGridColumn headerText="终端型号" dataField="TERMINAL_TYPE" width="90" labelFunction="doTERMINAL_TYPE"/>	
+			<mx:DataGridColumn headerText="酒店" dataField="HOTEL_ID" width="120" labelFunction="doHotel_ID"/>
+			<mx:DataGridColumn headerText="生产厂家" dataField="ORG_ID" width="130" labelFunction="doProduct_Org_ID"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Canvas x="10" y="226" width="63" height="268" borderColor="#010101" borderStyle="solid" backgroundColor="#AFA3A3" fontSize="12">
+		<mx:CheckBox x="22" y="54" id="check03"/>
+		<mx:CheckBox x="22" y="28" id="check02"/>
+		<mx:CheckBox x="22" y="78" id="check04"/>
+		<mx:CheckBox x="22" y="4" id="check01"/>
+		<mx:CheckBox x="22" y="103" id="check05"/>
+		<mx:CheckBox x="22" y="128" id="check06"/>
+		<mx:CheckBox x="22" y="154" id="check07"/>
+		<mx:CheckBox x="22" y="179" id="check08"/>
+		<mx:CheckBox x="22" y="203" id="check09"/>
+		<mx:CheckBox x="22" y="227" id="check10"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="201" width="63" height="26" borderStyle="solid" borderColor="#010101" backgroundColor="#FCF8F8">
+		<mx:CheckBox x="1" y="0" label="全选" color="#080808" fontWeight="normal" id="CheckSelectAll" fontSize="12" borderColor="#A7D9FF" width="58" click="doCheckSelectAllHandler()"/>
+	</mx:Canvas>
+	<mx:Label x="10" y="167" text="总数：" fontWeight="bold" color="#F30A2B" fontSize="12"/>
+	<mx:Label x="62" y="167" fontWeight="bold" color="#141212" id="TableRowCount" fontSize="12"/>
+	<mx:Button x="535" y="163" label="上一页" click="doQueryTerminal(2)" color="#141212" fontSize="12"/>
+	<mx:ComboBox x="608" y="163" width="80" id="SelectPage" change="doQueryTerminal(3)" color="#141212" fontSize="12"></mx:ComboBox>
+	<mx:Button x="696" y="163" label="下一页" click="doQueryTerminal(4)" color="#141212" fontSize="12"/>
+	<mx:Panel x="558" y="0" width="212" height="142" layout="absolute" title="控制区域" borderColor="#342D55">
+		<mx:Button x="68" y="13" label="更新" fontFamily="Arial" fontSize="12" color="#010101" click="doUpdateTerminalInfo()"/>
+		<mx:Button x="128" y="13" label="分发" fontFamily="Arial" fontSize="12" color="#010101" click="doFenFaTerminal()"/>
+		<mx:Button x="10" y="55" label="回收" fontFamily="Arial" fontSize="12" color="#010101" click="doRecoverTerminal()"/>
+		<mx:Button x="70" y="55" label="报废" fontFamily="Arial" fontSize="12" color="#010101" click="doRevokeTerminal()"/>
+		<mx:Button x="130" y="55" label="导出" fontFamily="Arial" fontSize="12" color="#010101" click="doLeadTerminal()"/>
+		<mx:Button x="10" y="13" label="查看" fontSize="12" color="#010101" click="doViewSingleTerminal()" fontFamily="Arial"/>
+	</mx:Panel>
+</mx:Panel>

@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="init()" layout="absolute" width="666" height="350" title="任务修改向导" fontSize="12" fontFamily="Arial" borderColor="#0B064C" xmlns:ns1="*">
+	<mx:Canvas x="10" y="10" width="626" height="254" borderStyle="solid" backgroundColor="#CDF3E8" fontSize="12" color="#000000" id="Cavas02" borderColor="#020B11">
+		<mx:Label x="320" y="137" text="开始发送时间"/>
+		<mx:TextInput x="94" y="15" width="158" maxChars="64" id="tiTaskNameId" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)" fontFamily="Arial"/>
+		<mx:Label id="hotelName" x="10" y="17" text="任务名称"/>
+		<mx:Label id="hotelName0" x="10" y="46" text="信息内容"/>
+		<mx:Label x="341" y="60" text="信息类型"/>
+		<mx:ComboBox id="cbbInfoTypeCon" x="405" y="57" width="159"></mx:ComboBox>
+		<mx:Label x="320" y="101" text="信息语言类型"/>
+		<mx:ComboBox id="cbbLanguageCon" x="405" y="98" width="159"></mx:ComboBox>
+		<mx:Label x="355" y="126" visible="false"  text="优先级" width="42"/>
+		<mx:Label x="341" y="159" visible="false" text="状态报告"  width="56"/>
+		<mx:ComboBox id="cbbPriorityCon"  visible="false" x="405" y="123" width="159"></mx:ComboBox>
+		<mx:ComboBox id="cbbReturnReportCon"  visible="false" x="405" y="156" width="159"></mx:ComboBox>
+		<mx:Label x="320" y="173" text="发送截止时间"/>
+		<mx:TextArea x="10" y="75" height="120" width="242" maxChars="140" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)" id="tiContextId"/>
+		<mx:Button x="296" y="15" label="获取发送对象" click="onShowDialog()" fontWeight="normal"/>
+		<mx:ComboBox id="cbbSendGroupIDCon" x="405" y="14" width="159"></mx:ComboBox>
+		<ns1:TimeField id="insertStartTimeId" x="405" y="136">
+		</ns1:TimeField>
+		<ns1:TimeField id="insertEndTimeId" x="405" y="173">
+		</ns1:TimeField>
+	</mx:Canvas>
+	<mx:DateFormatter id="df" formatString="YYYY-MM-DD JJ:NN:SS"/>
+	<mx:Button x="235" y="272" label="确定" click="doClick()"/>
+	<mx:Button x="327" y="272" label="取消" click="doCancle()"/>
+		<mx:RemoteObject id="getDataService" destination="oTaskInfoSendService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.flex.FlexReponse;
+			import cn.ucans.flex.FlexRequest;
+			import cn.ucans.bean.T_INFO_NUMBER_OBJECT;
+			import cn.ucans.bean.T_INFO_SEND_TASK;
+			import cn.ucans.bean.T_BLACK_WHITE_HIS;
+			import cn.ucans.bean.T_BLACK_WHITE;
+			import cn.ucans.common.ArrayFactory;
+			import cn.ucans.common.RegularExpression;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.bean.T_ORG_LINKMAN;
+			
+			public var DOOK:Boolean = false;
+			private var reg:RegularExpression = new RegularExpression();
+			public var sendTask:T_INFO_SEND_TASK = null;
+			public var arrConHotelReset:ArrayCollection = new ArrayCollection();
+			public var objectDialog:takeUpdateSendObjectDialog = new takeUpdateSendObjectDialog();
+			private var arrCon:ArrayCollection = new ArrayCollection();
+			private var taskId:String = "";
+			private var status1:String = "";
+			
+			public function showDialog(parent:DisplayObject,arrLanguageCon:ArrayCollection,item:Object,SendGroupIDObjectParent:ArrayCollection,arrInfoTypeCon:ArrayCollection,arrPriorityCon:ArrayCollection,arrReturnReportCon:ArrayCollection):void{
+				PopUpManager.addPopUp(this,parent,true);
+				var dateStart:String = "";
+				var dateEnd:String = "";
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				tiTaskNameId.text = item.TASK_NAME;
+				tiContextId.text = item.CONTENT;
+				dateStart = item.START_TIME;
+				dateEnd = item.END_TIME;
+				status1 = item.STATUS;					
+				taskId = item.TASK_ID;
+				var array:Array = dateStart.split(" ");
+				insertStartTimeId.setDate(array[0]);
+				insertStartTimeId.setTime(array[1]);
+				var array1:Array = dateEnd.split(" ");
+				insertEndTimeId.setDate(array1[0]);
+				insertEndTimeId.setTime(array1[1]);
+				cbbSendGroupIDCon.dataProvider = SendGroupIDObjectParent;
+				this.cbbSendGroupIDCon.selectedItem=ArrayFactory.getComboBoxSelectedItemFromArrayCollection(SendGroupIDObjectParent,item.SEND_GROUP_ID);
+				arrCon = SendGroupIDObjectParent;
+				cbbSendGroupIDCon.enabled = false;
+				cbbInfoTypeCon.dataProvider = arrInfoTypeCon;
+				this.cbbInfoTypeCon.selectedItem=ArrayFactory.getComboBoxSelectedItemFromArrayCollection(arrInfoTypeCon,item.INFO_TYPE);
+				cbbLanguageCon.dataProvider = arrLanguageCon;
+				this.cbbLanguageCon.selectedItem=ArrayFactory.getComboBoxSelectedItemFromArrayCollection(arrLanguageCon,item.LANGUAGE);
+				this.cbbLanguageCon.enabled = false;
+				cbbPriorityCon.dataProvider = arrPriorityCon;
+				cbbReturnReportCon.dataProvider = arrReturnReportCon;
+//				this.cbbLanguageCon.selectedItem=ArrayFactory.getComboBoxSelectedItemFromArrayCollection(arrPriorityCon,item.LANGUAGE);
+//				this.cbbLanguageCon.selectedItem=ArrayFactory.getComboBoxSelectedItemFromArrayCollection(arrReturnReportCon,item.LANGUAGE);
+				sendTask = new T_INFO_SEND_TASK();
+			}
+			
+			private function doClick():void{
+				var ok:Boolean = true;
+				
+				if(reg.trim(this.tiTaskNameId.text).length < 1){
+						CCSSAlert.showMessageDialog(this,"请输入任务名称！");
+						FlashContrl.target = tiTaskNameId;
+						FlashContrl.play();
+						tiTaskNameId.setFocus();	
+						ok = false;
+						return;
+				}
+				if(reg.trim(this.tiContextId.text).length < 1){
+						CCSSAlert.showMessageDialog(this,"请输入信息内容！");
+						FlashContrl.target = tiContextId;
+						FlashContrl.play();
+						tiContextId.setFocus();	
+						ok = false;
+						return;
+				}
+				if(arrCon.length < 1){
+						CCSSAlert.showMessageDialog(this,"请请获取发送对象并选择要发送的对象！");
+						FlashContrl.target = cbbSendGroupIDCon;
+						FlashContrl.play();
+						cbbSendGroupIDCon.setFocus();	
+						ok = false;
+						return;
+				}
+				if(insertStartTimeId.getTime().substr(0,4).concat(insertStartTimeId.getTime().substr(5,2)).concat(insertStartTimeId.getTime().substr(8,2)) != insertEndTimeId.getTime().substr(0,4).concat(insertEndTimeId.getTime().substr(5,2)).concat(insertEndTimeId.getTime().substr(8,2))){
+					CCSSAlert.showMessageDialog(this,"开始发送时间和发送截止时间必须为同一天！");
+					FlashContrl.target = insertStartTimeId;
+					FlashContrl.play();
+					insertStartTimeId.setFocus();	
+					ok = false;
+					return;
+				}
+				var startTime:String = df.format(insertStartTimeId.getTime()).substr(11,2); 
+				var endTime:String = df.format(insertEndTimeId.getTime()).substr(11,2); 
+				if((Number(endTime)-Number(startTime)) > 6){
+					CCSSAlert.showMessageDialog(this,"开始发送时间和发送截止时间应该小于6小时！");
+					FlashContrl.target = insertStartTimeId;
+					FlashContrl.play();
+					insertStartTimeId.setFocus();	
+					FlashContrl.target = insertEndTimeId;
+					FlashContrl.play();
+					insertEndTimeId.setFocus();
+					ok = false;
+					return;
+				}
+					
+				if(ok){
+					sendTask.TASK_ID = taskId;
+					sendTask.STATUS = status1;
+//					CCSSAlert.showMessageDialog(this,status1);
+					sendTask.TASK_NAME = reg.trim(tiTaskNameId.text);
+					sendTask.CONTENT = reg.trim(tiContextId.text);
+					sendTask.SEND_GROUP_ID = cbbSendGroupIDCon.selectedItem.data;
+					sendTask.INFO_TYPE = cbbInfoTypeCon.selectedItem.data;
+//					sendTask.PRIORITY = cbbPriorityCon.selectedItem.data;
+//					sendTask.RETURN_REPORT = cbbReturnReportCon.selectedItem.data;
+					sendTask.START_TIME = df.format(insertStartTimeId.getTime());
+					sendTask.END_TIME = df.format(insertEndTimeId.getTime());
+					sendTask.USER_ID = this.parentApplication.LoginUser_ID;
+					sendTask.ORG_ID =this.parentApplication.LoginORG_ID;;
+					this.DOOK = true;
+					PopUpManager.removePopUp(this);
+				}
+			}
+			private function doCancle():void{
+				this.DOOK = false;
+				PopUpManager.removePopUp(this);
+			}
+			private function init():void{
+				
+			}
+			
+			private function doResult(data:Object):void{
+    			this.enabled = true;
+    			var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 2021:
+						if(reponse.sign == 0){
+							arrCon = reponse.result.list as ArrayCollection;
+							cbbSendGroupIDCon.dataProvider = arrCon;
+							if(arrCon.length <1){
+								CCSSAlert.showMessageDialog(this,"没有查询到数据，请更换时间查询条件,重新查询！");
+								return;
+							}
+							cbbSendGroupIDCon.enabled = true;
+							return;
+						}else{
+							cbbSendGroupIDCon.enabled = true;
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}	
+						break;
+					default:
+						break;
+				}
+    		}
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			private function onShowDialog():void{
+				this.objectDialog = new takeUpdateSendObjectDialog();
+				this.objectDialog.showDialog(this);
+				this.objectDialog.addEventListener(Event.REMOVED,doAddListHandler);
+			}
+			private function doAddListHandler(event:Event):void{
+				if(this.objectDialog.DOOK){
+					var request:FlexRequest = new FlexRequest();
+	    			request.ope_id = 2021;
+	    			request.menu_id = this.parentApplication.LoginMenu_ID;
+	    			request.org_id = this.parentApplication.LoginORG_ID;
+	    			request.user_id = this.parentApplication.LoginUser_ID;
+	    			var sendObjectInfo:T_INFO_NUMBER_OBJECT = new T_INFO_NUMBER_OBJECT();
+	    			sendObjectInfo = this.objectDialog.sendObject;
+	    			request.form.sendObject = sendObjectInfo;
+	    			this.getDataService.doTransaction(request);
+    				this.enabled = false;
+	    			
+    			}
+    			
+    		}
+		]]>
+	</mx:Script>
+		<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+    </mx:Sequence>
+</mx:TitleWindow>

@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" initialize="init()" width="790" height="550" fontSize="15"  backgroundColor="#E8EFE8" borderColor="#00656E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="终端参数维护" xmlns:ns1="*">
+	
+	<mx:RemoteObject id="terminalParm_service" destination="TerminalParmService"  
+		result="doTerminalTypeResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.collections.ArrayCollection;
+			import cn.ucans.flex.FlexRequest;
+ 			import cn.ucans.flex.FlexReponse;
+ 			import cn.ucans.bean.T_TERMINAL_PARM;
+ 			
+ 			import mx.events.CloseEvent;
+ 			import mx.controls.Alert;
+ 			private var strFileName:String="";
+ 			private var file: FileReference;
+ 			
+ 			import mx.controls.Alert;
+ 			private var dialog_add:AddTerminalParmDialog=null;
+ 			private var dialog_confirm:CCSSConfirm = null;
+ 			private var dialog_update:UpdateTerminalParmDialog=null;
+ 			
+ 			private var terminal_parm_util:T_TERMINAL_PARM=null;//提供给修改操作时传递数据
+ 			
+			[Bindable]
+			public var tableGridList:ArrayCollection=new ArrayCollection();
+			
+			private function init():void{
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 9020;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id=this.parentApplication.LoginORG_ID;
+				request.user_id=this.parentApplication.LoginUser_ID;
+				
+				this.terminal_parm_util=new T_TERMINAL_PARM();
+				
+				this.terminalParm_service.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			private function doAddTerminalParm():void{
+				this.dialog_add = new AddTerminalParmDialog();
+				this.dialog_add.showDialog(this);
+				this.dialog_add.addEventListener(Event.REMOVED,doAddTerminalParmHandler);
+				
+			}
+			
+			
+			private function doAddTerminalParmHandler(event:Event):void{
+				if(this.dialog_add.DOOK){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 9021;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id=this.parentApplication.LoginORG_ID;
+					request.user_id=this.parentApplication.LoginUser_ID;
+					request.form.terminalParm=this.dialog_add.terminalParm;
+					this.terminalParm_service.doTransaction(request);
+					this.enabled = false;
+				}
+				
+			}
+			
+			private function doSelectItem():void{
+				if(TableGrid.selectedIndex>-1){
+					var item:Object = this.TableGrid.selectedItem;
+					this.terminal_parm_util.ID=item.ID;
+					this.terminal_parm_util.IMEI_NUMBER=item.IMEI_NUMBER;
+					this.terminal_parm_util.PARAMETERS=item.PARAMETERS;
+					this.terminal_parm_util.AVAILABLE=item.AVAILABLE;
+					this.terminal_parm_util.CREATE_TIME=item.CREATE_TIME;
+					this.terminal_parm_util.MODIFY_TIME=item.MODIFY_TIME;
+				}else{
+					this.clear();
+				
+				}
+			}
+			
+			
+			private function doUpdateTerminalParm():void{
+				if(this.TableGrid.selectedIndex <= -1){
+					CCSSAlert.showMessageDialog(this,"请在数据表中选择要修改的终端参数，再进行此操作！");
+				}else{
+					this.dialog_update = new UpdateTerminalParmDialog();
+					this.dialog_update.showDialog(this,terminal_parm_util);
+					this.dialog_update.addEventListener(Event.REMOVED,doUpdateTerminalParmHandler);
+				}
+				
+			}
+			
+			
+			private function doUpdateTerminalParmHandler(event:Event):void{
+				
+					if(this.dialog_update.DOOK){
+						var request:FlexRequest = new FlexRequest();
+						request.ope_id = 9023;
+						request.menu_id = this.parentApplication.LoginMenu_ID;
+						request.org_id=this.parentApplication.LoginORG_ID;
+						request.user_id=this.parentApplication.LoginUser_ID;
+						
+						request.form.oldTerminalParmForUpdate=this.terminal_parm_util;
+						request.form.terminalParmForUpdate=this.dialog_update.terminalParm;
+						
+						this.terminalParm_service.doTransaction(request);
+						this.enabled = false;
+					}
+				
+			}
+			
+			private function doDeleteTerminalParm():void{
+				if(this.TableGrid.selectedIndex<=-1){
+					CCSSAlert.showMessageDialog(this,"请选择要删除的终端参数！");
+				}else{
+					
+					var item:Object = this.TableGrid.selectedItem;
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 9024;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id=this.parentApplication.LoginORG_ID;
+					request.user_id=this.parentApplication.LoginUser_ID;
+					
+					
+					request.form.terminalParmForDel=this.terminal_parm_util;
+					this.dialog_confirm = new CCSSConfirm();
+					this.dialog_confirm.showDialog(this,"您确认要删除此终端参数信息吗？",request);
+					this.dialog_confirm.addEventListener(Event.REMOVED,doDeleteTerminalParmHandler);
+				}
+			}
+			
+			private function doDeleteTerminalParmHandler(event:Event):void{
+				if(this.dialog_confirm.YES){
+					var request:FlexRequest = this.dialog_confirm.object as FlexRequest;
+					this.terminalParm_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+	
+			
+			private function doExportTerminalParm():void{
+    			var strFileData:String = "IMEI号||参数值||参数状态";				
+				for(var n:int = 0;n < this.tableGridList.length;n ++){
+					var item:Object = this.tableGridList.getItemAt(n);
+					strFileData = strFileData + "&&" + 
+					NVL(item.IMEI_NUMBER,"") + "||" + 
+					NVL(item.PARAMETERS,"") + "||" +  
+					NVL(item.AVAILABLE,"");
+				}
+				
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 9025;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				this.terminalParm_service.CreateExcelFile(strFileData,"",request);
+				this.enabled = false;
+    		}
+    		
+    		 private function NVL(strSour:String,strTag:String):String{
+				if(strSour == null){
+					return strTag;
+				}else{
+					return strSour;
+				}
+				return null;
+			}
+			
+			private function fun_DeleteExcel(event:CloseEvent):void{	
+				switch(event.detail){
+					case Alert.YES:
+						var downloadURL:URLRequest;
+							downloadURL = new URLRequest(parentApplication.strPubURL + "//TempFile//"+
+								strFileName);
+							file = new FileReference();
+							file.addEventListener(ProgressEvent.PROGRESS,onProgress);
+							file.addEventListener(Event.COMPLETE, downComplete);
+							file.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+							file.addEventListener(Event.CANCEL,doCancel);
+							file.download(downloadURL);
+						break;
+					case Alert.NO:
+							var request:FlexRequest = new FlexRequest();
+							request.menu_id = this.parentApplication.LoginMenu_ID;
+			    			request.ope_id = 9026;
+			    			request.org_id = this.parentApplication.LoginORG_ID;
+			    			request.user_id = this.parentApplication.LoginUser_ID;
+							terminalParm_service.DeleteExcelFile(strFileName,request);
+							this.enabled = false;
+						break;
+				}
+			}
+			
+			 private function onProgress(e: ProgressEvent): void
+			{
+				var oProcessBar:ProcessBarCanvas = this.getChildByName("ProcessBarCanvas") as ProcessBarCanvas;
+				
+				if(oProcessBar == null)
+				{
+					oProcessBar = new ProcessBarCanvas();
+					oProcessBar.x = 300;
+					oProcessBar.y = 200;
+					oProcessBar.name = "ProcessBarCanvas";
+					this.addChild(oProcessBar);
+					oProcessBar.onProgress(e);
+				}
+				else
+				{
+					oProcessBar.onProgress(e);
+				}
+				
+			}
+
+			private function downComplete(e:Event): void{
+				var oProcessBar:ProcessBarCanvas = this.getChildByName("ProcessBarCanvas") as ProcessBarCanvas;
+				if(oProcessBar != null)
+				{
+					this.removeChild(oProcessBar);
+				}
+				CCSSAlert.showMessageDialog(this,"生成Excel文件成功");
+				file.removeEventListener(ProgressEvent.PROGRESS, onProgress);
+				file.removeEventListener(Event.COMPLETE, downComplete);
+				file.removeEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				file.removeEventListener(Event.CANCEL,doCancel);
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 9026;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				this.terminalParm_service.DeleteExcelFile(strFileName,request);
+				this.enabled = false;
+			}
+			
+			private function doCancel(event:Event):void
+			{
+				file.removeEventListener(ProgressEvent.PROGRESS, onProgress);
+				file.removeEventListener(Event.COMPLETE, downComplete);
+				file.removeEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				file.removeEventListener(Event.CANCEL,doCancel);
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 9026;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				terminalParm_service.DeleteExcelFile(strFileName,request);
+				this.enabled = false;
+			}
+			
+			private function ioErrorHandler(e:Event): void{
+				CCSSAlert.showErrorDialog(this,"ioErrorHandler: " + e);
+				var oProcessBar:ProcessBarCanvas = this.getChildByName("ProcessBarCanvas") as ProcessBarCanvas;
+				if(oProcessBar != null)
+				{
+					this.removeChild(oProcessBar);
+				}
+				
+				file.removeEventListener(ProgressEvent.PROGRESS, onProgress);
+				file.removeEventListener(Event.COMPLETE, downComplete);
+				file.removeEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				file.removeEventListener(Event.CANCEL,doCancel);
+				
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 9026;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				terminalParm_service.DeleteExcelFile(strFileName,request);
+				CCSSAlert.showErrorDialog(this,"文件下载错误，请联系管理员！");
+				this.enabled = false;
+			}
+						
+			private function clear():void{
+					this.TableGrid.selectedIndex=-1;
+			}
+			
+			
+			private function doTerminalTypeResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 9020:
+						if(reponse.sign == 0){
+							
+							var query_init_list:ArrayCollection = reponse.result.list as ArrayCollection;
+							tableGridList = query_init_list;
+							return;
+						}
+						break;
+					case 9021:
+						if(reponse.sign == 0){
+							this.clear();
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 9023:
+						if(reponse.sign == 0){
+							this.clear();
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 9024:
+						if(reponse.sign == 0){
+							this.clear();
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 9025:
+						if(reponse.sign == 0)
+						{
+							strFileName = (reponse.org_id as String);	
+							dialog_confirm = new CCSSConfirm();	
+							Alert.show("请问您真的想导出这些数据吗？","确认信息",3,this,fun_DeleteExcel);
+							return;
+						}
+						else
+						{
+							CCSSAlert.showErrorDialog(this,"生成Execl文件时出错，错误代码是：" + reponse.message);
+							return;
+						}
+						break;
+					case 9026:
+						if(reponse.sign == 0)
+						{
+							return;
+						}
+						else
+						{
+							CCSSAlert.showErrorDialog(this,"删除Execl文件时出错，错误代码是：" + reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			
+			private function formatAvailable(item:Object,column:DataGridColumn):String{
+				var availableStr:String="";
+				if(item.AVAILABLE=="1")
+					availableStr="可用";
+				else if(item.AVAILABLE=="0")
+					availableStr="不可用";
+				else
+					availableStr="未知";
+				
+				return availableStr;
+			}
+			
+			private function formatParmeters(item:Object,column:DataGridColumn):String{
+				var parmetersStr:String="";
+				parmetersStr=item[column.dataField].toString();
+				return parmetersStr;
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Panel x="0" y="0" width="770" height="102" layout="absolute" borderColor="#050BFA" title="控制区域" fontSize="13">
+		<mx:Button x="271" y="17" label="修改" fontFamily="Arial" fontSize="12" color="#040404" click="doUpdateTerminalParm()"/>
+		<mx:Button x="136" y="17" label="添加" fontFamily="Arial" fontSize="12" color="#040404" click="doAddTerminalParm()"/>
+		<mx:Button x="406" y="17" label="删除" fontFamily="Arial" fontSize="12" color="#040404" click="doDeleteTerminalParm()"/>
+		<mx:Button x="541" y="17" label="导出" fontFamily="Arial" fontSize="12" color="#040404" click="doExportTerminalParm()"/>
+	</mx:Panel>
+	
+	
+	<mx:Panel x="0" y="110" width="770" height="379" layout="absolute" borderColor="#3D50C2" fontSize="13" title="数据">
+		<mx:DataGrid x="0" y="0" width="750" height="335" id="TableGrid"  variableRowHeight="true" borderColor="#050505"  dataProvider="{tableGridList}" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center" click="doSelectItem()" fontSize="12" color="#030303">
+			<mx:columns>
+				<mx:DataGridColumn headerText="ID" dataField="ID" visible="false"/>
+				<mx:DataGridColumn headerText="IMEI号" dataField="IMEI_NUMBER" width="100"/>
+				<mx:DataGridColumn headerText="参数值" dataField="PARAMETERS" width="580" textAlign="left" labelFunction="formatParmeters"/>
+				<mx:DataGridColumn headerText="参数状态" dataField="AVAILABLE" width="60" labelFunction="formatAvailable"/>
+				<mx:DataGridColumn headerText="创建时间" dataField="CREATE_TIME" visible="false"/>
+				<mx:DataGridColumn headerText="修改时间" dataField="MODIFY_TIME" visible="false"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Panel>
+	
+	
+</mx:Panel>

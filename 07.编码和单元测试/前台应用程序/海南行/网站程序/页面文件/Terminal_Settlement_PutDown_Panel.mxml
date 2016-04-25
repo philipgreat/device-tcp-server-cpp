@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute"  initialize="init()"  creationComplete="setComplete()" width="790" height="550" fontSize="15"  backgroundColor="#FFFFFF" borderColor="#00656E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="结账（酒店前台）" xmlns:ns1="*">
+	<mx:Sequence id="FlashContrl"> 
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+ 	</mx:Sequence>
+	<mx:RemoteObject id="settlement_service" destination="SettlementServiceFlexService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.bean.T_BILL_DETAIL;
+			import cn.ucans.table.RowItem;
+			import cn.ucans.table.XMLTable;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import cn.ucans.common.ArrayFactory;
+			
+			import cn.ucans.bean.T_SERVICE_CASH;
+			
+	 		import cn.ucans.flex.FlexRequest;
+ 			import cn.ucans.flex.FlexReponse;
+	 		
+	 		private var regular:RegularExpression = new RegularExpression();
+	 		
+	 		private var dialog_update:UpdateSettlementHotelDialog = null;
+	 		private var arrayCollection:ArrayCollection = null
+	 		private var telephone_select_number:String = "";
+	 		
+	 		private var array_DaoHang:Array = [{label:"结账窗口",data:"1"},{label:"销账窗口",data:"2"}];
+	 		
+	 		private function init():void{
+	 			this.Room_NO.addEventListener(KeyboardEvent.KEY_DOWN,doRoom_NOEnterHandler);
+	 		}
+	 		
+	 		private function setComplete():void{
+	 			this.Room_NO.setFocus();	 		
+	 			
+	 		}
+	 		
+	 		private function doRoom_NOEnterHandler(event:KeyboardEvent):void{
+	 			switch(event.keyCode){
+	 				case Keyboard.ENTER:
+	 					this.queryMsisdn();
+	 					break;
+	 				default:
+	 					break;
+	 			}
+	 		}
+	 		
+	 		private function queryMsisdn():void{
+	 			var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1300;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				var cash:T_SERVICE_CASH = new T_SERVICE_CASH();
+				cash.ROOM_NO = this.Room_NO.text;
+				request.form.cash = cash;
+				this.settlement_service.doTransaction(request);
+				this.enabled = false;
+				this.Msisdn.dataProvider = new Array();
+	 		}
+	 		
+	 		private function doQueryUsedHisList():void{
+	 			if(this.Msisdn.selectedItem == null && regular.trim(this.Msisdn.text).length==0){
+	 				CCSSAlert.showMessageDialog(this,"请选择出一个手机号码，再进行此操作！");
+	 				this.showView(this.Msisdn);
+	 				return;
+	 			}else{
+	 				var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1310;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					
+					var cash:T_SERVICE_CASH = new T_SERVICE_CASH();
+					cash.ROOM_NO = this.regular.trim(this.Room_NO.text);
+					var b1:Boolean = false;
+					if(this.Msisdn.selectedItem != null){
+						b1 = true;
+						cash.MSISDN = this.Msisdn.selectedItem.data;	
+						this.telephone_select_number = this.Msisdn.selectedItem.data;	
+					}
+					var b2:Boolean = false;
+					if(!b1){
+						if(this.regular.trim(this.Msisdn.text).length > 0){
+							b2 = true;
+							cash.MSISDN = this.Msisdn.text;
+							this.telephone_select_number = this.Msisdn.text;
+						}
+					}	
+					if(b1 || b2){	
+						request.form.cash = cash;
+						this.settlement_service.doTransaction(request);
+						this.enabled = false;					
+					}else{
+						CCSSAlert.showMessageDialog(this,"请选择出一个手机号码，再进行此操作！");
+		 				this.showView(this.Msisdn);
+		 				return;
+					}
+	 			}
+	 		}
+	 		
+	 		private function putAccount():void{
+	 			if(this.TableGrid.selectedIndex>-1){
+	 				var item:Object = this.TableGrid.selectedItem;
+	 				var cash:T_SERVICE_CASH = new T_SERVICE_CASH();
+	 				cash.SERVICE_ID = item.SERVICE_ID;
+	 				if(item.STATUS == "2"){
+	 					CCSSAlert.showMessageDialog(this,"该账单不能被挂起！");
+	 					return;
+	 				}else{
+	 					cash.STATUS = "2";
+	 					cash.CREATE_TIME = item.CREATE_TIME;
+	 					var request:FlexRequest = new FlexRequest();
+						request.ope_id = 1311;
+						request.menu_id = this.parentApplication.LoginMenu_ID;
+						request.org_id = this.parentApplication.LoginORG_ID;
+						request.user_id = this.parentApplication.LoginUser_ID;
+						request.form.cash = cash;
+						this.settlement_service.doTransaction(request);
+						this.enabled = false;	
+	 				}
+	 			}else{
+	 				CCSSAlert.showMessageDialog(this,"请选择出一个账单，再进行此操作！");
+	 				return;
+	 			}
+	 		}
+	 		
+	 		private function downAccount():void{
+	 			if(this.TableGrid.selectedIndex>-1){
+	 				var item:Object = this.TableGrid.selectedItem;
+	 				var cash:T_SERVICE_CASH = new T_SERVICE_CASH();
+	 				cash.SERVICE_ID = item.SERVICE_ID;
+	 				if(item.STATUS == "0"){
+	 					CCSSAlert.showMessageDialog(this,"该账单不能被解挂！");
+	 					return;
+	 				}else{
+	 					cash.STATUS = "0";
+	 					cash.CREATE_TIME = item.CREATE_TIME;
+	 					var request:FlexRequest = new FlexRequest();
+						request.ope_id = 1313;
+						request.menu_id = this.parentApplication.LoginMenu_ID;
+						request.org_id = this.parentApplication.LoginORG_ID;
+						request.user_id = this.parentApplication.LoginUser_ID;
+						request.form.cash = cash;
+						this.settlement_service.doTransaction(request);
+						this.enabled = false;	
+	 				}
+	 			}else{
+	 				CCSSAlert.showMessageDialog(this,"请选择出一个账单，再进行此操作！");
+	 				return;
+	 			}
+	 		}
+	 
+	 		private function doSTATUS(item:Object,column:DataGridColumn):String{
+	 			return ArrayFactory.getValueFromArray(DataProvider.combobox_service_cash_Status_Query,item.STATUS);
+	 		}
+	 		
+	 		private function doResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1300:
+						if(reponse.sign == 0){
+							var Msisdn_list:ArrayCollection = reponse.result.list as ArrayCollection;
+							if(Msisdn_list.length>0){
+								this.Msisdn.dataProvider = Msisdn_list
+							}else{
+								this.Msisdn.editable = true;
+								this.Msisdn.setFocus();
+//								this.Msisdn.toolTip = "没有找到任何符合条件的手机记录，请重新输入房间号码查询，或者输入自定义手机号码来查询账单！";
+							}
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1310:
+						if(reponse.sign == 0){
+							this.arrayCollection = reponse.result.list as ArrayCollection;
+							this.TableGrid.dataProvider = arrayCollection;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1311:
+						if(reponse.sign == 0){
+							this.doQueryUsedHisList();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1313:
+						if(reponse.sign == 0){
+							this.doQueryUsedHisList();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			
+			private function showView(object:Object):void{
+				FlashContrl.target = object;
+				FlashContrl.play();
+				object.setFocus();
+			}
+			
+			private function doCASH(item:Object,column:DataGridColumn):String{
+	 			return this.regular.trackNumber(item.CASH,100);
+	 		}
+	 		
+	 		private function doMAY_FREE_CASH(item:Object,column:DataGridColumn):String{
+	 			return this.regular.trackNumber(item.MAY_FREE_CASH,100);
+	 		}
+	 		
+	 		private function doREAL_PAY_CASH(item:Object,column:DataGridColumn):String{
+	 			return this.regular.trackNumber(item.REAL_PAY_CASH,100);
+	 		}
+	 		
+	 		private function doFREE_CASH(item:Object,column:DataGridColumn):String{
+	 			return this.regular.trackNumber(item.FREE_CASH,100);
+	 		}
+	 		
+		]]>
+	</mx:Script>
+	<mx:Panel x="0" y="0" width="577" height="99" layout="absolute" title="查询向导" borderColor="#120956">
+		<mx:Label x="10" y="21" text="房间号码" fontSize="12" color="#040404"  fontFamily="Arial"/>
+		<mx:Label x="172.5" y="20" text="手机号码" fontSize="12" color="#040404" fontFamily="Arial"/>
+		<mx:TextInput x="71" y="17" id="Room_NO" fontSize="12" color="#040404" width="86" maxChars="8" toolTip="输入房间号码，回车即可查询出手机号码" fontFamily="Arial"/>
+		<mx:Button x="494" y="18" label="查询" fontSize="12" color="#040404" click="doQueryUsedHisList()" fontWeight="bold" fontFamily="Arial"/>
+		<mx:ComboBox x="229.5" y="17" width="155" fontSize="12" color="#040404" id="Msisdn" fontWeight="normal" fontFamily="Arial"  editable="true"></mx:ComboBox>
+	</mx:Panel>
+	<mx:Panel x="0" y="107" width="770" height="382" layout="absolute" color="#F4F3F6" borderColor="#4F49BB" title="数据">
+		<mx:DataGrid x="0" y="0" width="750" height="336" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center"  fontSize="12" color="#010101" borderColor="#060606" id="TableGrid">
+			<mx:columns>
+				<mx:DataGridColumn headerText="手机号码" dataField="MSISDN" width="90"/>
+				<mx:DataGridColumn headerText="起租时间" dataField="START_TIME" width="130"/>
+				<mx:DataGridColumn headerText="退租时间" dataField="END_TIME" width="130"/>
+				<mx:DataGridColumn headerText="账单状态" dataField="STATUS" width="100" labelFunction="doSTATUS"/>
+				<mx:DataGridColumn headerText="应缴金额（元）" dataField="CASH" width="100" labelFunction="doCASH"/>
+				<mx:DataGridColumn headerText="实缴金额（元）" dataField="REAL_PAY_CASH" width="100" labelFunction="doREAL_PAY_CASH"/>
+				<mx:DataGridColumn headerText="最多减免金额（元）" dataField="MAY_FREE_CASH" width="120" labelFunction="doMAY_FREE_CASH"/>
+				<mx:DataGridColumn headerText="实际减免金额（元）" dataField="FREE_CASH" width="120" labelFunction="doFREE_CASH"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Panel>
+	<mx:Panel x="585" y="0" width="185" height="99" layout="absolute" title="控制区域" borderColor="#261D53">
+		<mx:Button x="23.5" y="18" label="挂起" fontSize="12" fontFamily="Arial" color="#030303" click="putAccount()"/>
+		<mx:Button x="89.5" y="18" label="解挂" fontSize="12" fontFamily="Arial" color="#030303" click="downAccount()"/>
+	</mx:Panel>
+</mx:Panel>

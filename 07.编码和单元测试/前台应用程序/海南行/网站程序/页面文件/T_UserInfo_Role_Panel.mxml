@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="790" height="550" fontSize="15" fontFamily="Arial" color="#F3F5F6" borderColor="#00656E" title="角色管理">
+	<mx:Panel x="0" y="96" width="770" height="408" layout="absolute" borderColor="#101139" title="数据">
+		<mx:DataGrid x="0" y="0" width="750" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center"  height="362" id="TableGrid_Role" borderColor="#040404" color="#020202" fontSize="12">
+			<mx:columns>
+				<mx:DataGridColumn headerText="角色编号" dataField="ROLE_ID" width="100"/>
+				<mx:DataGridColumn headerText="角色名称" dataField="ROLE_NAME" width="130"/>
+				<mx:DataGridColumn headerText="创建者" dataField="CREATE_USER_ID" width="100"/>
+				<mx:DataGridColumn headerText="创建时间" dataField="CREATE_TIME" width="140"/>
+				<mx:DataGridColumn headerText="角色说明" dataField="ROLE_NOTES" width="140">
+					<mx:itemRenderer>
+						<mx:Component>
+							<mx:Label text="{data.ROLE_NOTES}" textAlign="left"/>
+						</mx:Component>
+					</mx:itemRenderer>
+				</mx:DataGridColumn>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Panel>
+	<mx:Panel x="0" y="0" width="442" height="88" layout="absolute" borderColor="#221F8D" title="查询向导">
+		<mx:Button x="362" y="9" label="查询" click="doQueryRole()" fontFamily="Arial" fontSize="12" color="#030303"/>
+		<mx:Label x="10" y="12" text="角色编号" fontSize="12" color="#030303"/>
+		<mx:Label x="174" y="12" text="角色名称" fontSize="12" color="#030303"/>
+		<mx:TextInput x="71" y="9" width="95" maxChars="8" fontSize="12" fontFamily="Arial" color="#010101" id="Role_ID"/>
+		<mx:TextInput x="235" y="10" width="105" maxChars="16" fontSize="12" fontFamily="Arial" color="#010101" id="Role_Name"/>
+	</mx:Panel>
+	<mx:Panel x="450" y="0" width="320" height="88" layout="absolute" borderColor="#34452D" title="控制区域">
+		<mx:Button x="9" y="10" label="添加" click="doAddRole()" fontFamily="Arial" fontSize="12" color="#030303"/>
+		<mx:Button x="69" y="10" label="更新" click="doUpdateRole()" fontFamily="Arial" fontSize="12" color="#030303"/>
+		<mx:Button x="129" y="10" label="删除" click="doDeleteRole()" fontFamily="Arial" fontSize="12" color="#030303"/>
+		<mx:Button x="188" y="10" label="修改菜单别名" fontSize="12" fontFamily="Arial" color="#070707" click="doChangeMenu()"/>
+	</mx:Panel>
+	<mx:RemoteObject id="role_service" destination="UserInfoRoleFlexService"  
+		result="doRoleResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+	 		import cn.ucans.bean.T_ROLE_INFO;
+	 		
+	 		import cn.ucans.bean.T_ORG_INFO;
+	 		import cn.ucans.bean.T_USER_INFO;
+	 		import cn.ucans.tree.TreeNode;
+	 		import mx.collections.ArrayCollection;
+	 		import cn.ucans.flex.FlexRequest;
+	 		import cn.ucans.flex.FlexReponse;
+	 		import cn.ucans.common.RegularExpression;
+	 		import cn.ucans.common.DataProvider;
+	 		import cn.ucans.common.ArrayFactory;
+	 		
+	 		private var regular:RegularExpression = new RegularExpression();
+	 		private var dialog_add_user:AddUserInfoDialog = null; 
+	 		private var dialog_add_role:AddRoleMenuDialog = null; 
+	 		private var dialog_update_role:UpdateRoleMenuDialog = null;
+	 		private var dialog_update_user:UpdateUserInfoDialog = null;
+	 		private var dialog_confirm:CCSSConfirm = null;
+	 		private var dialog_password_user:UserRolePanelChangePasswordDialog = null;
+	 		private var dialog_fouce_change_password_user:UserRolePanelFouceChangePasswordDialog = null;
+			private var dialog_menu_change:UpdateMenuAsNameDialog = null;
+			
+			private function doAddRole():void{
+				this.dialog_add_role = new AddRoleMenuDialog();
+				this.dialog_add_role.showDialog(this);
+				this.dialog_add_role.addEventListener(Event.REMOVED,doAddRoleHandler);
+			}
+			
+			private function doAddRoleHandler(event:Event):void{
+				if(this.dialog_add_role.DOOK){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1014;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.role = this.dialog_add_role.role;
+					request.form.xml = this.dialog_add_role.XMLRole;
+					this.role_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doUpdateRole():void{
+				if(this.TableGrid_Role.selectedIndex>-1){
+					this.dialog_update_role = new UpdateRoleMenuDialog();
+					this.dialog_update_role.showDialog(this,this.TableGrid_Role.selectedItem);
+					this.dialog_update_role.addEventListener(Event.REMOVED,doUpdateRoleHandler);
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在角色列表中选择一个角色，再进行本操作！");
+					return;
+				}
+			}
+			
+			private function doUpdateRoleHandler(event:Event):void{
+				if(this.dialog_update_role.DOOK){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1015;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.role = this.dialog_update_role.role;
+					request.form.xml = this.dialog_update_role.XMLRole;
+					this.role_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doDeleteRole():void{
+				if(this.TableGrid_Role.selectedIndex>-1){
+					var item:Object = this.TableGrid_Role.selectedItem;
+					if(item.ROLE_ID == "00A"){
+						CCSSAlert.showMessageDialog(this,"系统保护，不能删除系统默认角色（"+item.ROLE_ID+"，"+item.ROLE_NAME+"）!");
+						return;
+					}else{
+						var request:FlexRequest = new FlexRequest();
+						request.ope_id = 1016;
+						request.menu_id = this.parentApplication.LoginMenu_ID;
+						request.org_id = this.parentApplication.LoginORG_ID;
+						request.user_id = this.parentApplication.LoginUser_ID;
+						var role:T_ROLE_INFO = new T_ROLE_INFO();
+						role.ROLE_ID = item.ROLE_ID;
+						role.ROLE_NAME = item.ROLE_NAME;
+						request.form.role = role;
+						this.dialog_confirm = new CCSSConfirm();
+						this.dialog_confirm.showDialog(this,"您确认要删除该角色（"+item.ROLE_ID+"，"+item.ROLE_NAME+"）吗？",request);
+						this.dialog_confirm.addEventListener(Event.REMOVED,doDeleteRoleHandler);
+					}
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在角色列表中选择一个角色，再进行本操作！");
+					return;
+				}
+			}
+			
+			private function doDeleteRoleHandler(event:Event):void{
+				if(this.dialog_confirm.YES){
+					var request:FlexRequest = this.dialog_confirm.object as FlexRequest;
+					this.role_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doChangeMenu():void{
+				if(this.TableGrid_Role.selectedIndex>-1){
+					var item:Object = this.TableGrid_Role.selectedItem;
+					this.dialog_menu_change = new UpdateMenuAsNameDialog(); 
+					this.dialog_menu_change.showDialog(this,item.ROLE_ID);
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在列表中选择一条记录，再进行此操作！");
+					return;
+				}
+			}
+			
+			private function doQueryRole():void{
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1017;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				var role:T_ROLE_INFO = new T_ROLE_INFO();
+				role.ROLE_ID = regular.trim(this.Role_ID.text);
+				role.ROLE_NAME = regular.trim(this.Role_Name.text);
+				request.form.role = role;
+				this.role_service.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			private function doRoleResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1014:
+						if(reponse.sign == 0){
+							this.doQueryRole();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1015:
+						if(reponse.sign == 0){
+							this.doQueryRole();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1016:
+						if(reponse.sign == 0){
+							this.doQueryRole();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1017:
+						if(reponse.sign == 0){
+							var collection_query:ArrayCollection = reponse.result.list as ArrayCollection;
+							this.TableGrid_Role.dataProvider = collection_query;
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1018:
+						if(reponse.sign == 0){
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+	 	]]>
+	 </mx:Script>
+		
+</mx:Panel>

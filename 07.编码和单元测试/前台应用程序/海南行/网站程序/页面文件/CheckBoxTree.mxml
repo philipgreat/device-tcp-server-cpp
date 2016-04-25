@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" initialize="init()" width="400" height="300" xmlns:controls="it.sephiroth.controls.*" >
+	<mx:Script>   
+<![CDATA[ 
+	  
+    import it.sephiroth.renderers.TreecheckboxItemRenderer;   
+    import mx.events.TreeEvent;   
+  	
+  	[Bindable]
+    private var xml:XML =  <node data="121" label="正在加载......" isSelect="0">   
+            <node data="121" label="代销商1" isSelect="1">   
+                <node data="121" label="菜单11" isSelect="0"/>  
+                <node data="121" label="菜单12" isSelect="1"/>   
+                <node data="121" label="菜单13" isSelect="0"/>
+            </node>  
+            <node data="121" label="菜单1" isSelect="0">   
+                <node data="121" label="菜单11" isSelect="0"/>  
+                <node data="121" label="菜单12" isSelect="0"/>   
+                <node data="121" label="菜单13" isSelect="0"/>   
+            </node>   
+        </node>;   
+     
+	    private function init():void{
+	    	this.CheckTree.dataProvider = xml;
+			this.CheckTree.selectedIndex = 0;
+	    }
+	    
+	    public function set dataProvider(xml_provider:XML):void{
+	    	this.xml = xml_provider
+	    	this.CheckTree.dataProvider = this.xml;
+	    }
+	    
+		public function setTree():void{
+			this.CheckTree.expandItem(this.CheckTree.selectedItem,true);	
+		}
+		
+	    public function toXML():String{
+	    	return this.xml.toXMLString();
+	    }
+	    private function onItemCheck(event:TreeEvent):void{
+	    	   
+	    	//CCSSAlert.showMessageDialog(this,"item data "+event.item.@data+"----");
+	    	//return;
+	        updateParents( event.item as XML, ( event.itemRenderer as TreecheckboxItemRenderer ).checkBox.checkState );   
+	        updateChilds( event.item as XML, ( event.itemRenderer as TreecheckboxItemRenderer ).checkBox.checkState );   
+	    }   
+	       
+	    /**  
+	     * @see it.sephiroth.controls.CheckBoxExtended#checkState  
+	     *   
+	     */  
+	    private function updateChilds( item:XML,value:uint):void{  
+	        var middle: Boolean = ( value & 2 << 1 ) == ( 2 << 1 );   
+	        var selected: Boolean = ( value & 1 << 1 ) == ( 1 << 1 );   
+	       
+	        if( item.children().length() > 0 && !middle){   
+	            for each(var x: XML in item.node )   
+	            {   
+	                x.@isSelect = value == ( 1 << 1 | 2 << 1 ) ? "2" : value == ( 1 << 1 ) ? "1" : "0";   
+	                updateChilds( x, value );   
+	            }   
+	        }   
+	    }   
+	       
+	    private function updateParents( item: XML, value: uint ): void  
+	    {   
+	        var checkValue: String = ( value == ( 1 << 1 | 2 << 1 ) ? "2" : value == ( 1 << 1 ) ? "1" : "0" );   
+	        var parentNode: XML = item.parent( );   
+	        if( parentNode )   
+	        {   
+	            for each(var x: XML in parentNode.node )   
+	            {   
+	                if( x.@isSelect != checkValue )   
+	                {   
+	                    checkValue = "2"  
+	                }   
+	            }   
+	            parentNode.@isSelect = checkValue;   
+	            updateParents( parentNode, value );   
+	        }   
+	    }   
+	]]>   
+	</mx:Script>   
+    <controls:TreeCheckBox id="CheckTree" width="100%" height="100%" labelField="@label"  checkField="@isSelect"  itemCheck="{onItemCheck(event)}"  x="0" y="0" fontFamily="Arial" fontSize="12" color="#010101" />
+</mx:Canvas>

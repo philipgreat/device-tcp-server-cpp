@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="250" height="300" title="选择地区" fontSize="12" fontFamily="Arial" color="#FBF6F6" borderColor="#0F1156">
+	<mx:Canvas x="20" y="37" width="192" height="210" borderStyle="solid" borderColor="#020202" fontFamily="Arial" fontSize="12" color="#040404">
+	</mx:Canvas>
+	<mx:Button x="39.5" y="4" label="确定" fontFamily="Arial" fontSize="12" color="#040404" click="doClick()"/>
+	<mx:Button x="138.5" y="4" label="取消" fontFamily="Arial" fontSize="12" color="#040404" click="doCancle()"/>
+	<mx:RemoteObject id="config_service" destination="HappyConfigFlexService"  
+		result="doConfigResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.tree.TreeNode;
+		
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.bean.T_AREA_CODE_PARM;
+			
+			public var DOOK:Boolean = false;
+			private var regular:RegularExpression = new RegularExpression();
+			public var node:TreeNode = null;
+			
+			public function showDialog(parent:DisplayObject,parent_id:String,top:int):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				request.ope_id = 7000;
+				request.menu_id = 5;
+				var area:T_AREA_CODE_PARM = new T_AREA_CODE_PARM();
+				area.AREA_CODE = "10086";
+				area.TOP_LEVEL = "0";
+				request.form.area = area;
+				this.config_service.doTransaction(request);
+			}
+			
+			private function doConfigResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 7000:
+						if(reponse.sign == 0){
+							var xml_str_area_tree:String = reponse.result.xml as String;
+							var xml_tree_init:XML = new XML(xml_str_area_tree);
+							this.AreaTree.dataProvider = xml_tree_init;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doClick():void{
+				node:TreeNode = this.AreaTree.selectNode;
+				if(node == null){
+					CCSSAlert.showMessageDialog(this,"请在地区树中选中一个节点，再进行此操作！");
+					return;
+				}else{
+					this.DOOK = true;
+					PopUpManager.removePopUp(this);
+				}
+			}
+			
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+		]]>
+	</mx:Script>
+</mx:TitleWindow>

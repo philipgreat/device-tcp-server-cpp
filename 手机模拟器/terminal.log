@@ -1,0 +1,168 @@
+0208 17:54:16 simulator: 208: started 
+0208 17:54:16 simulator: 209: tmid       =012345678901234ABCDEFGHIJKLMNO
+0208 17:54:16 simulator: 210: serverip   =127.0.0.1
+0208 17:54:16 simulator: 211: serverport =7000
+0208 17:54:16 simulator: 212: params     ='a=b,c=d,e=f'
+0208 17:54:32 simulator: 273: 发送开通请求
+0208 17:54:32 simulator: 279: 收到开通回复 命令: 0x102 代码: 0x0000 完全正确，比毛主席和林副统帅都正确！
+0208 17:54:32 simulator: 221: 断开处理
+0208 17:54:32 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 17:54:32 simulator: 244: 修改系统参数: wap=list列表
+0208 17:54:32 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 17:55:52 simulator: 301: 发送退租请求
+0208 17:55:52 simulator: 306: 收到退租回复 命令: 0x103 代码: 0x0000 完全正确，比毛主席和林副统帅都正确！
+0208 17:55:52 simulator: 221: 断开处理
+0208 17:55:52 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 17:55:52 simulator: 244: 修改系统参数: wap=list列表
+0208 17:55:52 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:12:45 simulator: 301: 发送退租请求
+0208 18:12:45 simulator: 306: 收到退租回复 命令: 0x103 代码: 0x1021 系统从没收到过终端的开通请求
+0208 18:12:45 simulator: 221: 断开处理
+0208 18:12:45 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:12:45 simulator: 244: 修改系统参数: wap=list列表
+0208 18:12:45 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:12:46 simulator: 273: 发送开通请求
+0208 18:12:46 simulator: 279: 收到开通回复 命令: 0x102 代码: 0x0000 完全正确，比毛主席和林副统帅都正确！
+0208 18:12:46 simulator: 221: 断开处理
+0208 18:12:46 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:12:46 simulator: 244: 修改系统参数: wap=list列表
+0208 18:12:46 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:12:54 simulator: 301: 发送退租请求
+0208 18:12:54 simulator: 306: 收到退租回复 命令: 0x103 代码: 0x0000 完全正确，比毛主席和林副统帅都正确！
+0208 18:12:54 simulator: 221: 断开处理
+0208 18:12:54 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:12:54 simulator: 244: 修改系统参数: wap=list列表
+0208 18:12:54 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:12:57 simulator: 318: end tmid=012345678901234ABCDEFGHIJKLMNO params='wap=list列表'
+0208 18:23:22 simulator: 208: started 
+0208 18:23:22 simulator: 209: tmid       =012345678901234ABCDEFGHIJKLMNO
+0208 18:23:22 simulator: 210: serverip   =127.0.0.1
+0208 18:23:22 simulator: 211: serverport =7000
+0208 18:23:22 simulator: 212: params     ='a=b,c=d,e=f'
+0208 18:23:23 simulator: 273: 发送开通请求
+0208 18:23:23 simulator: 279: 收到开通回复 命令: 0x102 代码: 0x0000 执行成功！
+0208 18:23:23 simulator: 221: 断开处理
+0208 18:23:23 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:23:23 simulator: 244: 修改系统参数: wap=list列表
+0208 18:23:23 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:23:25 simulator: 301: 发送退租请求
+0208 18:23:25 simulator: 306: 收到退租回复 命令: 0x103 代码: 0x0000 执行成功！
+0208 18:23:25 simulator: 221: 断开处理
+0208 18:23:25 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:23:25 simulator: 244: 修改系统参数: wap=list列表
+0208 18:23:25 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:23:26 simulator: 273: 发送开通请求
+0208 18:23:26 simulator: 279: 收到开通回复 命令: 0x102 代码: 0x0000 执行成功！
+0208 18:23:26 simulator: 221: 断开处理
+0208 18:23:26 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:23:26 simulator: 244: 修改系统参数: wap=list列表
+0208 18:23:26 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:23:26 simulator: 301: 发送退租请求
+0208 18:23:26 simulator: 306: 收到退租回复 命令: 0x103 代码: 0x0000 执行成功！
+0208 18:23:26 simulator: 221: 断开处理
+0208 18:23:26 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:23:26 simulator: 244: 修改系统参数: wap=list列表
+0208 18:23:26 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:23:27 simulator: 273: 发送开通请求
+0208 18:23:27 simulator: 279: 收到开通回复 命令: 0x102 代码: 0x0000 执行成功！
+0208 18:23:27 simulator: 221: 断开处理
+0208 18:23:27 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:23:27 simulator: 244: 修改系统参数: wap=list列表
+0208 18:23:27 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:23:27 simulator: 301: 发送退租请求
+0208 18:23:27 simulator: 306: 收到退租回复 命令: 0x103 代码: 0x0000 执行成功！
+0208 18:23:27 simulator: 221: 断开处理
+0208 18:23:27 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:23:27 simulator: 244: 修改系统参数: wap=list列表
+0208 18:23:27 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:23:27 simulator: 273: 发送开通请求
+0208 18:23:27 simulator: 279: 收到开通回复 命令: 0x102 代码: 0x0000 执行成功！
+0208 18:23:27 simulator: 221: 断开处理
+0208 18:23:27 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:23:27 simulator: 244: 修改系统参数: wap=list列表
+0208 18:23:27 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:23:27 simulator: 301: 发送退租请求
+0208 18:23:28 simulator: 306: 收到退租回复 命令: 0x103 代码: 0x0000 执行成功！
+0208 18:23:28 simulator: 221: 断开处理
+0208 18:23:28 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:23:28 simulator: 244: 修改系统参数: wap=list列表
+0208 18:23:28 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:23:28 simulator: 273: 发送开通请求
+0208 18:23:28 simulator: 279: 收到开通回复 命令: 0x102 代码: 0x0000 执行成功！
+0208 18:23:28 simulator: 221: 断开处理
+0208 18:23:28 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:23:28 simulator: 244: 修改系统参数: wap=list列表
+0208 18:23:28 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:23:28 simulator: 301: 发送退租请求
+0208 18:23:28 simulator: 306: 收到退租回复 命令: 0x103 代码: 0x0000 执行成功！
+0208 18:23:28 simulator: 221: 断开处理
+0208 18:23:28 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:23:28 simulator: 244: 修改系统参数: wap=list列表
+0208 18:23:28 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:23:28 simulator: 273: 发送开通请求
+0208 18:23:28 simulator: 279: 收到开通回复 命令: 0x102 代码: 0x0000 执行成功！
+0208 18:23:28 simulator: 221: 断开处理
+0208 18:23:28 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:23:28 simulator: 244: 修改系统参数: wap=list列表
+0208 18:23:28 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:23:29 simulator: 301: 发送退租请求
+0208 18:23:29 simulator: 306: 收到退租回复 命令: 0x103 代码: 0x0000 执行成功！
+0208 18:23:29 simulator: 221: 断开处理
+0208 18:23:29 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:23:29 simulator: 244: 修改系统参数: wap=list列表
+0208 18:23:29 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:23:29 simulator: 273: 发送开通请求
+0208 18:23:29 simulator: 279: 收到开通回复 命令: 0x102 代码: 0x0000 执行成功！
+0208 18:23:29 simulator: 221: 断开处理
+0208 18:23:29 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:23:29 simulator: 244: 修改系统参数: wap=list列表
+0208 18:23:29 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:23:29 simulator: 301: 发送退租请求
+0208 18:23:29 simulator: 306: 收到退租回复 命令: 0x103 代码: 0x0000 执行成功！
+0208 18:23:29 simulator: 221: 断开处理
+0208 18:23:29 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:23:29 simulator: 244: 修改系统参数: wap=list列表
+0208 18:23:29 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:23:29 simulator: 273: 发送开通请求
+0208 18:23:29 simulator: 279: 收到开通回复 命令: 0x102 代码: 0x0000 执行成功！
+0208 18:23:29 simulator: 221: 断开处理
+0208 18:23:29 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:23:29 simulator: 244: 修改系统参数: wap=list列表
+0208 18:23:29 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:23:30 simulator: 301: 发送退租请求
+0208 18:23:30 simulator: 306: 收到退租回复 命令: 0x103 代码: 0x0000 执行成功！
+0208 18:23:30 simulator: 221: 断开处理
+0208 18:23:30 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:23:30 simulator: 244: 修改系统参数: wap=list列表
+0208 18:23:30 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:23:30 simulator: 273: 发送开通请求
+0208 18:23:30 simulator: 279: 收到开通回复 命令: 0x102 代码: 0x0000 执行成功！
+0208 18:23:30 simulator: 221: 断开处理
+0208 18:23:30 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:23:30 simulator: 244: 修改系统参数: wap=list列表
+0208 18:23:30 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:23:32 simulator: 318: end tmid=012345678901234ABCDEFGHIJKLMNO params='wap=list列表'
+0208 18:36:12 simulator: 208: started 
+0208 18:36:12 simulator: 209: tmid       =012345678901234ABCDEFGHIJKLMNO
+0208 18:36:12 simulator: 210: serverip   =127.0.0.1
+0208 18:36:12 simulator: 211: serverport =7000
+0208 18:36:12 simulator: 212: params     ='a=b,c=d,e=f'
+0208 18:36:14 simulator: 273: 发送开通请求
+0208 18:36:14 simulator: 279: 收到开通回复 命令: 0x102 代码: 0x1003 终端状态错误，已经是开通状态
+0208 18:36:14 simulator: 221: 断开处理
+0208 18:36:14 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:36:14 simulator: 244: 修改系统参数: wap=list列表
+0208 18:36:14 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:36:15 simulator: 301: 发送退租请求
+0208 18:36:15 simulator: 306: 收到退租回复 命令: 0x103 代码: 0x0000 执行成功！
+0208 18:36:15 simulator: 221: 断开处理
+0208 18:36:15 simulator: 230: 收到服务器传递过来的命令: 0011
+0208 18:36:15 simulator: 244: 修改系统参数: wap=list列表
+0208 18:36:15 simulator: 230: 收到服务器传递过来的命令: cccccccc
+0208 18:36:16 simulator: 318: end tmid=012345678901234ABCDEFGHIJKLMNO params='wap=list列表'
+0217 08:48:22 simulator: 208: started 
+0217 08:48:22 simulator: 209: tmid       =012345678901234ABCDEFGHIJKLMNO
+0217 08:48:22 simulator: 210: serverip   =127.0.0.1
+0217 08:48:22 simulator: 211: serverport =7000
+0217 08:48:22 simulator: 212: params     ='a=b,c=d,e=f'
+0217 08:48:26 simulator: 318: end tmid=012345678901234ABCDEFGHIJKLMNO params='a=b,c=d,e=f'

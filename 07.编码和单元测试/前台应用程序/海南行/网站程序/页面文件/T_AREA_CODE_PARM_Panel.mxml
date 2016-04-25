@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" initialize="init()" width="790" height="550" fontSize="15"  backgroundColor="#FFFFFF" borderColor="#00656E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="地区代码配置" xmlns:ns1="*">
+	<mx:Canvas x="243" y="27" width="507" height="45" fontSize="12" color="#030303" borderColor="#272D26" backgroundColor="#C8F4C7" borderStyle="solid">
+		<mx:Button x="73" y="10" label="更新" fontFamily="Arial" fontSize="12" color="#040404" click="doUpdateArea()"/>
+		<mx:Button x="10" y="10" label="添加" fontFamily="Arial" fontSize="12" color="#040404" click="doAddArea()"/>
+		<mx:Button x="136" y="10" label="删除" fontFamily="Arial" fontSize="12" color="#040404" click="doDeleteArea()"/>
+	</mx:Canvas>
+	<mx:Canvas x="243" y="131" width="507" height="334" borderStyle="solid" borderColor="#101010" fontSize="12" color="#040404" backgroundColor="#8C9AEF">
+		<mx:DataGrid x="5.5" y="10" width="494" height="312" id="TableGrid" borderColor="#050505" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center">
+			<mx:columns>
+				<mx:DataGridColumn headerText="编号" dataField="AREA_CODE" width="140"/>
+				<mx:DataGridColumn headerText="名称" dataField="AREA_NAME" width="140"/>
+				<mx:DataGridColumn headerText="类型" dataField="AREA_TYPE" width="140" labelFunction="doAREA_TYPE"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="27" width="216" height="438" fontSize="12" color="#090909" borderStyle="solid" borderColor="#171718" backgroundColor="#D4D6F1">
+		<ns1:NormalTreeField x="6" y="10" width="202" height="416" id="AreaTree" borderStyle="solid" borderColor="#080909">
+		</ns1:NormalTreeField>
+	</mx:Canvas>
+	<mx:RemoteObject id="config_service" destination="HappyConfigFlexService"  
+		result="doConfigResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import cn.ucans.common.ArrayFactory;
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.MD5;
+			import mx.collections.ArrayCollection;
+			import cn.ucans.flex.FlexRequest;
+ 			import cn.ucans.flex.FlexReponse;
+ 			import cn.ucans.tree.TreeNode;
+ 			import cn.ucans.bean.T_AREA_CODE_PARM;
+ 			
+ 			private var regular:RegularExpression = new RegularExpression();
+ 			private var dialog_add:AddAreaCodeDialog = null;
+ 			private var dialog_confirm:CCSSConfirm = null;
+			
+			private function init():void{
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 7000;
+				request.menu_id = 5;
+				var area:T_AREA_CODE_PARM = new T_AREA_CODE_PARM();
+				area.AREA_CODE = "0086";
+				area.TOP_LEVEL = "0";
+				request.form.area = area;
+				this.config_service.doTransaction(request);
+				this.enabled = false;
+				this.Area_Type.dataProvider = DataProvider.combobox_array_Area_Code_Type_Edit;
+				this.AreaTree.click_Function = this.click_Tree_Handler;
+			}
+			
+			private function doAddArea():void{
+				var node:TreeNode = this.AreaTree.selectNode;
+				if(node == null){
+					CCSSAlert.showMessageDialog(this,"请在地区树中选中一个节点，再进行此操作！");
+					return;
+				}else{
+					this.dialog_add = new AddAreaCodeDialog();
+					this.dialog_add.showDialog(this,node.data,node.top);
+					this.dialog_add.addEventListener(Event.REMOVED,doAddAreaHandler);
+				}
+			}
+			
+			private function doAddAreaHandler(event:Event):void{
+				if(this.dialog_add.DOOK){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 7002;
+					request.menu_id = 5;
+					request.form.area = this.dialog_add.area;
+					this.config_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doTableClick():void{
+				var node:TreeNode = this.AreaTree.selectNode;
+				if(node == null){
+					CCSSAlert.showMessageDialog(this,"请在地区树中选中一个节点，再进行此操作！");
+					return;
+				}else{
+				}
+			}
+			
+			private function doUpdateArea():void{
+				var node:TreeNode = this.AreaTree.selectNode;
+				if(node == null){
+					CCSSAlert.showMessageDialog(this,"请在地区树中选中一个节点，再进行此操作！");
+					return;
+				}else{
+					if(this.Area_Code.text == "" && node.top != 0){
+						CCSSAlert.showMessageDialog(this,"请在地区树中选中一个节点（“中华人民共和国”除外），再进行此操作！");
+						return;
+					}else{
+						var request:FlexRequest = new FlexRequest();
+						request.ope_id = 7003;
+						request.menu_id = 5;
+						var area:T_AREA_CODE_PARM = new T_AREA_CODE_PARM();
+						area.AREA_CODE = this.Area_Code.text;
+						area.AREA_NAME = regular.trim(this.Area_Name.text);
+						area.AREA_TYPE = this.Area_Type.selectedItem.data;
+						area.TOP_LEVEL = ""+node.top;
+						request.form.area = area;
+						this.config_service.doTransaction(request);
+						this.enabled = false;
+					}					
+				}
+			}
+			
+			private function doDeleteArea():void{
+				var node:TreeNode = this.AreaTree.selectNode;
+				if(node == null){
+					CCSSAlert.showMessageDialog(this,"请在地区树中选中一个节点，再进行此操作！");
+					return;
+				}else{
+					if(node.top == 0){
+						CCSSAlert.showMessageDialog(this,"不能删除“"+node.label+"”！");
+						return;
+					}else{
+						this.clear();
+						var request:FlexRequest = new FlexRequest();
+						request.ope_id = 7004;
+						request.menu_id = 5;
+						var area:T_AREA_CODE_PARM = new T_AREA_CODE_PARM();
+						area.AREA_CODE = node.data;
+						area.AREA_NAME = node.label;
+						area.TOP_LEVEL = node.top+"";
+						area.AREA_TYPE = this.Area_Type.selectedItem.data;
+						request.form.area = area;
+						this.dialog_confirm = new CCSSConfirm();
+						this.dialog_confirm.showDialog(this,"您确认要删除地区（"+area.AREA_CODE+"，"+area.AREA_NAME+"）吗？",request);
+						this.dialog_confirm.addEventListener(Event.REMOVED,doDeleteAreaHandler);
+					}					
+				}
+			}
+			
+			private function doDeleteAreaHandler(event:Event):void{
+				if(this.dialog_confirm.YES){
+					var request:FlexRequest = this.dialog_confirm.object as FlexRequest;
+					this.config_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function click_Tree_Handler():void{
+				var node_selected:TreeNode = this.AreaTree.selectNode;
+				
+				this.Area_Code.text = node_selected.data;
+				this.Area_Name.text = node_selected.label;
+				this.Area_Type.selectedItem = ArrayFactory.getComboBoxSelectedItemFromArray(DataProvider.combobox_array_Area_Code_Type_Edit,""+node_selected.type);
+				
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 7001;
+				request.menu_id = 1001;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				var area:T_AREA_CODE_PARM = new T_AREA_CODE_PARM();
+				area.AREA_CODE = node_selected.data;
+				area.TOP_LEVEL = ""+(node_selected.top);
+				area.AREA_TYPE = this.Area_Type.selectedItem.data;
+				request.form.area = area;				
+				
+				this.config_service.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			private function clear():void{
+				this.Area_Code.text = "";
+				this.Area_Name.text = "";
+				this.Area_Type.selectedItem = ArrayFactory.getComboBoxSelectedItemFromArray(DataProvider.combobox_array_Area_Code_Type_Edit,"1");
+			}
+			
+			private function doConfigResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 7000:
+						if(reponse.sign == 0){
+							var xml_str_area_tree:String = reponse.result.xml as String;
+							var xml_tree_init:XML = new XML(xml_str_area_tree);
+							this.AreaTree.dataProvider = xml_tree_init;
+							var collection_query_init:ArrayCollection = reponse.result.list as ArrayCollection;
+							this.TableGrid.dataProvider = collection_query_init;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 7001:
+						if(reponse.sign == 0){
+							var query_xml_str_area_tree1:String = reponse.result.xml as String;
+							var query_xml_tree_init1:XML = new XML(query_xml_str_area_tree1);
+							this.AreaTree.updateSelectedItem(query_xml_tree_init1);
+							var collection_query_query:ArrayCollection = reponse.result.list as ArrayCollection;
+							this.TableGrid.dataProvider = collection_query_query;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 7002:
+						if(reponse.sign == 0){
+							var xml_add_add_str:String = reponse.result.xml as String;
+							var xml_add_add:XML = new XML(xml_add_add_str);
+							this.AreaTree.updateSelectedItem(xml_add_add);
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 7003:
+						if(reponse.sign == 0){
+							var xml_add_update_str:String = reponse.result.xml as String;
+							var xml_add_update:XML = new XML(xml_add_update_str);
+							this.AreaTree.setParentNodeSelected();
+							this.AreaTree.updateSelectedItem(xml_add_update);
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 7004:
+						if(reponse.sign == 0){
+							var xml_add_delete_str:String = reponse.result.xml as String;
+							var xml_add_delete:XML = new XML(xml_add_delete_str);
+							this.AreaTree.setParentNodeSelected();
+							this.AreaTree.updateSelectedItem(xml_add_delete);
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doAREA_TYPE(item:Object,column:DataGridColumn):String{
+				return ArrayFactory.getValueFromArray(DataProvider.combobox_array_Area_Code_Type_Edit,item.AREA_TYPE);
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas x="243" y="80" width="507" height="43" fontSize="12" color="#050505" borderStyle="solid" borderColor="#121313" backgroundColor="#DAD3F6">
+		<mx:Label x="10" y="12" text="编号"/>
+		<mx:Label x="323" y="13" text="类型"/>
+		<mx:Label x="157" y="12" text="名称"/>
+		<mx:ComboBox x="360" y="9" width="135" id="Area_Type"></mx:ComboBox>
+		<mx:TextInput x="194" y="10" width="121" maxChars="20" id="Area_Name"/>
+		<mx:TextInput x="47" y="9" width="102" editable="false" id="Area_Code"/>
+	</mx:Canvas>
+</mx:Panel>

@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" initialize="init()" width="790" height="550" fontSize="15"  backgroundColor="#FFFFFF" borderColor="#00656E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="终端类型配置" xmlns:ns1="*">
+	
+	<mx:RemoteObject id="terminalType_service" destination="TerminalTypeService"  
+		result="doTerminalTypeResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.ArrayFactory;
+			import mx.collections.ArrayCollection;
+			import cn.ucans.flex.FlexRequest;
+ 			import cn.ucans.flex.FlexReponse;
+ 			import cn.ucans.bean.T_TERMINAL_TYPE;
+ 			
+ 			import mx.controls.Alert;
+ 			
+ 			private var regular:RegularExpression = new RegularExpression();
+ 			private var dialog_add:AddTerminalTypeDialog = null;
+ 			private var dialog_update:UpdateTerminalTypeDialog=null;
+ 			private var dialog_confirm:CCSSConfirm = null;
+ 			
+ 			private var terminal_Type_util:T_TERMINAL_TYPE=null;//提供给修改操作时传递数据
+ 			
+ 			[Bindable]
+ 			public var orgNameList:ArrayCollection=new ArrayCollection();
+			
+			
+			
+			[Bindable]
+			public var tableGridList:ArrayCollection=new ArrayCollection();
+			
+			private function init():void{
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 9000;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id=this.parentApplication.LoginORG_ID;
+				request.user_id=this.parentApplication.LoginUser_ID;
+				this.terminal_Type_util=new T_TERMINAL_TYPE();
+				
+				this.terminalType_service.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			private function doAddTerminalType():void{
+				this.dialog_add = new AddTerminalTypeDialog();
+				this.dialog_add.showDialog(this,orgNameList);
+				this.dialog_add.addEventListener(Event.REMOVED,doAddTerminalTypeHandler);
+				
+			}
+			
+			
+			private function doAddTerminalTypeHandler(event:Event):void{
+				if(this.dialog_add.DOOK){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 9001;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id=this.parentApplication.LoginORG_ID;
+					request.user_id=this.parentApplication.LoginUser_ID;
+					request.form.terminalType=this.dialog_add.terminalType;
+					this.terminalType_service.doTransaction(request);
+					this.enabled = false;
+				}
+				
+			}
+			
+			private function doSelectItem():void{
+				if(TableGrid.selectedIndex>-1){
+					var item:Object = this.TableGrid.selectedItem;
+					this.terminal_Type_util.ORG_ID=item.ORG_ID;
+					this.terminal_Type_util.TERMINAL_TYPE=item.TERMINAL_TYPE;
+					this.terminal_Type_util.TERMINAL_NAME=item.TERMINAL_NAME;
+					this.terminal_Type_util.PERFORMANCE=item.PERFORMANCE;
+					this.terminal_Type_util.BASE_CONFIG=item.BASE_CONFIG;
+					this.terminal_Type_util.NOTES=item.NOTES;
+					
+				}else{
+					this.clear();
+				
+				}
+			}
+			
+			
+			private function doUpdateTerminalType():void{
+				if(this.TableGrid.selectedIndex <= -1){
+					CCSSAlert.showMessageDialog(this,"请在数据表中选择要修改的终端类型，再进行此操作！");
+				}else{
+					this.dialog_update = new UpdateTerminalTypeDialog();
+					this.dialog_update.showDialog(this,orgNameList,terminal_Type_util);
+					this.dialog_update.addEventListener(Event.REMOVED,doUpdateTerminalTypeHandler);
+				}
+				
+			}
+			
+			
+			private function doUpdateTerminalTypeHandler(event:Event):void{
+				
+					if(this.dialog_update.DOOK){
+						var request:FlexRequest = new FlexRequest();
+						request.ope_id = 9003;
+						request.menu_id = this.parentApplication.LoginMenu_ID;
+						request.org_id=this.parentApplication.LoginORG_ID;
+						request.user_id=this.parentApplication.LoginUser_ID;
+						
+						
+						request.form.terminalType=this.dialog_update.terminalType;
+						request.form.oldTerminalType=terminal_Type_util;
+						
+						this.terminalType_service.doTransaction(request);
+						this.enabled = false;
+					}
+				
+			}
+			
+			private function doDeleteTerminalType():void{
+				if(this.TableGrid.selectedIndex<=-1){
+					CCSSAlert.showMessageDialog(this,"请选择要删除的终端类型！");
+				}else{
+					
+					var item:Object = this.TableGrid.selectedItem;
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 9004;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id=this.parentApplication.LoginORG_ID;
+					request.user_id=this.parentApplication.LoginUser_ID;
+					var terminalType:T_TERMINAL_TYPE = new T_TERMINAL_TYPE();
+					terminalType.ORG_ID=item.ORG_ID;
+					terminalType.TERMINAL_TYPE=item.TERMINAL_TYPE;
+					request.form.terminalType = terminalType;
+					this.dialog_confirm = new CCSSConfirm();
+					this.dialog_confirm.showDialog(this,"您确认要删除终端： 终端生产厂家为：（"+item.ORG_NAME+"，终端型号为："+terminalType.TERMINAL_TYPE+"）吗？",request);
+					this.dialog_confirm.addEventListener(Event.REMOVED,doDeleteTerminalTypeHandler);
+				}
+			}
+			
+			private function doDeleteTerminalTypeHandler(event:Event):void{
+				if(this.dialog_confirm.YES){
+					var request:FlexRequest = this.dialog_confirm.object as FlexRequest;
+					this.terminalType_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doQueryTerminalTypes():void{
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 9002;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id=this.parentApplication.LoginORG_ID;
+				request.user_id=this.parentApplication.LoginUser_ID;
+				
+				var terminalType:T_TERMINAL_TYPE = new T_TERMINAL_TYPE();
+				terminalType.ORG_ID=org_id.selectedItem.data;
+				terminalType.TERMINAL_TYPE=terminalTypeId.text;
+				terminalType.TERMINAL_NAME=terminalNameId.text;
+				
+				request.form.terminalType=terminalType;
+				
+				this.terminalType_service.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			
+			private function clear():void{
+					this.TableGrid.selectedIndex=-1;
+			}
+			
+			private function doTerminalTypeResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 9000:
+						if(reponse.sign == 0){
+							
+							var query_init_list:ArrayCollection = reponse.result.list as ArrayCollection;
+							tableGridList = query_init_list;
+							
+							this.orgNameList = reponse.result.orgNameList as ArrayCollection;
+							
+							this.org_id.dataProvider=reponse.result.queryOrgNameList as ArrayCollection;
+							return;
+						}
+						break;
+					case 9001:
+						if(reponse.sign == 0){
+							this.clear();
+							this.doQueryTerminalTypes();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 9002:
+						if(reponse.sign == 0){
+							var query_init:ArrayCollection = reponse.result.list as ArrayCollection;
+							this.TableGrid.dataProvider = query_init;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 9003:
+						if(reponse.sign == 0){
+							this.clear();
+							this.doQueryTerminalTypes();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							this.doQueryTerminalTypes();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 9004:
+						if(reponse.sign == 0){
+							this.clear();
+							this.doQueryTerminalTypes();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							this.doQueryTerminalTypes();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Panel x="0" y="0" width="455" height="118" layout="absolute" fontSize="13" borderColor="#421D8C" title="查询向导">
+		<mx:Label x="21" y="14" text="终端厂家" color="#000000" fontSize="12"/>
+		<mx:ComboBox x="79" y="9" width="125" id="org_id" fontSize="12" color="#030303" dropdownWidth="300"></mx:ComboBox>
+		<mx:Button x="364" y="10" label="查询" fontFamily="Arial" fontSize="12" color="#040404" click="doQueryTerminalTypes()"/>
+		<mx:Label x="20" y="48" text="终端型号" color="#030303"/>
+		<mx:Label x="224" y="45" text="终端名字" color="#030303"/>
+		<mx:TextInput x="284" y="42" fontFamily="Arial" fontSize="12" color="#050505" width="132" id="terminalNameId"/>
+		<mx:TextInput x="78" y="44" width="126" id="terminalTypeId" fontFamily="Arial" fontSize="12" color="#050505"/>
+	</mx:Panel>
+	
+	<mx:Panel x="463" y="0" width="307" height="118" layout="absolute" borderColor="#4D68AE" title="控制区域" fontSize="13">
+		<mx:Button x="119.5" y="25" label="修改" fontFamily="Arial" fontSize="12" color="#040404" click="doUpdateTerminalType()"/>
+		<mx:Button x="39.5" y="25" label="添加" fontFamily="Arial" fontSize="12" color="#040404" click="doAddTerminalType()"/>
+		<mx:Button x="195.5" y="25" label="删除" fontFamily="Arial" fontSize="12" color="#040404" click="doDeleteTerminalType()"/>
+	</mx:Panel>
+	
+	
+	<mx:Panel x="0" y="126" width="770" height="363" layout="absolute" borderColor="#3D50C2" fontSize="13" title="数据">
+		<mx:DataGrid x="0" y="0" width="750" height="319" id="TableGrid" borderColor="#050505"  dataProvider="{tableGridList}" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center" click="doSelectItem()" fontSize="12" color="#030303">
+			<mx:columns>
+				<mx:DataGridColumn headerText="终端厂家ID" dataField="ORG_ID" width="120" visible="false"/>
+				<mx:DataGridColumn headerText="终端厂家" dataField="ORG_NAME" width="120"/>
+				<mx:DataGridColumn headerText="终端型号" dataField="TERMINAL_TYPE" width="120"/>
+				<mx:DataGridColumn headerText="终端名字" dataField="TERMINAL_NAME" width="120"/>
+				<mx:DataGridColumn headerText="标配说明" dataField="BASE_CONFIG" width="140" textAlign="left"/>
+				<mx:DataGridColumn headerText="特性说明" dataField="PERFORMANCE" width="140" textAlign="left"/>
+				<mx:DataGridColumn headerText="备注" dataField="NOTES" width="140" textAlign="left"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Panel>
+	
+	
+</mx:Panel>

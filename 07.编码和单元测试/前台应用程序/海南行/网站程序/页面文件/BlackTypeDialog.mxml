@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="init()" layout="absolute" width="398" height="290" title="添加黑名单" fontSize="12" fontFamily="Arial" borderColor="#0B064C" xmlns:ns1="*">
+	<mx:Canvas x="13" y="10" width="350" height="194" borderStyle="solid" backgroundColor="#CDF3E8" fontSize="12" color="#000000" id="Cavas02" borderColor="#030F18">
+		<mx:Label x="21" y="73" text="黑名单类型"/>
+		<mx:Label x="21" y="43" text="黑名单号码"/>
+		<mx:TextInput x="94" y="41" width="170" maxChars="15" id="blackPhoneNumberId"/>
+		<mx:Label x="36" y="104" text="备注"/>
+		<mx:Label id="hotelName" x="21" y="15" text="酒店名称"/>
+		<mx:ComboBox id="cbbBlackTypeID" x="94" y="71" width="170"></mx:ComboBox>
+		<mx:ComboBox id="hotelId" x="93" y="10" width="171"></mx:ComboBox>
+		<mx:TextArea x="94" y="102" width="170" id="notesId" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)" maxChars="64"/>
+	</mx:Canvas>
+	<mx:Button x="105" y="212" label="确定" click="doClick()"/>
+	<mx:Button x="221" y="212" label="取消" click="doCancle()"/>
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.bean.T_BLACK_WHITE;
+			
+			import cn.ucans.common.RegularExpression;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.bean.T_ORG_LINKMAN;
+			import mx.events.CloseEvent;
+			import mx.controls.Alert;
+			import cn.ucans.common.RegularExpression;
+			
+			public var strAlertCode:String = "";
+			private var reg:RegularExpression = new RegularExpression();
+			public var DOOK:Boolean = false;
+			private var regular:RegularExpression = new RegularExpression();
+			public var black:T_BLACK_WHITE = null;
+			
+			public function showDialog(parent:DisplayObject,arrCon:ArrayCollection,arrConHotel:ArrayCollection):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				cbbBlackTypeID.dataProvider = arrCon;
+				hotelId.dataProvider = arrConHotel;
+				black = new T_BLACK_WHITE();
+			}
+			
+			private function doClick():void{
+				var ok:Boolean = true;
+				if(this.parentApplication.LoginORG_ID == "HAPPY"){
+						if(hotelId.selectedItem.data == ""){
+							CCSSAlert.showMessageDialog(this,"请选择酒店！");
+							FlashContrl.target = hotelId;
+							FlashContrl.play();
+							hotelId.setFocus();	
+							ok = false;
+							return;
+						}
+					}
+				if(!regular.isNumber(regular.trim(this.blackPhoneNumberId.text))||regular.trim(this.blackPhoneNumberId.text) == ""){
+						CCSSAlert.showMessageDialog(this,"黑名单号码格式不正确！");
+						FlashContrl.target = blackPhoneNumberId;
+						FlashContrl.play();
+						blackPhoneNumberId.setFocus();	
+						ok = false;
+						return;
+				}
+				if(ok){
+					if(this.parentApplication.LoginORG_ID == "HAPPY"){
+						black.ORG_ID = hotelId.selectedItem.data;
+					}
+					this.black.PHONE_NUMBER = this.regular.trim(this.blackPhoneNumberId.text);
+					this.black.BLACK_TYPE = this.regular.trim(this.cbbBlackTypeID.selectedItem.data);
+					this.black.NOTES = this.regular.trim(this.notesId.text);
+					this.DOOK = true;
+					PopUpManager.removePopUp(this);
+				}
+			}
+			private function doCancle():void{
+				this.DOOK = false;
+				PopUpManager.removePopUp(this);
+			}
+			private function init():void{
+				
+				if(this.parentApplication.LoginORG_ID != "HAPPY"){
+					black.ORG_ID = this.parentApplication.LoginORG_ID;
+					this.hotelId.enabled = false;
+					hotelName.enabled = false;
+				}else{
+					this.hotelId.enabled = true;
+					hotelName.enabled = true;
+					black.ORG_ID = "";
+				}
+			}
+		]]>
+	</mx:Script>
+		<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+    </mx:Sequence>
+</mx:TitleWindow>

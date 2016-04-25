@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"  initialize="init()" width="1024" height="609" horizontalScrollPolicy="off" verticalScrollPolicy="off" xmlns:ns1="*">
+<mx:Fade id="HideOut" duration="1000" alphaFrom="1.0" alphaTo="0.0"/>		
+ 	<mx:Canvas width="100%" height="609"  verticalScrollPolicy="off" horizontalScrollPolicy="off">
+		<mx:Panel width="227" layout="absolute" title="菜单" backgroundAlpha="0.36" horizontalScrollPolicy="off" verticalScrollPolicy="off" borderColor="#96BEC2" cornerRadius="7" alpha="0.8" themeColor="#8FD4FF" color="#FFFFFF" fontSize="14" fontWeight="normal" backgroundColor="#DCFBFF" left="0" top="0" bottom="55" borderThicknessBottom="25">
+			<ns1:NormalTreeField id="RoleTree" x="0" y="0" width="206" height="494">
+			</ns1:NormalTreeField>
+		</mx:Panel>
+	</mx:Canvas>
+	<mx:Canvas x="231" y="0" id="mainContext" width="793" height="560">
+	</mx:Canvas>
+	<mx:Script>
+ 	<![CDATA[
+ 		import cn.ucans.common.RegularExpression;
+		
+		import cn.ucans.tree.TreeNode;
+		import cn.ucans.common.MenuLocation;
+		
+		private var location:MenuLocation = new MenuLocation();
+		private var regular:RegularExpression = new RegularExpression();
+		
+		public function setProvider(xml:XML):void{
+			this.RoleTree.dataProvider = xml;
+			this.RoleTree.click_Function = this.click_Tree_Handler;
+		}
+		
+		private function click_Tree_Handler():void{
+			var node_selected:TreeNode = this.RoleTree.selectNode;
+			//var menu_id:String = node_selected.data;
+			//CCSSAlert.showMessageDialog(this,""+node_selected.top);
+			if(node_selected.top == 2){
+				this.parentApplication.LoginMenu_ID = node_selected.data;
+				this.mainContext.removeAllChildren();
+				this.mainContext.addChild(this.location.getDiaplayObject(node_selected.data));
+			}
+		}
+ 	]]>
+ </mx:Script>
+</mx:Canvas>

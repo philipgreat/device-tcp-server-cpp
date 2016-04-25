@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="790" height="550" fontSize="15"   creationComplete="init()" backgroundColor="#FFFFFF" borderColor="#00646E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="套餐配置" xmlns:ns1="*">
+	
+	<mx:RemoteObject id="infoPayTypeParmServiceId" destination="InfoPayTypeParmService"  
+		result="doTerminalServicePointResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import cn.ucans.common.RegularExpression;
+			import mx.collections.ArrayCollection;
+			import cn.ucans.flex.FlexRequest;
+ 			import cn.ucans.flex.FlexReponse;
+ 			import cn.ucans.bean.T_INFO_PAY_TYPE;
+			import cn.ucans.bean.T_INFO_PAY_TYPE_PARM;
+ 			
+ 			private var regular:RegularExpression = new RegularExpression();
+ 			
+ 			private var dialog_add:AddInfoPayTypeParmDialog=null;
+ 			private var dialog_update:UpdateInfoPayTypeParmDialog=null;
+ 			private var dialog_confirm:CCSSConfirm = null;
+ 			
+ 			
+ 			private var pay_Type_Util:T_INFO_PAY_TYPE=null;//提供给修改操作时作中间变量传递数据
+			private var pay_Type_Parm_Util:T_INFO_PAY_TYPE_PARM=null;//提供给修改操作时作中间变量传递数据
+			
+			[Bindable]
+			public var tableGridList:ArrayCollection=new ArrayCollection();
+			
+			private function init():void{
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 9040;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id=this.parentApplication.LoginORG_ID;
+				request.user_id=this.parentApplication.LoginUser_ID;
+				
+				this.pay_Type_Util=new T_INFO_PAY_TYPE();
+				this.pay_Type_Parm_Util=new T_INFO_PAY_TYPE_PARM();
+				
+				this.infoPayTypeParmServiceId.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			private function doAddInfoPayTypeParm():void{
+				this.dialog_add = new AddInfoPayTypeParmDialog();
+				this.dialog_add.showDialog(this);
+				this.dialog_add.addEventListener(Event.REMOVED,doAddInfoPayTypeParmHandler);
+				
+			}
+			
+			
+			private function doAddInfoPayTypeParmHandler(event:Event):void{
+				if(this.dialog_add.DOOK){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 9041;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id=this.parentApplication.LoginORG_ID;
+					request.user_id=this.parentApplication.LoginUser_ID;
+					
+					request.form.payTypeForAdd=this.dialog_add.payTypeForAdd;
+					request.form.payTypeParmForAdd=this.dialog_add.payTypeParmForAdd;
+					
+					this.infoPayTypeParmServiceId.doTransaction(request);
+					this.enabled = false;
+				}
+				
+			}
+			
+			private function doSelectItem():void{
+				if(TableGrid.selectedIndex>-1){
+					var item:Object = this.TableGrid.selectedItem;
+					this.pay_Type_Util.PAY_TYPE=item.PAY_TYPE;
+					this.pay_Type_Util.PAY_NAME=item.PAY_NAME;
+					
+					this.pay_Type_Parm_Util.PAY_TYPE=item.PAY_TYPE;
+					this.pay_Type_Parm_Util.START_NUMBER=item.START_NUMBER;
+					this.pay_Type_Parm_Util.END_NUMBER=item.END_NUMBER;
+					this.pay_Type_Parm_Util.CHARGE_TYPE=item.CHARGE_TYPE;
+					this.pay_Type_Parm_Util.PAY_RATE=item.PAY_RATE;
+					this.pay_Type_Parm_Util.NOTES=item.NOTES;
+					this.pay_Type_Parm_Util.CREATE_TIME=item.CREATE_TIME;
+					
+				}else{
+					this.clear();
+				}
+			}
+			
+			
+			private function doUpdateInfoPayTypeParm():void{
+				if(this.TableGrid.selectedIndex <= -1){
+					CCSSAlert.showMessageDialog(this,"请在数据表中选择要修改的套餐信息，再进行此操作！");
+				}else{
+					this.dialog_update = new UpdateInfoPayTypeParmDialog();
+					this.dialog_update.showDialog(this,pay_Type_Util,pay_Type_Parm_Util);
+					this.dialog_update.addEventListener(Event.REMOVED,doUpdateInfoPayTypeParmHandler);
+				}
+				
+			}
+			
+			
+			private function doUpdateInfoPayTypeParmHandler(event:Event):void{
+				
+					if(this.dialog_update.DOOK){
+						var request:FlexRequest = new FlexRequest();
+						request.ope_id = 9043;
+						request.menu_id = this.parentApplication.LoginMenu_ID;
+						request.org_id=this.parentApplication.LoginORG_ID;
+						request.user_id=this.parentApplication.LoginUser_ID;
+						
+						request.form.oldPay_Type_Parm_Util=pay_Type_Parm_Util;
+						request.form.payTypeParmForUpdate=this.dialog_update.payTypeParmForUpdate;
+						
+						this.infoPayTypeParmServiceId.doTransaction(request);
+						this.enabled = false;
+					}
+				
+			}
+			
+			private function doDelInfoPayTypeParm():void{
+				if(this.TableGrid.selectedIndex<=-1){
+					CCSSAlert.showMessageDialog(this,"请选择要删除的套餐配置信息！");
+				}else{
+					
+					var item:Object = this.TableGrid.selectedItem;
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 9044;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id=this.parentApplication.LoginORG_ID;
+					request.user_id=this.parentApplication.LoginUser_ID;
+					
+					
+					request.form.infoPayTypeParmForDel = pay_Type_Parm_Util;
+					
+					this.dialog_confirm = new CCSSConfirm();
+					this.dialog_confirm.showDialog(this,"您确认要删除此套餐配置信息吗？",request);
+					this.dialog_confirm.addEventListener(Event.REMOVED,doDelInfoPayTypeParmHandler);
+				}
+			}
+			
+			private function doDelInfoPayTypeParmHandler(event:Event):void{
+				if(this.dialog_confirm.YES){
+					var request:FlexRequest = this.dialog_confirm.object as FlexRequest;
+					this.infoPayTypeParmServiceId.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doQueryInfoPayTypeParm():void{
+				var ok:Boolean=true;
+//				if(regular.compareDateTime(startTimeId.text,endTimeId.text)){
+//					CCSSAlert.showMessageDialog(this,"起始时间不能大于截至时间！");
+//					FlashContrl.target = startTimeId;
+//					FlashContrl.play();
+//					startTimeId.setFocus();	
+//					ok = false;
+//					return;
+//				}
+				if(ok){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 9042;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id=this.parentApplication.LoginORG_ID;
+					request.user_id=this.parentApplication.LoginUser_ID;
+					
+					request.form.Pay_Name=regular.trim(Pay_Name_Id.text);
+//					request.form.startTime=regular.trim(startTimeId.text);
+//					request.form.endTime=regular.trim(endTimeId.text);
+					
+					this.infoPayTypeParmServiceId.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			
+			private function clear():void{
+					this.TableGrid.selectedIndex=-1;
+			}
+			
+			private function doTerminalServicePointResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 9040:
+						if(reponse.sign == 0){
+							var query_init_list:ArrayCollection = reponse.result.list as ArrayCollection;
+							tableGridList = query_init_list;
+							return;
+						}
+						break;
+					case 9041:
+						if(reponse.sign == 0){
+							this.clear();
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 9042:
+						if(reponse.sign == 0){
+							var queryTerminalServiePonit_init:ArrayCollection = reponse.result.list as ArrayCollection;
+							this.TableGrid.dataProvider = queryTerminalServiePonit_init;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 9043:
+						if(reponse.sign == 0){
+							this.clear();
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 9044:
+						if(reponse.sign == 0){
+							this.clear();
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			
+			private function formatChargeType(item:Object,clumn:DataGridColumn):String{
+				if(item[clumn.dataField]=="1")
+					return "打包付费";
+				else 
+					return "按条数计费";
+			
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Panel x="0" y="0" width="477" height="122" layout="absolute" fontSize="13" borderColor="#028874" title="查询向导" cornerRadius="5">
+		<mx:Label x="68" y="28" text="套餐名称" color="#000000" fontSize="13"/>
+		<mx:Button x="344" y="26" label="查询" fontFamily="Arial" fontSize="12" color="#040404" click="doQueryInfoPayTypeParm()" tabIndex="4"/>
+		
+		<!--
+		
+		<mx:Label x="10" y="45" text="起始时间" color="#030303"/>
+		<mx:Label x="233" y="45" text="截止时间" color="#030303"/>
+		
+		
+		<mx:DateField x="69" y="44" width="156" id="startTimeId" tabIndex="2" monthNames="['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']"
+										  dayNames="['日', '一', '二', '三', '四', '五', '六']" creationComplete="fun_setInitValue(startTimeId,0)" formatString="YYYY-MM-DD" color="#0D0C0C" fontSize="12" fontWeight="normal"/> 
+
+		<mx:DateField x="296" y="44" width="151" id="endTimeId" tabIndex="3" monthNames="['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']"
+										  dayNames="['日', '一', '二', '三', '四', '五', '六']" creationComplete="fun_setInitValue2(endTimeId,0)" formatString="YYYY-MM-DD" color="#0D0C0C" fontSize="12" fontWeight="normal"/> 
+		-->
+		<mx:TextInput x="133" y="25" width="141" color="#040404" id="Pay_Name_Id" tabIndex="1"/>
+	</mx:Panel>
+	
+	<mx:Panel x="485" y="0" width="285" height="122" layout="absolute" borderColor="#170394" title="控制区域" fontSize="13">
+		<mx:Button x="108.5" y="26" label="修改" fontFamily="Arial" fontSize="12" color="#040404" click="doUpdateInfoPayTypeParm()" tabIndex="6"/>
+		<mx:Button x="30.5" y="26" label="添加" fontFamily="Arial" fontSize="12" color="#040404" click="doAddInfoPayTypeParm()" tabIndex="5"/>
+		<mx:Button x="183.5" y="26" label="删除" fontFamily="Arial" fontSize="12" color="#040404" click="doDelInfoPayTypeParm()" tabIndex="7"/>
+	</mx:Panel>
+	
+	
+	<mx:Panel x="0" y="130" width="770" height="359" layout="absolute" borderColor="#0803C4" fontSize="13" title="数据">
+		<mx:DataGrid x="-10" y="0" width="750" height="315" id="TableGrid" borderColor="#050505"  dataProvider="{tableGridList}" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center" click="doSelectItem()" fontSize="12" color="#030303" alternatingItemColors="[#FFFFFF, #FFFFFF]">
+			<mx:columns>
+				<mx:DataGridColumn headerText="套餐类型" dataField="PAY_TYPE" visible="false"/>
+				<mx:DataGridColumn headerText="套餐名称" dataField="PAY_NAME" width="90"/>
+				<mx:DataGridColumn headerText="起始条数" dataField="START_NUMBER" width="80"/>
+				<mx:DataGridColumn headerText="截至条数" dataField="END_NUMBER" width="80"/>
+				<mx:DataGridColumn headerText="计费方式" dataField="CHARGE_TYPE" width="80" labelFunction="formatChargeType"/>
+				<mx:DataGridColumn headerText="费率" dataField="PAY_RATE" width="60"/>
+				<mx:DataGridColumn headerText="数据描述" dataField="NOTES" width="180" textAlign="left"/>
+				<mx:DataGridColumn headerText="创建套餐日期" dataField="CREATE_TIME"  visible="false"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Panel>
+	
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+    </mx:Sequence>
+	
+	
+	
+</mx:Panel>

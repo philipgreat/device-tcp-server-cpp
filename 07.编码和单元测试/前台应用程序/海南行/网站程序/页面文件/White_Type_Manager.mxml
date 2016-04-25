@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" initialize="init()" width="790" height="550" fontSize="15"  backgroundColor="#FFFFFF" borderColor="#00656E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="白名单管理" xmlns:ns1="*">
+	<mx:DataGrid x="0" id="dg" y="83" width="770" height="406" color="#000706" fontSize="12" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" borderColor="#01090E">
+		<mx:columns>
+			
+			<mx:DataGridColumn headerText="白名单号码" dataField="PHONE_NUMBER"/>
+			<mx:DataGridColumn headerText="加入操作员" dataField="JOIN_USER_ID" width="80"/>
+			<mx:DataGridColumn headerText="加入时间" dataField="JOIN_TIME" width="130"/>
+			<mx:DataGridColumn headerText="备注" dataField="NOTES"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Panel x="0" y="0" width="770" height="75" layout="absolute" headerHeight="15" title="                                             功能列表" fontSize="13" color="#F30A2B">
+		<mx:Canvas x="0" y="0" width="750" height="48" fontSize="12" color="#030303" borderColor="#272D26" backgroundColor="#C8F4C7" borderStyle="solid">
+			<mx:Button x="27" y="10" label="增加" fontFamily="Arial" fontSize="12" color="#040404" click="addBlackInfo()"/>
+			<mx:Button x="105" y="10" label="删除" fontFamily="Arial" fontSize="12" color="#040404" click="deleteBlackInfo()"/>
+			<mx:Button x="182" y="11" label="导出" fontFamily="Arial" fontSize="12" color="#040404" click="doExcpot()"/>
+			<mx:TextInput x="360" y="10" width="170" visible="false" maxChars="10" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)" id="blackPhoneNumberId"/>
+		</mx:Canvas>
+	</mx:Panel>
+	<mx:RemoteObject id="getDataService" destination="blackConfigFlexService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	
+	<mx:DateFormatter id="df" formatString="YYYY-MM-DD JJ:NN:SS"/>
+	<mx:DateFormatter id="df1" formatString="YYYY-MM-DD"/>
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+    </mx:Sequence>
+    <mx:Script>
+    	<![CDATA[
+    		import mx.controls.TextInput;
+    		import cn.ucans.flex.FlexReponse;
+    		import mx.collections.ArrayCollection;
+    		import cn.ucans.common.RegularExpression;
+    		import cn.ucans.bean.T_BLACK_WHITE;
+    		import cn.ucans.flex.FlexRequest;
+    		import cn.ucans.common.ArrayFactory;
+    		import mx.events.CloseEvent;
+    		import mx.controls.Alert;
+    		
+    		
+    		private	var	strAlertCode:String = "";
+    		private var strFileName:String = "";
+    		private var file: FileReference;
+    		private var reg:RegularExpression = new RegularExpression();
+    		private var arrCon:ArrayCollection = new ArrayCollection();
+    		private var whiteDialog:WhiteTypeDialog = null;
+    		private var dialog_confirm:CCSSConfirm = null;
+    		
+    		private function doResult(data:Object):void{
+    			this.enabled = true;
+    			var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 2007:
+						if(reponse.sign == 0){
+							arrCon = reponse.result.list as ArrayCollection;
+							dg.dataProvider = arrCon;
+//							if(arrCon.length <1){
+//								CCSSAlert.showMessageDialog(this,"没有查询到数据，请更换查询条件！");
+//								return;
+//							}
+							return;
+						}else{
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}	
+						break;
+					case 2008:
+						if(reponse.sign == 0){
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+							return;
+						}else{
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}	
+						break;
+					case 2009:
+						if(reponse.sign == 0){
+							if(this.dialog_confirm.YES){
+								arrCon.removeItemAt(dg.selectedIndex);
+								CCSSAlert.showMessageDialog(this,reponse.message);
+							}
+							return;
+						}else{
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 2005:
+						if(reponse.sign == 0)
+						{
+							var downloadURL:URLRequest;
+							strFileName = (reponse.org_id as String);	
+							dialog_confirm = new CCSSConfirm();	
+							Alert.show("请问您真的想导出这些数据吗？","确认信息",3,this,fun_DeleteExcel);
+							file.download(downloadURL);
+							return;
+						}
+						else
+						{
+							CCSSAlert.showErrorDialog(this,"生成Execl文件时出错，错误代码是：" + reponse.message);
+							return;
+						}
+						break;
+					case 2006:
+						if(reponse.sign == 0)
+						{
+							return;
+						}
+						else
+						{
+							CCSSAlert.showErrorDialog(this,"删除Execl文件时出错，错误代码是：" + reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;
+				}
+    		}
+    		
+    		private function addBlackInfo():void{
+				this.whiteDialog = new WhiteTypeDialog();
+				this.whiteDialog.showDialog(this);
+				this.whiteDialog.addEventListener(Event.REMOVED,doAddBlackNameListHandler);
+    		}
+    		private function doAddBlackNameListHandler(event:Event):void{
+    			if(this.whiteDialog.DOOK){
+	    			var request:FlexRequest = new FlexRequest();
+	    			var white:T_BLACK_WHITE = new T_BLACK_WHITE();
+	    			white = this.whiteDialog.white;
+	    			white.JOIN_USER_ID = this.parentApplication.LoginUser_ID;
+	    			request.ope_id = 2008;
+	    			request.menu_id = this.parentApplication.LoginMenu_ID;
+	    			request.org_id = this.parentApplication.LoginORG_ID;
+	    			request.user_id = this.parentApplication.LoginUser_ID;
+	    			request.form.white = white;
+	    			this.getDataService.doTransaction(request);
+			    	this.enabled = false;
+		    	}
+		    	
+		    	
+    		}
+    		private function deleteBlackInfo():void{
+    			if(this.dg.selectedIndex < 0){
+    				CCSSAlert.showMessageDialog(this,"请在列表中选择一条记录，再进行此操作！");
+					FlashContrl.target = dg;
+					FlashContrl.play();
+					dg.setFocus();	
+					return;
+    			}else{
+    				var item:Object = this.dg.selectedItem;
+    				var request:FlexRequest = new FlexRequest();
+					request.ope_id = 2009;
+					request.menu_id = this.parentApplication.LoginMenu_ID;	
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					var delwhite:T_BLACK_WHITE = new T_BLACK_WHITE();
+					delwhite.PHONE_NUMBER = item.PHONE_NUMBER;
+					delwhite.JOIN_USER_ID = item.JOIN_USER_ID;
+					delwhite.JOIN_TIME = item.JOIN_TIME;
+					delwhite.NOTES = item.NOTES;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.delwhite = delwhite;
+					this.dialog_confirm = new CCSSConfirm();
+					this.dialog_confirm.showDialog(this,"您确认要删除白名单号码<"+item.PHONE_NUMBER+">吗？",request);
+					this.dialog_confirm.addEventListener(Event.REMOVED,doDeleteBlackTypeHandler);
+    			}
+    		}
+    		private function doDeleteBlackTypeHandler(event:Event):void{
+    			if(this.dialog_confirm.YES){
+					var request:FlexRequest = this.dialog_confirm.object as FlexRequest;
+					this.getDataService.doTransaction(request);
+					this.enabled = false;
+				}
+    		}
+//    		////////////////////////////////////////////////////////////////////////////////////////////////
+    			private function fun_DeleteExcel(event:CloseEvent):void
+			{	
+				switch(event.detail)
+				{
+					case Alert.YES:
+						var downloadURL:URLRequest;
+							downloadURL = new URLRequest(parentApplication.strPubURL + "/TempFile/" + 
+								strFileName);
+							file = new FileReference();
+							file.addEventListener(ProgressEvent.PROGRESS,onProgress);
+							file.addEventListener(Event.COMPLETE, downComplete);
+							file.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+							file.addEventListener(Event.CANCEL,doCancel);
+							file.download(downloadURL);
+						break;
+					case Alert.NO:
+							var request:FlexRequest = new FlexRequest();
+							request.menu_id = this.parentApplication.LoginMenu_ID;
+			    			request.ope_id = 2006;
+			    			request.org_id = this.parentApplication.LoginORG_ID;
+			    			request.user_id = this.parentApplication.LoginUser_ID;
+							getDataService.DeleteExcelFile(strFileName,request);
+							this.enabled = false;
+						break;
+				}
+			}
+    		private function doExcpot():void{
+    			if(arrCon.length < 1){
+    				CCSSAlert.showMessageDialog(this,"请在列表中选择一条记录，再进行导出！");
+    				FlashContrl.target = dg;
+					FlashContrl.play();
+					dg.setFocus();	
+    				return;
+    			}
+    			var strFileData:String = "白名单号码||加入操作员||加入时间||备注";				
+				for(var n:int = 0;n < this.arrCon.length;n ++){
+					var item:Object = this.arrCon.getItemAt(n);
+					strFileData = strFileData + "&&" + 	 
+					NVL(item.PHONE_NUMBER,"") + "||" +  
+					NVL(item.JOIN_USER_ID,"") + "||" + 
+					NVL(item.JOIN_TIME,"") + "||" + 
+					NVL(item.NOTES,"");
+				}
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 2005;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				this.getDataService.CreateExcelFile(strFileData,"",request);
+				this.enabled = false;
+    		}
+    		 private function NVL(strSour:String,strTag:String):String{
+				if(strSour == null){
+					return strTag;
+				}else{
+					return strSour;
+				}
+			}
+    	    private function onProgress(e: ProgressEvent): void
+			{
+				var oProcessBar:ProcessBarCanvas = this.getChildByName("ProcessBarCanvas") as ProcessBarCanvas;
+				
+				if(oProcessBar == null)
+				{
+					oProcessBar = new ProcessBarCanvas();
+					oProcessBar.x = 300;
+					oProcessBar.y = 200;
+					oProcessBar.name = "ProcessBarCanvas";
+					this.addChild(oProcessBar);
+					oProcessBar.onProgress(e);
+				}
+				else
+				{
+					oProcessBar.onProgress(e);
+				}
+				
+			}
+
+			private function downComplete(e:Event): void{
+				var oProcessBar:ProcessBarCanvas = this.getChildByName("ProcessBarCanvas") as ProcessBarCanvas;
+				if(oProcessBar != null)
+				{
+					this.removeChild(oProcessBar);
+				}
+				CCSSAlert.showMessageDialog(this,"生成Excel文件成功");
+				file.removeEventListener(ProgressEvent.PROGRESS, onProgress);
+				file.removeEventListener(Event.COMPLETE, downComplete);
+				file.removeEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				file.removeEventListener(Event.CANCEL,doCancel);
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 2006;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				this.getDataService.DeleteExcelFile(strFileName,request);
+				this.enabled = false;
+			}
+			
+			private function doCancel(event:Event):void
+			{
+				file.removeEventListener(ProgressEvent.PROGRESS, onProgress);
+				file.removeEventListener(Event.COMPLETE, downComplete);
+				file.removeEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				file.removeEventListener(Event.CANCEL,doCancel);
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 2006;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				getDataService.DeleteExcelFile(strFileName,request);
+				this.enabled = false;
+			}
+			
+			private function ioErrorHandler(e:Event): void{
+				CCSSAlert.showErrorDialog(this,"ioErrorHandler: " + e);
+				var oProcessBar:ProcessBarCanvas = this.getChildByName("ProcessBarCanvas") as ProcessBarCanvas;
+				if(oProcessBar != null)
+				{
+					this.removeChild(oProcessBar);
+				}
+				
+				file.removeEventListener(ProgressEvent.PROGRESS, onProgress);
+				file.removeEventListener(Event.COMPLETE, downComplete);
+				file.removeEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				file.removeEventListener(Event.CANCEL,doCancel);
+				
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 2006;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				getDataService.DeleteExcelFile(strFileName,request);
+				CCSSAlert.showErrorDialog(this,"文件下载错误，请联系管理员！");
+				this.enabled = false;
+			}
+//			/////////////////////////////////////////////////////////////////////////////////////
+    		
+    		private function init():void{
+//				if(this.parentApplication.LoginORG_ID != "HAPPY"){
+//					this.enabled = false;
+//					CCSSAlert.showMessageDialog(this,"只有平台操作员");
+//				}else{
+//
+//				}
+//				查询白名单
+    			var request:FlexRequest = new FlexRequest();
+    			request.user_id = this.parentApplication.LoginUser_ID;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 2007;
+    			this.getDataService.doTransaction(request);
+    			this.enabled = false;
+    		}
+    		private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+    	]]>
+    </mx:Script>
+</mx:Panel>

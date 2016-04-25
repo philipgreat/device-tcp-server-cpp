@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="400" height="300" title="添加地区" fontSize="12" fontFamily="Arial" color="#EEF3F4" borderColor="#14105A">
+	<mx:Label x="74" y="44" text="地区编号" color="#040404"/>
+	<mx:Label x="74" y="133" text="地区类型" color="#040404"/>
+	<mx:Label x="74" y="89" text="地区名称" color="#040404"/>
+	<mx:TextInput x="146" y="40" fontFamily="Arial" fontSize="12" color="#050505" maxChars="8" id="Area_Code" width="160"/>
+	<mx:TextInput x="146" y="85" fontFamily="Arial" fontSize="12" color="#050505" id="Area_Name" maxChars="20"/>
+	<mx:ComboBox x="146" y="129" fontFamily="Arial" fontSize="12" color="#050505" id="Area_Type"></mx:ComboBox>
+	<mx:Button x="112.5" y="194" label="确定" fontFamily="Arial" fontSize="12" color="#040404" click="doClick()"/>
+	<mx:Button x="215.5" y="194" label="取消" fontFamily="Arial" fontSize="12" color="#040404" click="doCancle()"/>
+	<mx:Script>
+		<![CDATA[
+		
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.bean.T_AREA_CODE_PARM;
+			
+			public var DOOK:Boolean = false;
+			private var regular:RegularExpression = new RegularExpression();
+			public var area:T_AREA_CODE_PARM = null;
+			
+			public function showDialog(parent:DisplayObject,parent_id:String,top:int):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				area = new T_AREA_CODE_PARM();
+				area.PARENT_ID = parent_id;
+				area.TOP_LEVEL = ""+(top+1);
+				this.Area_Type.dataProvider = DataProvider.combobox_array_Area_Code_Type_Edit;
+			}
+			
+			private function doClick():void{
+				var ok:Boolean = true;
+				if(this.regular.trim(this.Area_Code.text) == ""){
+					CCSSAlert.showMessageDialog(this,"编号不能为空！");
+					ok = false;
+					this.showView(this.Area_Code);
+					return;
+				}else{
+					if(!regular.isNumber(this.Area_Code.text)){
+						CCSSAlert.showMessageDialog(this,"编号只能位数字！");
+						ok = false;
+						this.showView(this.Area_Code);
+						return;
+					}
+				}
+				
+				if(this.regular.trim(this.Area_Name.text) == ""){
+					CCSSAlert.showMessageDialog(this,"名称不能为空！");
+					ok = false;
+					return;
+				}
+				if(ok){
+					if(this.Area_Type.selectedItem.data == "1"){
+						this.area.AREA_CODE = "P"+this.regular.trim(this.Area_Code.text);
+					}else{
+						this.area.AREA_CODE = this.regular.trim(this.Area_Code.text);
+					}
+					this.area.AREA_NAME = this.regular.trim(this.Area_Name.text);
+					this.area.AREA_TYPE = this.Area_Type.selectedItem.data;
+					this.DOOK = true;
+					PopUpManager.removePopUp(this);
+				}
+			}
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function showView(object:Object):void{
+				FlashContrl.target = object;
+				FlashContrl.play();
+				object.setFocus();
+			}
+		]]>
+	</mx:Script>
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+ </mx:Sequence>
+</mx:TitleWindow>

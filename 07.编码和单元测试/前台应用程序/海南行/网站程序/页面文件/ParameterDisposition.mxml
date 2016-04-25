@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initComplete()" width="1024" height="609" horizontalScrollPolicy="off" verticalScrollPolicy="off" xmlns:ns1="*">		
+ 
+	
+	<mx:Canvas width="100%" height="609"  verticalScrollPolicy="off" horizontalScrollPolicy="off">
+		<mx:Panel width="222" layout="absolute" title="菜单" backgroundAlpha="0.36" horizontalScrollPolicy="off" verticalScrollPolicy="off" borderColor="#96BEC2" cornerRadius="7" alpha="0.8" themeColor="#8FD4FF" color="#FFFFFF" fontSize="14" fontWeight="normal" backgroundColor="#DCFBFF" left="0" top="0" bottom="55" borderThicknessBottom="25">
+			<mx:Tree id="MenuList" x="0" y="0" width="100%" height="494"  backgroundSize="100%" fontWeight="bold" backgroundAlpha="0.3" color="#98E6FA" backgroundColor="#E3FFFD" fontSize="12" alpha="0.7"></mx:Tree>	
+			<ns1:NormalTreeField x="0" y="0" height="494" id="ParamTree">
+			</ns1:NormalTreeField>
+		</mx:Panel>
+	</mx:Canvas>
+	<mx:Script>
+ 	<![CDATA[
+		import cn.ucans.tree.TreeNode;
+ 		
+ 		private function initComplete():void{
+ 		//	this.currentIndex = this.defaultPanel.creationIndex;
+ 		}
+ 		
+ 		public function setTreeClickFunction():void{
+ 			this.ParamTree.click_Function = this.click_Tree_Handler;
+ 		}
+ 		
+		private function click_Tree_Handler():void{
+			var node_selected:TreeNode = this.ParamTree.selectNode;
+			if(node_selected != null && node_selected.data != "-1"){
+				switch(Number(node_selected.data)){
+					case 501:	//地区代码参数配置
+						this.mainContext.removeAllChildren();
+						var pabel_area_code:T_AREA_CODE_PARM_Panel = new T_AREA_CODE_PARM_Panel();
+						this.mainContext.addChild(pabel_area_code);
+						break;
+					case 502:	//地区代码参数配置
+						
+						break;
+					default:
+						break;
+				}
+			}
+		}
+ 	]]>
+ </mx:Script>
+	<mx:Canvas x="231" y="0" id="mainContext" width="793" height="560">
+	</mx:Canvas>
+</mx:Canvas>

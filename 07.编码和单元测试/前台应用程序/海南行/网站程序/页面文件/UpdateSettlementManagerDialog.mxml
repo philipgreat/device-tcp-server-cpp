@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="432" height="306" title="编辑账单" fontSize="15" fontFamily="Arial" color="#F0F6F7" borderColor="#2B135B">
+	<mx:Button x="103.5" y="208" label="确定" fontFamily="Arial" fontSize="12" color="#030303" click="doClick()"/>
+	<mx:Button x="250.5" y="208" label="取消" fontFamily="Arial" fontSize="12" color="#030303" click="doCancle()"/>
+	<mx:Canvas x="24.5" y="50" width="364" height="124" borderStyle="solid" borderColor="#29263A" backgroundColor="#A3E9EA">
+		<mx:Label x="10" y="71" text="实际减免金额（元）" fontFamily="Arial" fontSize="12" color="#040404" fontWeight="normal"/>
+		<mx:Label x="10" y="42" text="最多减免金额（元）" fontFamily="Arial" fontSize="12" color="#040404" fontWeight="normal"/>
+		<mx:NumericStepper x="131" y="69" id="Free_Cash" minimum="0" maximum="999999999" stepSize="0.01" fontFamily="Arial" fontSize="12" color="#020202" width="134"/>
+		<mx:Label x="131" y="41" text="未设置" id="May_Free_Cash" fontSize="12" color="#040404"/>
+	</mx:Canvas>
+	<mx:Script>
+		<![CDATA[
+			
+			import mx.collections.ArrayCollection;
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import cn.ucans.common.ArrayFactory; 
+			import mx.managers.PopUpManager;
+			
+			private var most_free_cash:Number = 0;
+			public var free_cash_set:Number = 0;
+			public var DOOK:Boolean = false;
+			
+			private var dialog_conform:CCSSConfirm = null;
+			
+			public function showDialog(parent:DisplayObject,most_free_cash:Number):void{
+             	PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				this.May_Free_Cash.text = ""+(most_free_cash/100);
+				this.most_free_cash = most_free_cash;
+//				if(this.most_free_cash>0){
+//					this.Free_Cash.maximum = this.most_free_cash/100;
+//				}
+        	}
+        	
+        	public function doClick():void{
+        		if(this.Free_Cash.value <= this.most_free_cash/100 || this.Free_Cash.value<0){
+        			this.dialog_conform = new CCSSConfirm();
+	    			this.dialog_conform.showDialog(this,"您确认要执行费用减免操作吗？",null);
+	    			this.dialog_conform.addEventListener(Event.REMOVED,doClickHandler);
+        		}else{
+        			CCSSAlert.showMessageDialog(this,"减少金额只能为0~ "+this.most_free_cash/100+"元！");
+        			return;
+        		}       		
+        	}
+        	
+        	private function doClickHandler(event:Event):void{
+        		if(this.dialog_conform.YES){
+        			this.free_cash_set = this.Free_Cash.value as Number;
+	        		this.DOOK = true;
+	        		PopUpManager.removePopUp(this);
+        		}
+        	}
+        	
+        	public function doCancle():void{
+        		PopUpManager.removePopUp(this);
+        	}
+			
+		]]>
+	</mx:Script>
+	<mx:Label x="148.5" y="10" text="减免费用控制" fontSize="13" color="#D91A1A" fontFamily="Arial" fontWeight="bold"/>
+</mx:TitleWindow>

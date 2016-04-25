@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" initialize="init()" width="790" height="550" fontSize="15"  backgroundColor="#B6DCB7" borderColor="#00656E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="公共参数配置" xmlns:ns1="*">
+	
+	<mx:RemoteObject id="publicParmInfoService" destination="PublicParmInfoService"  
+		result="doPublicParmInfoResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.collections.ArrayCollection;
+			import cn.ucans.flex.FlexRequest;
+ 			import cn.ucans.flex.FlexReponse;
+ 			
+ 			import cn.ucans.bean.T_PUBLIC_PARM_INFO;
+ 			
+ 			private var dialog_add:AddPublicParmInfoDialog=null;
+ 			private var dialog_confirm:CCSSConfirm = null;
+ 			private var dialog_update:UpdatePublicParmInfoDialog=null;
+ 			
+ 			private var publicParmInfo:T_PUBLIC_PARM_INFO=null;
+ 			
+			[Bindable]
+			public var tableGridList:ArrayCollection=new ArrayCollection();
+			
+			private function init():void{
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 9050;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id=this.parentApplication.LoginORG_ID;
+				request.user_id=this.parentApplication.LoginUser_ID;
+				
+				this.publicParmInfo=new T_PUBLIC_PARM_INFO();
+				
+				this.publicParmInfoService.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			private function doAddPublicParmInfo():void{
+				this.dialog_add = new AddPublicParmInfoDialog();
+				this.dialog_add.showDialog(this);
+				this.dialog_add.addEventListener(Event.REMOVED,doAddPublicParmInfoHandler);
+				
+			}
+			
+			
+			private function doAddPublicParmInfoHandler(event:Event):void{
+				if(this.dialog_add.DOOK){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 9051;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id=this.parentApplication.LoginORG_ID;
+					request.user_id=this.parentApplication.LoginUser_ID;
+					
+					this.dialog_add.publicParmInfo.UPDATE_USER_ID=request.user_id;
+					
+					request.form.publicParmInfo=this.dialog_add.publicParmInfo;
+					this.publicParmInfoService.doTransaction(request);
+					this.enabled = false;
+				}
+				
+			}
+			
+			private function doSelectItem():void{
+				if(TableGrid.selectedIndex>-1){
+					var item:Object = this.TableGrid.selectedItem;
+					publicParmInfo.NOTES=item.NOTES;
+					publicParmInfo.PARM_KEY=item.PARM_KEY;
+					publicParmInfo.PARM_VALUES=item.PARM_VALUES;
+					
+				}else{
+					this.clear();
+				
+				}
+			}
+			
+			
+			private function doUpdatePublicParmInfo():void{
+				if(this.TableGrid.selectedIndex <= -1){
+					CCSSAlert.showMessageDialog(this,"请在数据表中选择要修改的公参数，再进行此操作！");
+				}else{
+					this.dialog_update = new UpdatePublicParmInfoDialog();
+					this.dialog_update.showDialog(this,publicParmInfo);
+					this.dialog_update.addEventListener(Event.REMOVED,doUpdatePublicParmInfoHandler);
+				}
+				
+			}
+			
+			
+			private function doUpdatePublicParmInfoHandler(event:Event):void{
+				
+					if(this.dialog_update.DOOK){
+						var request:FlexRequest = new FlexRequest();
+						request.ope_id = 9052;
+						request.menu_id = this.parentApplication.LoginMenu_ID;
+						request.org_id=this.parentApplication.LoginORG_ID;
+						request.user_id=this.parentApplication.LoginUser_ID;
+						
+						this.dialog_update.publicParmInfo.UPDATE_USER_ID=request.user_id;
+						
+						request.form.publicParmInfoForUpdate=this.dialog_update.publicParmInfo;
+						request.form.oldPublicParmInfoForUpdate=this.publicParmInfo;
+						
+						this.publicParmInfoService.doTransaction(request);
+						this.enabled = false;
+					}
+				
+			}
+		
+	
+		
+						
+			private function clear():void{
+					this.TableGrid.selectedIndex=-1;
+			}
+			
+			
+			private function doPublicParmInfoResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 9050:
+						if(reponse.sign == 0){
+							
+							var query_init_list:ArrayCollection = reponse.result.list as ArrayCollection;
+							tableGridList = query_init_list;
+							return;
+						}
+						break;
+					case 9051:
+						if(reponse.sign == 0){
+							this.clear();
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							this.clear();
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 9052:
+						if(reponse.sign == 0){
+							this.clear();
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							this.clear();
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					
+					default:
+						break;				
+				}
+			}
+			
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Panel x="0" y="0" width="770" height="94" layout="absolute" borderColor="#050BFA" title="控制区域" fontSize="13">
+		<mx:Button x="417.5" y="13" label="修改" fontFamily="Arial" fontSize="12" color="#040404" click="doUpdatePublicParmInfo()"/>
+		<mx:Button x="259.5" y="13" label="创建" fontFamily="Arial" fontSize="12" color="#040404" click="doAddPublicParmInfo()"/>
+	</mx:Panel>
+	
+	
+	<mx:Panel x="0" y="102" width="770" height="387" layout="absolute" borderColor="#3D50C2" fontSize="13" title="数据">
+		<mx:DataGrid x="0" y="0" width="750" height="343" id="TableGrid"  variableRowHeight="true" borderColor="#050505"  dataProvider="{tableGridList}" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center" click="doSelectItem()" fontSize="12" color="#030303">
+			<mx:columns>
+				
+				<mx:DataGridColumn headerText="参数标识" dataField="PARM_KEY" width="200" textAlign="left"/>
+				<mx:DataGridColumn headerText="参数值" dataField="PARM_VALUES" width="200" textAlign="left"/>
+				<mx:DataGridColumn headerText="参数含义" dataField="NOTES" width="340" textAlign="left"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Panel>
+	
+	
+</mx:Panel>

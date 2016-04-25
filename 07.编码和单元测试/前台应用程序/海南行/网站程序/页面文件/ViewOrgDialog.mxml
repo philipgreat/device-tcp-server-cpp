@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="648" height="456" title="查询组织信息" color="#F8FBFC" fontSize="15" fontFamily="Arial" borderColor="#1E0F6B">
+	<mx:Canvas x="10" y="10" width="608" height="78" borderStyle="solid" borderColor="#100C35" backgroundColor="#E5F7DD" fontFamily="Arial" fontSize="12" color="#000000">
+		<mx:Button x="422" y="8" label="查询" fillAlphas="[1.0, 1.0]" fillColors="[#B6BBEE, #B6BBEE]" click="doQuery()"/>
+		<mx:Label x="10" y="10" text="组织编号"/>
+		<mx:TextInput x="71" y="8" width="106" id="Org_ID" maxChars="10"/>
+		<mx:Label x="210" y="10" text="组织名称"/>
+		<mx:TextInput x="270" y="8" width="123" id="Org_Name"/>
+		<mx:Label x="210" y="44" text="组织类型"/>
+		<mx:ComboBox x="271" y="41" id="Org_Type" width="122"></mx:ComboBox>
+		<mx:Label x="10" y="43" text="酒店星级"/>
+		<mx:ComboBox x="71" y="40" id="Hotel_Grade" width="106"></mx:ComboBox>
+		<mx:Label x="421" y="45" text="组织状态"/>
+		<mx:ComboBox x="482" y="41" id="Status" width="114"></mx:ComboBox>
+		<mx:Button x="518" y="8" label="退出窗口" click="doCancle()"/>
+	</mx:Canvas>
+	<mx:DataGrid x="10" y="105" width="608" height="295" borderColor="#030303" id="TableGrid" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center"  fontSize="12" fontFamily="Arial" color="#080808">
+		<mx:columns>
+			<mx:DataGridColumn headerText="组织ID" dataField="ORG_ID" width="80"/>
+			<mx:DataGridColumn headerText="组织名称" dataField="ORG_NAME" width="90"/>
+			<mx:DataGridColumn headerText="组织类型" dataField="ORG_TYPE" width="90" labelFunction="doORG_TYPE"/>
+			<mx:DataGridColumn headerText="上级组织" dataField="SUPERIOR_ORG_ID" width="140"/>
+			<mx:DataGridColumn headerText="酒店星级" dataField="HOTEL_GRADE" width="120"/>
+			<mx:DataGridColumn headerText="状态" dataField="STATUS" width="100" labelFunction="doSTATUS"/>
+			<mx:DataGridColumn headerText="备注" dataField="NOTES" width="140"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:RemoteObject id="org_service" destination="OrgFlexService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import cn.ucans.common.ArrayFactory;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.bean.T_ORG_INFO;
+			import cn.ucans.flex.FlexRequest;
+	 		import cn.ucans.flex.FlexReponse;
+			
+			public var DOOK:Boolean = false;
+			private var regular:RegularExpression = new RegularExpression();
+			public var org:T_ORG_INFO = null;
+			
+			
+			public function showDialog(parent:DisplayObject):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				org = new T_ORG_INFO();
+				this.Org_Type.dataProvider = DataProvider.combobox_array_Org_Type_Edit_Normal;
+				this.Status.dataProvider = DataProvider.combobox_array_Org_Status_Query;
+				this.Hotel_Grade.dataProvider = DataProvider.combobox_array_Hotel_Grade_Query;
+			}
+			
+			private function doQuery():void{
+				var org:T_ORG_INFO = new T_ORG_INFO();
+				org.ORG_ID = regular.trim(this.Org_ID.text);
+				org.ORG_NAME = regular.trim(this.Org_Name.text);
+				org.HOTEL_GRADE = ""+this.Hotel_Grade.value;
+				org.STATUS = this.Status.selectedItem.data;
+				org.ORG_TYPE = this.Org_Type.selectedItem.data;
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1006;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.type = 0;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				request.form.org = org;
+				this.org_service.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			private function doResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1006:
+						if(reponse.sign == 0){
+							var collection:ArrayCollection = reponse.result.list as ArrayCollection;
+							this.TableGrid.dataProvider = collection;
+							if(collection.length<1){
+								CCSSAlert.showMessageDialog(this,"没有找到任何数据！");
+								return;
+							}
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function doSTATUS(item:Object,column:DataGridColumn):String{
+				return ArrayFactory.getValueFromArray(DataProvider.combobox_array_Org_Status_Query,item.STATUS);
+			}
+			
+			private function doORG_TYPE(item:Object,column:DataGridColumn):String{
+				return ArrayFactory.getValueFromArray(DataProvider.combobox_array_Org_Type_Query,item.ORG_TYPE);
+			}
+		]]>
+	</mx:Script>
+</mx:TitleWindow>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="370" height="372" title="添加终端参数" fontSize="12" fontFamily="Arial" borderColor="#14105A">
+	
+	<mx:Label x="47" y="24" text="IMEI号"/>
+		<mx:Label x="58" y="64" text="参数"/>
+		<mx:Label x="34" y="194" text="是否启用"/>
+		<mx:ComboBox x="104" y="191" width="79" id="available_Id" selectedIndex="1" tabIndex="3"></mx:ComboBox>
+		<mx:TextArea x="104" y="64" height="105" width="174" id="parameters_Id" maxChars="256" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)" tabIndex="2"/>
+		<mx:TextInput  x="104" y="21" width="174" maxChars="15" id="imei_Number_Id" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)" tabIndex="1"/>
+	<mx:Button x="81.5" y="249" label="确定" fontFamily="Arial" fontSize="12" color="#040404" click="doClick()" tabIndex="4"/>
+	<mx:Button x="194" y="249" label="取消" fontFamily="Arial" fontSize="12" color="#040404" click="doCancle()" tabIndex="5"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.bean.T_TERMINAL_PARM;
+			import mx.controls.List;
+			import cn.ucans.common.DataProvider;
+			
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.common.RegularExpression;
+			
+			private var regular:RegularExpression = new RegularExpression();
+			public var DOOK:Boolean = false;
+			
+			
+			public var terminalParm:T_TERMINAL_PARM= null;
+			
+			public function showDialog(parent:DisplayObject):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				terminalParm = new T_TERMINAL_PARM();
+				available_Id.dataProvider=DataProvider.combobox_array_TerminalParmAvailable;
+			}
+			
+			private function doClick():void{
+				var ok:Boolean = true;
+				
+				if(this.regular.trim(this.imei_Number_Id.text) == ""){
+					CCSSAlert.showMessageDialog(this,"IMEI号不能为空！");
+					ok = false;
+					this.showView(this.imei_Number_Id);
+					return;
+				}
+				
+				if(this.regular.trim(this.parameters_Id.text) == ""){
+					CCSSAlert.showMessageDialog(this,"参数不能为空！");
+					ok = false;
+					this.showView(this.parameters_Id);
+					return;
+				}
+				if(ok){
+					this.terminalParm.IMEI_NUMBER=this.regular.trim(this.imei_Number_Id.text);
+					this.terminalParm.PARAMETERS=this.regular.trim(this.parameters_Id.text);
+					this.terminalParm.AVAILABLE=this.available_Id.selectedItem.data;
+					this.DOOK = true;
+					PopUpManager.removePopUp(this);
+				}
+			}
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function showView(object:Object):void{
+				FlashContrl.target = object;
+				FlashContrl.play();
+				object.setFocus();
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+ </mx:Sequence>
+	
+</mx:TitleWindow>

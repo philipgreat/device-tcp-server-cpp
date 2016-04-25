@@ -1,0 +1,674 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute"  initialize="init()"  creationComplete="setComplete()" width="790" height="550" fontSize="15"  backgroundColor="#FFFFFF" borderColor="#00656E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="结账（酒店前台）" xmlns:ns1="*">
+	<mx:Sequence id="FlashContrl"> 
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+ 	</mx:Sequence>
+ 	<mx:Canvas x="10" y="42" width="750" height="437" fontSize="12" color="#010101" borderStyle="solid" borderColor="#0B0C0C" backgroundColor="#7E9094" id="Canvas_DoSettlement" visible="true">
+		<mx:DataGrid x="10" y="49" width="728" height="257" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center"  fontSize="12" color="#010101" borderColor="#060606" id="TableGrid">
+			<mx:columns>
+				<mx:DataGridColumn headerText="房间号码" dataField="ROOM_NO" width="100"/>
+				<mx:DataGridColumn headerText="手机号码" dataField="MSISDN" width="100"/>
+				<mx:DataGridColumn headerText="起租时间" dataField="START_TIME" width="220"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Label x="10" y="12" text="查询到的记录总数：" fontSize="14" color="#F8F3F2" fontWeight="normal"/>
+		<mx:Label x="138" y="13" text="未设置" id="CashCount" color="#1C186B" fontWeight="normal"/>
+		<mx:Button x="293.5" y="356" label="开始结账并生成账单" click="doSetupSattelement()" width="161" height="36" fontSize="14"/>
+	</mx:Canvas>
+	<mx:ComboBox x="645" y="10" fontFamily="Arial" fontSize="12" color="#060606" id="DaoHangCombobox" width="115" change="doDaoHangChange()"></mx:ComboBox>
+	<mx:Label x="580" y="13" text="导航切换" fontFamily="Arial" fontSize="12" color="#060606" fontWeight="bold"/>
+	<mx:Canvas x="10" y="42" width="750" height="437" fontSize="12" color="#010101" borderStyle="solid" borderColor="#0B0C0C" backgroundColor="#8FABBB" id="Canvas_DoBill" visible="false">
+		<mx:DataGrid x="18" y="43" width="712" height="290" borderColor="#030303" id="TableBill"  horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center"  >
+			<mx:columns>
+				<mx:DataGridColumn headerText="账单流水号" dataField="SERVICE_ID" width="100" visible="false"/>
+				<mx:DataGridColumn headerText="手机号码" dataField="MSISDN" width="100"/>
+				<mx:DataGridColumn headerText="起租时间" dataField="START_TIME" width="130"/>
+				<mx:DataGridColumn headerText="退租时间" dataField="END_TIME" width="130"/>
+				<mx:DataGridColumn headerText="账单状态" dataField="STATUS" width="100" labelFunction="doCashSTATUS"/>
+				<mx:DataGridColumn headerText="应缴金额（元）" dataField="CASH" width="100" labelFunction="doCASH"/>
+				<!--<mx:DataGridColumn headerText="实缴金额（元）" dataField="REAL_PAY_CASH" width="100" labelFunction="doREAL_PAY_CASH"/>-->
+				<mx:DataGridColumn headerText="最多减免金额（元）" dataField="MAY_FREE_CASH" width="120" labelFunction="doMAY_FREE_CASH"/>
+				<mx:DataGridColumn headerText="实际减免金额（元）" dataField="FREE_CASH" width="120" labelFunction="doFREE_CASH"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Button x="530" y="359" label="我要销账" click="cancleAccount()" width="100" height="39" fontSize="14"/>
+		<mx:Button x="638" y="359" label="查看详单" click="doViewPaymentBillDetailList()" width="92" height="39" fontSize="14"/>
+		<mx:Button x="514" y="11" label="导出列表数据" click="doLeadBill()"/>
+		<mx:CheckBox x="18" y="8" label="将当前所有账单全部进行销账操作" color="#F61106" fontWeight="bold" id="CheckBox_AccountAllCash" selected="true" click="doCheckBox_AccountAllCashClick()" fontSize="13" visible="false"/>
+		<mx:Canvas x="18" y="341" width="347" height="84" id="Settlement_All" visible="true">
+			<mx:Label x="10" y="27" text="应缴总金额（元）：" fontWeight="bold" fontFamily="Arial" fontSize="20"/>
+			<mx:Label x="235" y="27" text="未设置" id="Real_Pay_All_Count" fontWeight="bold" color="#FA0404" fontFamily="Arial" fontSize="20"/>
+		</mx:Canvas>
+		<mx:Canvas x="18" y="341" width="347" height="84" id="Settlement_Single" visible="false">
+			<mx:Label x="40" y="10" text="本账单交款金额（元）：" fontWeight="bold" fontFamily="Arial" fontSize="14"/>
+			<mx:Label x="205" y="10" text="未设置" id="Single_Cash_Count" fontWeight="bold" color="#221B66" fontFamily="Arial" fontSize="14"/>
+			<mx:Label x="10" y="42" text="本账单实际交款金额（元）：" fontWeight="bold" fontFamily="Arial" fontSize="14"/>
+			<mx:Label x="205" y="42" text="未设置" id="Real_Single_Count" fontWeight="bold" color="#FA0404" fontFamily="Arial" fontSize="14"/>
+		</mx:Canvas>
+		<mx:Button x="428" y="11" label="费用减免" fillAlphas="[1.0, 1.0]" fillColors="[#F6DBDB, #F6DBDB]" click="doFreeCashOperate()"/>
+		<mx:Button x="626" y="11" label="打印列表数据" click="doPrintBillData()"/>
+	</mx:Canvas>
+	<mx:RemoteObject id="settlement_service" destination="SettlementServiceFlexService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.bean.T_BILL_DETAIL;
+			import cn.ucans.table.RowItem;
+			import cn.ucans.table.XMLTable;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import cn.ucans.common.ArrayFactory;
+			
+			import cn.ucans.bean.T_SERVICE_CASH;
+			
+	 		import cn.ucans.flex.FlexRequest;
+ 			import cn.ucans.flex.FlexReponse;
+	 		
+	 		private var regular:RegularExpression = new RegularExpression();
+	 		
+	 		private var dialog_update:UpdateSettlementHotelDialog = null;
+	 		private var dialog_free:UpdateSettlementManagerForHotelDialog = null;
+	 		private var dialog_time:SelectQueryBillDetailMaxMinTimeDialog = null;
+	 		private var arrayCollection:ArrayCollection = null
+	 		private var telephone_select_number:String = "";
+	 		private var arrayCollection_cash:ArrayCollection = null;
+	 		
+	 		private var array_DaoHang:Array = [{label:"结账窗口",data:"1"},{label:"销账窗口",data:"2"}];
+	 		
+	 		private function init():void{
+	 			this.DaoHangCombobox.dataProvider = this.array_DaoHang;
+	 			this.Room_NO.addEventListener(KeyboardEvent.KEY_DOWN,doRoom_NOEnterHandler);
+	 			this.TableBill.addEventListener(MouseEvent.CLICK,doTableBillHandler);
+	 		}
+	 		
+	 		private function setComplete():void{
+	 			this.Room_NO.setFocus();	 		
+	 			
+	 		}
+	 		
+	 		private function doFreeCashOperate():void{
+	 			if(this.TableBill.selectedIndex>-1){
+	 				var item:Object = this.TableBill.selectedItem;
+	 				if(Number(item.MAY_FREE_CASH)>0){
+	 					this.dialog_free = new UpdateSettlementManagerForHotelDialog();
+		 				this.dialog_free.showDialog(this,Number(item.MAY_FREE_CASH));
+		 				this.dialog_free.addEventListener(Event.REMOVED,doFreeCashOperateHandler);
+	 				}else{
+	 					CCSSAlert.showMessageDialog(this,"当前账单可减免金额为0，不能执行此操作！");
+	 					return;
+	 				}
+	 			}else{
+	 				CCSSAlert.showMessageDialog(this,"请在账单表中选中1个账单，再进行此操作！");
+	 				this.showView(this.TableBill);
+	 				return;
+	 			}
+	 		}
+	 		
+	 		private function doPrintBillData():void{
+	 			if(this.arrayCollection_cash != null && this.arrayCollection_cash.length>0){
+	 				PrintDataGridView.doPrint(this.parentApplication.LoginUser_ID,this.arrayCollection_cash,"账单数据表",this.TableBill.columns);	 			
+	 			}else{
+	 				CCSSAlert.showMessageDialog(this,"请先查询出账单数据，再进行此操作！");
+	 				this.showView(this.TableBill);
+	 				return;
+	 			}
+	 		}
+	 		
+	 		private function doFreeCashOperateHandler(event:Event):void{
+	 			if(this.dialog_free.DOOK){
+	 				var cash:T_SERVICE_CASH = new T_SERVICE_CASH();
+	 				var item:Object = this.TableBill.selectedItem;
+		 			cash.SERVICE_ID = item.SERVICE_ID;
+		 			cash.MSISDN = item.MSISDN;
+		 			cash.FREE_CASH = ""+(this.dialog_free.free_cash_set * 100);
+		 			var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1315;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.cash = cash;
+					request.form.free_user_id = this.dialog_free.Free_Opetator_ID;
+					request.form.free_user_password = this.dialog_free.Free_Opetator_Password;
+					request.form.free_user_menu_id = this.dialog_free.temp_menu_id;
+					this.settlement_service.doTransaction(request);
+					this.enabled = false;
+	 			}
+	 		}
+	 		
+	 		private function doTableBillHandler(event:MouseEvent):void{
+	 			if(this.TableBill.selectedIndex>-1){
+	 				var item:Object = this.TableBill.selectedItem;
+	 				this.Single_Cash_Count.text = "" + Number(item.CASH)/100;
+	 				if(item.STATUS == "0"){
+	 					this.Real_Single_Count.text = "" + Number(item.REAL_PAY_CASH)/100;
+	 				}else if(item.STATUS == "1"){
+	 					this.Real_Single_Count.text = "该账单已经缴费！";
+	 				}else{
+	 					this.Real_Single_Count.text = "未设置";
+	 				}
+	 			}
+	 		}
+	 		
+	 		private function doCheckBox_AccountAllCashClick():void{
+	 			if(this.CheckBox_AccountAllCash.selected){
+	 				this.Settlement_All.visible = true;
+	 				this.Settlement_Single.visible = false;
+//	 				this.Single_Cash_Count.text = "";
+//	 				this.Real_Single_Count.text = "";
+	 			}else{
+	 				this.Settlement_All.visible = false;
+	 				this.Settlement_Single.visible = true;
+	 			}
+	 		}
+	 		
+	 		private function doCASH(item:Object,column:DataGridColumn):String{
+	 			return "" + (Number(item.CASH) - Number(item.FREE_CASH))/100;
+	 		}
+	 		
+	 		private function doCashSTATUS(item:Object,column:DataGridColumn):String{
+	 			return ArrayFactory.getValueFromArray(DataProvider.combobox_service_cash_Status_Edit,item.STATUS);
+	 		}
+	 		
+	 		private function doREAL_PAY_CASH(item:Object,column:DataGridColumn):String{
+	 			return this.regular.trackNumber(item.REAL_PAY_CASH,100);
+	 		}
+	 		
+	 		private function doFREE_CASH(item:Object,column:DataGridColumn):String{
+	 			return this.regular.trackNumber(item.FREE_CASH,100);
+	 		}
+	 		
+	 		private function doMAY_FREE_CASH(item:Object,column:DataGridColumn):String{
+	 			return this.regular.trackNumber(item.MAY_FREE_CASH,100);
+	 		}
+	 		
+	 		
+	 		private function doRoom_NOEnterHandler(event:KeyboardEvent):void{
+	 			switch(event.keyCode){
+	 				case Keyboard.ENTER:
+	 					this.queryMsisdn();
+	 					break;
+	 				default:
+	 					break;
+	 			}
+	 		}
+	 		
+	 		private function doDaoHangChange():void{
+	 			if(this.DaoHangCombobox.selectedItem.data == "1"){
+	 				this.Canvas_DoSettlement.visible = true;
+	 				this.Canvas_DoBill.visible = false;
+	 			}else{
+	 				this.Canvas_DoSettlement.visible = false;
+	 				this.Canvas_DoBill.visible = true;
+	 			}
+	 			//CCSSAlert.showMessageDialog(this,this.Canvas_DoSettlement.visible.toString()+","+this.Canvas_DoBill.visible.toString());
+	 		}
+	 		
+	 		private function queryMsisdn():void{
+	 			var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1300;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				var cash:T_SERVICE_CASH = new T_SERVICE_CASH();
+				cash.ROOM_NO = this.Room_NO.text;
+				request.form.cash = cash;
+				this.settlement_service.doTransaction(request);
+				this.enabled = false;
+				this.Msisdn.dataProvider = new Array();
+	 		}
+	 		
+	 		private function doLeadBill():void{
+	 			var table:XMLTable = new XMLTable();
+				if(this.arrayCollection_cash != null && this.arrayCollection_cash.length>0){
+ 					table.addTitle("手机号码,起租时间,退租时间,账单状态,应缴金额（元）,最多减免金额（元）,实际减免金额（元）");
+	 				for(var n:int=0;n<this.arrayCollection_cash.length;n++){
+	 					var item_n:Object = this.arrayCollection_cash.getItemAt(n);
+	 					var row_n:RowItem = new RowItem();
+	 					row_n.setValue("MSISDN",item_n.MSISDN);
+	 					row_n.setValue("START_TIME",item_n.START_TIME);
+	 					row_n.setValue("END_TIME",item_n.END_TIME);
+	 					row_n.setValue("STATUS",ArrayFactory.getValueFromArray(DataProvider.combobox_service_cash_Status_Edit,item_n.STATUS));
+	 					row_n.setValue("CASH","" + (Number(item_n.CASH)-Number(item_n.FREE_CASH))/100);
+	 					row_n.setValue("MAY_FREE_CASH",regular.trackNumber(item_n.MAY_FREE_CASH,100));
+	 					row_n.setValue("FREE_CASH",regular.trackNumber(item_n.FREE_CASH,100));
+	 					table.addRowItem(row_n);
+	 				}
+	 				var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1305;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.xml = table.toXMLString();
+					this.settlement_service.doTransaction(request);
+					this.enabled = false;
+	 			}else{
+	 				CCSSAlert.showMessageDialog(this,"请先查询出数据，再进行本操作！");
+	 				this.showView(this.TableBill);
+	 				return;
+	 			}
+	 		}
+	 		
+	 		private function doQueryUsedHisList():void{
+	 			if(this.Msisdn.selectedItem == null && regular.trim(this.Msisdn.text).length==0){
+	 				CCSSAlert.showMessageDialog(this,"请选择出一个手机号码，再进行此操作！");
+	 				this.showView(this.Msisdn);
+	 				return;
+	 			}else{
+	 				var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1301;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					
+					var cash:T_SERVICE_CASH = new T_SERVICE_CASH();
+					cash.ROOM_NO = this.regular.trim(this.Room_NO.text);
+					var b1:Boolean = false;
+					if(this.Msisdn.selectedItem != null){
+						b1 = true;
+						cash.MSISDN = this.Msisdn.selectedItem.data;	
+						this.telephone_select_number = this.Msisdn.selectedItem.data;	
+					}
+					var b2:Boolean = false;
+					if(!b1){
+						if(this.regular.trim(this.Msisdn.text).length > 0){
+							b2 = true;
+							cash.MSISDN = this.Msisdn.text;
+							this.telephone_select_number = this.Msisdn.text;
+						}
+					}	
+					if(b1 || b2){	
+						request.form.cash = cash;
+						this.settlement_service.doTransaction(request);
+						this.enabled = false;					
+					}else{
+						CCSSAlert.showMessageDialog(this,"请选择出一个手机号码，再进行此操作！");
+		 				this.showView(this.Msisdn);
+		 				return;
+					}
+	 			}
+	 		}
+	 		
+	 		private function doSetupSattelement():void{
+	 			var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1302;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				
+				var cash:T_SERVICE_CASH = new T_SERVICE_CASH();
+				cash.ROOM_NO = this.regular.trim(this.Room_NO.text);
+				var b1:Boolean = false;
+				if(this.Msisdn.selectedItem != null){
+					b1 = true;
+					cash.MSISDN = this.Msisdn.selectedItem.data;	
+					this.telephone_select_number = this.Msisdn.selectedItem.data;	
+				}
+				var b2:Boolean = false;
+				if(!b1){
+					if(this.regular.trim(this.Msisdn.text).length > 0){
+						b2 = true;
+						cash.MSISDN = this.Msisdn.text;
+						this.telephone_select_number = this.Msisdn.text;
+					}
+				}	
+				if(b1 || b2){	
+					request.form.cash = cash;
+					this.settlement_service.doTransaction(request);
+					this.enabled = false;			
+				}else{
+					CCSSAlert.showMessageDialog(this,"请选择出一个手机号码，再进行此操作！");
+	 				this.showView(this.Msisdn);
+	 				return;
+				}
+	 		}
+	 		
+	 		private function cancleAccount():void{
+	 			if(this.arrayCollection_cash != null && this.arrayCollection_cash.length>0){
+	 				var dook:Boolean = true;
+	 				var cash:T_SERVICE_CASH = new T_SERVICE_CASH();
+	 				var request:FlexRequest = new FlexRequest();
+	 				if(this.CheckBox_AccountAllCash.selected){
+	 					request.type = 1;
+	 				}else{
+	 					if(this.TableBill.selectedIndex>-1){
+	 						var item:Object = this.TableBill.selectedItem;
+		 					cash.SERVICE_ID = item.SERVICE_ID;
+		 					request.type = 2;
+	 					}else{
+	 						CCSSAlert.showMessageDialog(this,"您设置的是单选账单销账方式，请现在账单表中选择1个账单，再进行此操作！");
+	 						this.showView(this.CheckBox_AccountAllCash);
+	 						this.showView(this.TableBill);
+	 						dook = false;
+	 						return;
+	 					}
+	 				}
+	 				
+	 				if(dook){
+	 					request.ope_id = 1303;
+						request.menu_id = this.parentApplication.LoginMenu_ID;
+						request.org_id = this.parentApplication.LoginORG_ID;
+						request.user_id = this.parentApplication.LoginUser_ID;
+	
+						cash.ROOM_NO = this.regular.trim(this.Room_NO.text);
+						var b1:Boolean = false;
+						if(this.Msisdn.selectedItem != null){
+							b1 = true;
+							cash.MSISDN = this.Msisdn.selectedItem.data;	
+							this.telephone_select_number = this.Msisdn.selectedItem.data;	
+						}
+						var b2:Boolean = false;
+						if(!b1){
+							if(this.regular.trim(this.Msisdn.text).length > 0){
+								b2 = true;
+								cash.MSISDN = this.Msisdn.text;
+								this.telephone_select_number = this.Msisdn.text;
+							}
+						}	
+						if(b1 || b2){	
+							request.form.cash = cash;
+							this.settlement_service.doTransaction(request);
+							this.enabled = false;			
+						}else{
+							CCSSAlert.showMessageDialog(this,"请选择出一个手机号码，再进行此操作！");
+			 				this.showView(this.Msisdn);
+			 				return;
+						}
+	 				}
+	 			}else{
+	 				CCSSAlert.showMessageDialog(this,"请先查询出要结账的账单，再进行此操作！");
+	 				this.showView(this.TableBill);
+	 				return;
+	 			}
+	 		}
+	 		
+	 		private function doSetupSattelementHandler(event:Event):void{
+	 			if(this.dialog_update.DOOK){
+	 				var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1302;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					
+					var cash:T_SERVICE_CASH = new T_SERVICE_CASH();
+					request.form.cash = this.dialog_update.cash_edit;
+					this.settlement_service.doTransaction(request);
+					this.enabled = false;
+	 			}
+	 		}
+	 		
+	 		
+	 		private function doLeadService():void{
+	 			if(this.arrayCollection != null && this.arrayCollection.length > 0){
+	 				var table:XMLTable = new XMLTable();
+	 				table.addTitle("手机号码,应缴金额（元）,账单状态,计费开始时间,计费截止时间");
+//	 				var item_0:Object = this.arrayCollection.getItemAt(0);
+//	 				CCSSAlert.showMessageDialog(this,regular.trackNumber(item_0.CASH,100));
+	 				for(var i:int=0;i<this.arrayCollection.length;i++){
+	 					var item:Object = this.arrayCollection.getItemAt(i);
+	 					var row:RowItem = new RowItem();
+	 					row.setValue("MSISDN",item.MSISDN);
+	 					row.setValue("CASH",regular.trackNumber(item.CASH,100));
+	 					row.setValue("STATUS",ArrayFactory.getValueFromArray(DataProvider.combobox_service_cash_Status_Query,item.STATUS));
+	 					row.setValue("START_TIME",item.START_TIME);
+	 					row.setValue("END_TIME",item.END_TIME);	 					
+	 					table.addRowItem(row);
+	 				}
+	 				var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1305;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.xml = table.toXMLString();
+					this.settlement_service.doTransaction(request);
+					this.enabled = false;
+	 			}else{
+	 				CCSSAlert.showMessageDialog(this,"请先查询出数据，再进行本操作！");
+	 				return;
+	 			}
+	 		}
+	 		
+	 		private function doViewPaymentBillDetailList():void{
+ 				if(this.TableBill.selectedIndex>-1){
+ 					var item:Object = this.TableBill.selectedItem;
+ 					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1304;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					var bill:T_BILL_DETAIL = new T_BILL_DETAIL();
+					bill.SERVICE_ID = item.SERVICE_ID;
+					bill.ROOM_NO = this.regular.trim(this.Room_NO.text);
+					var b1:Boolean = false;
+					if(this.Msisdn.selectedItem != null){
+						b1 = true;
+						bill.MSISDN = this.Msisdn.selectedItem.data;	
+						this.telephone_select_number = this.Msisdn.selectedItem.data;	
+					}
+					var b2:Boolean = false;
+					if(!b1){
+						if(this.regular.trim(this.Msisdn.text).length > 0){
+							b2 = true;
+							bill.MSISDN = this.Msisdn.text;
+							this.telephone_select_number = this.Msisdn.text;
+						}
+					}	
+					if(b1 || b2){	
+						request.form.bill = bill;
+						this.settlement_service.doTransaction(request);
+						this.enabled = false;			
+					}else{
+						CCSSAlert.showMessageDialog(this,"请选择出一个手机号码，再进行此操作！");
+		 				this.showView(this.Msisdn);
+		 				return;
+					}
+ 				}else{
+ 					CCSSAlert.showMessageDialog(this,"请在账单表中选择1个记录，再进行此操作！");
+ 					return;
+ 				}
+	 		}
+	 		
+	 		private function doSelectQueryBillDetailMaxMinTimeHandler(event:Event):void{
+	 			if(this.dialog_time.DOOK){
+
+		 		}
+		 	}
+	 			
+	 		
+	 		private function doPrintService():void{
+	 			if(this.arrayCollection != null && this.arrayCollection.length>0){
+	 				PrintDataGridView.doPrint(this.parentApplication.LoginUser_ID,this.arrayCollection,"账单数据表",this.TableGrid.columns);
+	 			}else{
+	 				CCSSAlert.showMessageDialog(this,"请先查询出数据，再进行本操作！");
+	 				return;
+	 			}	 			
+	 		}
+	 		
+	 
+	 		private function doSTATUS(item:Object,column:DataGridColumn):String{
+	 			return ArrayFactory.getValueFromArray(DataProvider.combobox_service_cash_Status_Query,item.STATUS);
+	 		}
+	 		
+	 		private function doResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1300:
+						if(reponse.sign == 0){
+							var Msisdn_list:ArrayCollection = reponse.result.list as ArrayCollection;
+							if(Msisdn_list.length>0){
+								this.Msisdn.dataProvider = Msisdn_list
+							}else{
+								this.Msisdn.editable = true;
+								this.Msisdn.setFocus();
+//								this.Msisdn.toolTip = "没有找到任何符合条件的手机记录，请重新输入房间号码查询，或者输入自定义手机号码来查询账单！";
+							}
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1301:
+						if(reponse.sign == 0){
+							var type:int = reponse.result.type as int;
+							this.arrayCollection = reponse.result.list as ArrayCollection;
+							if(type == 0){
+								this.Canvas_DoBill.visible = false;
+								this.Canvas_DoSettlement.visible = true;
+								this.DaoHangCombobox.selectedItem = ArrayFactory.getComboBoxSelectedItemFromArray(this.array_DaoHang,"1");
+								this.TableGrid.dataProvider = arrayCollection;
+								if(this.arrayCollection.length<1){
+									CCSSAlert.showMessageDialog(this,"没有找到任何数据！");
+									return;
+								}else{
+									this.CashCount.text = "总共："+this.arrayCollection.length;
+								}
+							}else{
+								this.Canvas_DoBill.visible = true;
+								this.Canvas_DoSettlement.visible = false;
+								this.DaoHangCombobox.selectedItem = ArrayFactory.getComboBoxSelectedItemFromArray(this.array_DaoHang,"2");
+								this.arrayCollection_cash = arrayCollection;
+								this.TableBill.dataProvider = arrayCollection;
+								this.doAllCash_Real_Pay(arrayCollection);	
+								if(this.arrayCollection.length<1){
+									CCSSAlert.showMessageDialog(this,"没有找到任何数据！");
+									return;
+								}else{
+									this.CashCount.text = "总共："+this.arrayCollection.length;
+								}
+							}
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1302:
+						if(reponse.sign == 0){
+							var list_cash_123:ArrayCollection = reponse.result.list;
+							if(list_cash_123.length>0){
+								this.Canvas_DoBill.visible = true;
+								this.Canvas_DoSettlement.visible = false;
+								this.DaoHangCombobox.selectedItem = ArrayFactory.getComboBoxSelectedItemFromArray(this.array_DaoHang,"2");
+								//CCSSAlert.showMessageDialog(this,this.Canvas_DoBill.visible.toString()+","+this.Canvas_DoSettlement.visible.toString()+","+this.DaoHangCombobox.selectedItem.data);
+								this.arrayCollection_cash = list_cash_123;
+								this.TableBill.dataProvider = list_cash_123;
+								this.doAllCash_Real_Pay(list_cash_123);	
+							}else{
+								CCSSAlert.showMessageDialog(this,"没有查询到您想要的数据，请确认您是否已经进行结账操作！");
+								return;
+							}
+							break;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1303:
+						if(reponse.sign == 0){
+							this.arrayCollection_cash = reponse.result.list as ArrayCollection;
+							this.TableBill.dataProvider = this.arrayCollection_cash;
+							this.doAllCash_Real_Pay(this.arrayCollection_cash);
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1304:
+						if(reponse.sign == 0){
+							var list_bill:ArrayCollection = reponse.result.list as ArrayCollection;
+							var Msisdn:String = reponse.result.Msisdn as String;
+							//CCSSAlert.showMessageDialog(this,""+list_bill.length);
+							if(list_bill.length>0){
+								var dialog_bill_detail_list:ViewBillDetailDialog = new ViewBillDetailDialog();
+								dialog_bill_detail_list.showDialog(this,"终端手机号: "+Msisdn,list_bill);
+							}else{
+								CCSSAlert.showMessageDialog(this,"没有可供查看的详单！");
+								return;
+							}
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1305:
+						if(reponse.sign == 0){
+							var url:String = reponse.result.url as String;
+							var request:URLRequest = new URLRequest(url);
+							navigateToURL(request, "_top");
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1314:
+						if(reponse.sign == 0){
+							var MIN_TIME:String = reponse.result.MIN_TIME as String;
+							var MAX_TIME:String = reponse.result.MAX_TIME as String;
+							this.dialog_time = new SelectQueryBillDetailMaxMinTimeDialog();
+							this.dialog_time.showDialog(this,MIN_TIME,MAX_TIME);
+							this.dialog_time.addEventListener(Event.REMOVED,doSelectQueryBillDetailMaxMinTimeHandler);
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1315:
+						if(reponse.sign == 0){
+							this.arrayCollection_cash = reponse.result.list;
+							this.TableBill.dataProvider = this.arrayCollection_cash;
+							this.doAllCash_Real_Pay(arrayCollection_cash);
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doAllCash_Real_Pay(arrayCollection:ArrayCollection):void{
+				var count_cash:Number = 0;
+				var count_real:Number = 0;
+				for(var i:int=0;i<arrayCollection.length;i++){
+					var item:Object = arrayCollection.getItemAt(i);
+					var temp_cash:Number = Number(item.CASH)/100;
+					var temp_free:Number = Number(item.FREE_CASH)/100;
+					count_cash += temp_cash;
+					count_real += temp_cash - temp_free;
+				}
+				this.Real_Pay_All_Count.text = ""+count_real;
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			
+			private function showView(object:Object):void{
+				FlashContrl.target = object;
+				FlashContrl.play();
+				object.setFocus();
+			}
+	 		
+		]]>
+	</mx:Script>
+	<mx:Label x="10" y="13" text="房间号码" fontSize="12" color="#040404" />
+	<mx:Label x="165" y="12" text="手机号码" fontSize="12" color="#030303"/>
+	<mx:TextInput x="71" y="9" id="Room_NO" fontSize="12" color="#070707" width="86" maxChars="8" toolTip="输入房间号码，回车即可查询出手机号码"/>
+	<mx:Button x="389" y="9" label="查看账单" fontSize="12" color="#040404" click="doQueryUsedHisList()" fontWeight="bold"/>
+	<mx:ComboBox x="226" y="9" width="155" fontSize="12" color="#050505" id="Msisdn" fontWeight="normal" editable="true"></mx:ComboBox>
+</mx:Panel>

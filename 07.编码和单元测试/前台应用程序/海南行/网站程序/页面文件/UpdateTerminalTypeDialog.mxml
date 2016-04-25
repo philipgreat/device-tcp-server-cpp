@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="358" height="376" fontSize="15" fontFamily="Arial" color="#F5F7F8" borderColor="#2F2FC5" title="更新终端类型">
+	<mx:Canvas x="0" y="0" width="338" height="330" fontSize="12" color="#050505" borderStyle="solid" borderColor="#121313" backgroundColor="#DAD3F6">
+		<mx:Label x="10" y="22" text="终端厂家"/>
+		<mx:Label x="10" y="67" text="终端型号"/>
+		<mx:Label x="10" y="107" text="终端名字"/>
+		<mx:Label x="10" y="147" text="标配说明"/>
+		<mx:Label x="10" y="187" text="特性说明"/>
+		<mx:Label x="34" y="227" text="备注"/>
+		<mx:ComboBox x="71" y="17" width="140" id="query_by_org_id" enabled="false"></mx:ComboBox>
+		<mx:TextInput x="71" y="65" width="140" maxChars="16" id="terminalType_Id" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)"/>
+		<mx:TextInput x="71" y="185" width="255" maxChars="128" id="Performance_Id" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)"/>
+		<mx:TextInput x="71" y="105" width="140" maxChars="32" id="terminalName_Id" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)"/>
+		<mx:TextInput x="71" y="225" width="255" maxChars="128" id="Notes_Id" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)"/>
+		<mx:TextInput x="70" y="145" width="256" maxChars="128" id="Base_Config_Id" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)"/>
+		
+		<mx:Button x="71" y="279" label="更新" click="doClick()"/>
+		<mx:Button x="199.5" y="279" label="取消" click="doCancle()"/>
+	</mx:Canvas>
+	
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.bean.T_TERMINAL_TYPE;
+			import mx.controls.List;
+		
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.ArrayFactory;
+			
+			import mx.events.CloseEvent;
+			import mx.controls.Alert;
+			public var strAlertCode:String = "";
+			private var reg:RegularExpression = new RegularExpression();
+			
+			private var regular:RegularExpression = new RegularExpression();
+			public var DOOK:Boolean = false;
+			
+			
+			public var terminalType:T_TERMINAL_TYPE= null;
+			
+			public function showDialog(parent:DisplayObject,orgNameList:ArrayCollection,terminal_Type:T_TERMINAL_TYPE):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				
+				terminalType=new T_TERMINAL_TYPE();
+				
+				terminalType.ORG_ID = terminal_Type.ORG_ID;
+				terminalType.TERMINAL_TYPE = terminal_Type.TERMINAL_TYPE;
+				terminalType.TERMINAL_NAME = terminal_Type.TERMINAL_NAME;
+				terminalType.PERFORMANCE = terminal_Type.PERFORMANCE;
+				terminalType.BASE_CONFIG = terminal_Type.BASE_CONFIG;
+				terminalType.NOTES = terminal_Type.NOTES;
+				
+				this.query_by_org_id.dataProvider = orgNameList;
+				
+				this.query_by_org_id.selectedItem=ArrayFactory.getComboBoxSelectedItemFromArrayCollection(orgNameList,terminalType.ORG_ID);
+				this.terminalType_Id.text=terminalType.TERMINAL_TYPE;
+				this.terminalName_Id.text=terminalType.TERMINAL_NAME;
+				this.Performance_Id.text=terminalType.PERFORMANCE;
+				this.Base_Config_Id.text=terminalType.BASE_CONFIG;
+				this.Notes_Id.text=terminalType.NOTES;
+			}
+			
+			private function doClick():void{
+				var ok:Boolean = true;
+				
+				if(this.regular.trim(this.terminalType_Id.text) == ""){
+					CCSSAlert.showMessageDialog(this,"终端型号不能为空！");
+					ok = false;
+					this.showView(this.terminalType_Id);
+					return;
+				}
+				
+				if(this.regular.trim(this.terminalName_Id.text) == ""){
+					CCSSAlert.showMessageDialog(this,"终端名字不能为空！");
+					ok = false;
+					return;
+				}
+				if(ok){
+					this.terminalType.ORG_ID=this.query_by_org_id.selectedItem.data;
+		
+					this.terminalType.TERMINAL_TYPE=this.terminalType_Id.text;
+					this.terminalType.TERMINAL_NAME=this.terminalName_Id.text;
+					this.terminalType.BASE_CONFIG=this.Base_Config_Id.text;
+					this.terminalType.PERFORMANCE=this.Performance_Id.text;
+					this.terminalType.NOTES=this.Notes_Id.text;
+					this.DOOK = true;
+					PopUpManager.removePopUp(this);
+				}
+			}
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function showView(object:Object):void{
+				FlashContrl.target = object;
+				FlashContrl.play();
+				object.setFocus();
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+ </mx:Sequence>
+ 
+</mx:TitleWindow>

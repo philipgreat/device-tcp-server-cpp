@@ -1,0 +1,487 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="790" height="550" fontSize="15"   creationComplete="init()" backgroundColor="#FFFFFF" borderColor="#00646E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="业务分成比例" xmlns:ns1="*">
+	
+	<mx:RemoteObject id="orgRewardService" destination="OrgRewardService"  
+		result="doOrgRewardResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.common.DataProvider;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.ArrayFactory;
+			import mx.collections.ArrayCollection;
+			import cn.ucans.flex.FlexRequest;
+ 			import cn.ucans.flex.FlexReponse;
+ 			import cn.ucans.bean.T_ORG_INFO;
+ 			import cn.ucans.bean.T_ORG_REWARD;
+ 			import mx.events.CloseEvent;
+ 			import mx.controls.Alert;
+ 			
+ 			private var file: FileReference;
+ 			
+ 			private var regular:RegularExpression = new RegularExpression();
+ 			
+ 			private var dialog_update:UpdateOrgRewardDialog=null;
+ 			private var dialog_confirm:CCSSConfirm = null;
+ 			
+ 			private var orgInfo_Util:T_ORG_INFO=null;//提供给修改操作时作中间变量传递数据
+ 			private var orgWardInfo_Util:T_ORG_REWARD=null;//提供给修改操作时作中间变量传递数据
+ 			
+ 			[Bindable]
+ 			public var orgNameList:ArrayCollection=new ArrayCollection();
+			
+			
+			
+			[Bindable]
+			public var tableGridList:ArrayCollection=new ArrayCollection();
+			
+			private var strFileName:String="";
+			
+			private function init():void{
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 9060;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id=this.parentApplication.LoginORG_ID;
+				request.user_id=this.parentApplication.LoginUser_ID;
+				
+				this.orgInfo_Util=new T_ORG_INFO();
+				this.orgWardInfo_Util=new T_ORG_REWARD();
+				
+				this.hotel_Grade_Id.dataProvider=cn.ucans.common.DataProvider.combobox_array_Hotel_Grade_Query;
+				this.org_Status_Id.dataProvider=cn.ucans.common.DataProvider.combobox_array_Org_Status_Query;
+				this.org_Type_Id.dataProvider=cn.ucans.common.DataProvider.combobox_array_Org_Type_Edit_Normal;
+				this.reward_Type_Id.dataProvider=cn.ucans.common.DataProvider.combobox_array_Org_Reward_Query;
+				
+				this.orgRewardService.doTransaction(request);
+				this.enabled = false;
+			}
+
+			
+			private function doSelectItem():void{
+				if(TableGrid.selectedIndex>-1){
+					var item:Object = this.TableGrid.selectedItem;
+					this.orgInfo_Util.ORG_ID=item.ORG_ID;
+					this.orgInfo_Util.ORG_NAME=item.ORG_NAME;
+					this.orgInfo_Util.ORG_TYPE=item.ORG_TYPE;
+					this.orgInfo_Util.STATUS=item.STATUS;
+					
+					this.orgWardInfo_Util.ORG_ID=item.ORG_ID;
+					this.orgWardInfo_Util.REWARD_TYPE=item.REWARD_TYPE;
+					this.orgWardInfo_Util.REWARD_PERCENT=item.REWARD_PERCENT;
+				}else{
+					this.clear();
+				}
+			}
+			
+			
+			private function doUpdateOrgReward():void{
+				
+				if(this.TableGrid.selectedIndex <= -1){
+					CCSSAlert.showMessageDialog(this,"请在数据表中选择要修改的业务分成比例条目，再进行此操作！");
+				}else{
+					
+					
+					if(orgInfo_Util.STATUS=="1"){
+						dialog_confirm = new CCSSConfirm();	
+						this.dialog_confirm.showDialog(this,"此组织已经被注销！！您确认要修改此业务分成比例吗？",null);
+						this.dialog_confirm.addEventListener(Event.REMOVED,doUpdateHandler);
+					}else if(orgInfo_Util.STATUS=="0"){
+						this.dialog_update = new UpdateOrgRewardDialog();
+						this.dialog_update.showDialog(this,orgInfo_Util,orgWardInfo_Util);
+						this.dialog_update.addEventListener(Event.REMOVED,doUpdateOrgRewardHandler);
+					}
+					
+				}
+				
+			}
+			private function doUpdateHandler(event:Event):void{
+				
+				if(this.dialog_confirm.YES){
+					this.dialog_update = new UpdateOrgRewardDialog();
+					this.dialog_update.showDialog(this,orgInfo_Util,orgWardInfo_Util);
+					this.dialog_update.addEventListener(Event.REMOVED,doUpdateOrgRewardHandler);
+				}
+			}
+			
+			
+			
+			private function doUpdateOrgRewardHandler(event:Event):void{
+				
+					if(this.dialog_update.DOOK){
+						var request:FlexRequest = new FlexRequest();
+						request.ope_id = 9062;
+						request.menu_id = this.parentApplication.LoginMenu_ID;
+						request.org_id=this.parentApplication.LoginORG_ID;
+						request.user_id=this.parentApplication.LoginUser_ID;
+						
+						request.form.orgRewardForUpdate = this.dialog_update.orgRewardForUpdate;
+						
+						this.orgRewardService.doTransaction(request);
+						this.enabled = false;
+					}
+				
+			}
+			
+			
+			
+			private function doQueryOrgReward():void{
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 9061;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id=this.parentApplication.LoginORG_ID;
+				request.user_id=this.parentApplication.LoginUser_ID;
+				
+				request.form.orgType=org_Type_Id.selectedItem.data;
+				request.form.orgName=org_Name_Id.selectedItem.data;
+				request.form.hotelGrade=hotel_Grade_Id.selectedItem.data;
+				request.form.orgStatus=org_Status_Id.selectedItem.data;
+				request.form.rewardType=reward_Type_Id.selectedItem.data;
+				request.form.linkmanName=regular.trim(linkman_Name_Id.text);
+				
+				this.orgRewardService.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			
+			private function clear():void{
+					this.TableGrid.selectedIndex=-1;
+			}
+			
+			private function doOrgRewardResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 9060:
+						if(reponse.sign == 0){
+							
+							var query_init_list:ArrayCollection = reponse.result.list as ArrayCollection;
+							
+							tableGridList = query_init_list;
+							org_Name_Id.dataProvider=reponse.result.queryOrgNameList as ArrayCollection;
+							return;
+						}
+						break;
+					case 9061:
+						if(reponse.sign == 0){
+							this.clear();
+							tableGridList = reponse.result.list as ArrayCollection;
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 9062:
+						if(reponse.sign == 0){
+							this.clear();
+							this.init();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 9063:
+						if(reponse.sign == 0){
+							this.clear();
+							this.doQueryOrgReward();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 9064:
+						if(reponse.sign == 0){
+							this.clear();
+							this.doQueryOrgReward();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+						
+					case 9065:
+						if(reponse.sign == 0)
+						{
+//							var downloadURL:URLRequest;
+							strFileName = reponse.result.fileName as String;	
+							dialog_confirm = new CCSSConfirm();	
+							Alert.show("请问您真的想导出这些数据吗？","确认信息",3,this,fun_DeleteExcel);
+//							file.download(downloadURL);
+							return;
+						}
+						else
+						{
+							CCSSAlert.showErrorDialog(this,"生成Execl文件时出错，错误代码是：" + reponse.message);
+							return;
+						}
+						break;
+					case 9066:
+						if(reponse.sign == 0)
+						{
+							return;
+						}
+						else
+						{
+							CCSSAlert.showErrorDialog(this,"删除Execl文件时出错，错误代码是：" + reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			
+			
+			
+			private function doExcpot():void{
+	    		if(this.tableGridList != null && this.tableGridList.length > 0){	
+	    			var strFileData:String = "组织名称||组织类型||业务名称||分成比例";				
+					for(var n:int = 0;n < this.tableGridList.length;n ++){
+						var item:Object = this.tableGridList.getItemAt(n);
+						
+						var tempStrForOrgType:String="";
+						if(item.ORG_TYPE=="0")
+								tempStrForOrgType= "平台";
+						else if(item.ORG_TYPE=="1")
+							tempStrForOrgType= "终端厂家";
+						else if(item.ORG_TYPE=="2")
+							tempStrForOrgType= "代销商";
+						else if(item.ORG_TYPE=="3")
+							tempStrForOrgType= "酒店";
+						else if(item.ORG_TYPE=="4")
+							tempStrForOrgType= "广告业主";
+							
+						var tempStrForRewardType:String="";
+						if(item.REWARD_TYPE=="1")
+							tempStrForRewardType= "租机费";
+						else if(item.REWARD_TYPE=="2")
+							tempStrForRewardType= "广告费";
+						else if(item.REWARD_TYPE=="3")
+							tempStrForRewardType= "通话费";
+						else if(item.REWARD_TYPE=="4")
+							tempStrForRewardType= "IP话费";
+						
+						strFileData = strFileData + "&&" + 
+						NVL(item.ORG_NAME,"") + "||" + 
+						NVL(tempStrForOrgType,"") + "||" +  
+						NVL(tempStrForRewardType,"") + "||" + 
+						NVL(item.REWARD_PERCENT,"");
+					}
+					
+					var request:FlexRequest = new FlexRequest();
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+	    			request.ope_id = 9065;
+	    			request.org_id = this.parentApplication.LoginORG_ID;
+	    			request.user_id = this.parentApplication.LoginUser_ID;
+					this.orgRewardService.CreateExcelFile(strFileData,"",request);
+					this.enabled = false;
+				}else{
+				 	
+					CCSSAlert.showMessageDialog(this,"请先查询出数据，再进行本操作！");
+				 	return;
+				 }
+    		}
+    		
+    		 private function NVL(strSour:String,strTag:String):String{
+				if(strSour == null){
+					return strTag;
+				}else{
+					return strSour;
+				}
+				return null;
+			}
+			
+			private function fun_DeleteExcel(event:CloseEvent):void{
+				switch(event.detail){
+					case Alert.YES:
+					
+						var downloadURL:URLRequest;
+//						CCSSAlert.showMessageDialog(this,""+parentApplication.strPubURL  + "//TempFile//"+
+//								strFileName);
+//						Alert.show("//TempFile//"+
+//								strFileName,"提示");	
+							downloadURL = new URLRequest(this.parentApplication.strPubURL + "//TempFile//"+
+								strFileName);
+							file = new FileReference();
+							file.addEventListener(ProgressEvent.PROGRESS,onProgress);
+							file.addEventListener(Event.COMPLETE, downComplete);
+							file.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+							file.addEventListener(Event.CANCEL,doCancel);
+							file.download(downloadURL);
+						break;
+					case Alert.NO:
+							var request:FlexRequest = new FlexRequest();
+							request.menu_id = this.parentApplication.LoginMenu_ID;
+			    			request.ope_id = 9066;
+			    			request.org_id = this.parentApplication.LoginORG_ID;
+			    			request.user_id = this.parentApplication.LoginUser_ID;
+							orgRewardService.DeleteExcelFile(strFileName,request);
+							this.enabled = false;
+						break;
+				}
+			}
+			
+			 private function onProgress(e: ProgressEvent): void
+			{
+				var oProcessBar:ProcessBarCanvas = this.getChildByName("ProcessBarCanvas") as ProcessBarCanvas;
+				
+				if(oProcessBar == null)
+				{
+					oProcessBar = new ProcessBarCanvas();
+					oProcessBar.x = 300;
+					oProcessBar.y = 200;
+					oProcessBar.name = "ProcessBarCanvas";
+					this.addChild(oProcessBar);
+					oProcessBar.onProgress(e);
+				}
+				else
+				{
+					oProcessBar.onProgress(e);
+				}
+				
+			}
+
+			private function downComplete(e:Event): void{
+				var oProcessBar:ProcessBarCanvas = this.getChildByName("ProcessBarCanvas") as ProcessBarCanvas;
+				if(oProcessBar != null)
+				{
+					this.removeChild(oProcessBar);
+				}
+				CCSSAlert.showMessageDialog(this,"生成Excel文件成功");
+				file.removeEventListener(ProgressEvent.PROGRESS, onProgress);
+				file.removeEventListener(Event.COMPLETE, downComplete);
+				file.removeEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				file.removeEventListener(Event.CANCEL,doCancel);
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 9066;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				this.orgRewardService.DeleteExcelFile(strFileName,request);
+				this.enabled = false;
+			}
+			
+			private function doCancel(event:Event):void
+			{
+				file.removeEventListener(ProgressEvent.PROGRESS, onProgress);
+				file.removeEventListener(Event.COMPLETE, downComplete);
+				file.removeEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				file.removeEventListener(Event.CANCEL,doCancel);
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 9066;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				orgRewardService.DeleteExcelFile(strFileName,request);
+				this.enabled = false;
+			}
+			
+			private function ioErrorHandler(e:Event): void{
+				CCSSAlert.showErrorDialog(this,"ioErrorHandler: " + e);
+				var oProcessBar:ProcessBarCanvas = this.getChildByName("ProcessBarCanvas") as ProcessBarCanvas;
+				if(oProcessBar != null)
+				{
+					this.removeChild(oProcessBar);
+				}
+				
+				file.removeEventListener(ProgressEvent.PROGRESS, onProgress);
+				file.removeEventListener(Event.COMPLETE, downComplete);
+				file.removeEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				file.removeEventListener(Event.CANCEL,doCancel);
+				
+				var request:FlexRequest = new FlexRequest();
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.ope_id = 9066;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+				orgRewardService.DeleteExcelFile(strFileName,request);
+				CCSSAlert.showErrorDialog(this,"文件下载错误，请联系管理员！");
+				this.enabled = false;
+			}
+			
+			private function formatOrgType(item:Object,column:DataGridColumn):String{
+				if(item[column.dataField]=="0")
+					return "平台";
+				else if(item[column.dataField]=="1")
+					return "终端厂家";
+				else if(item[column.dataField]=="2")
+					return "代销商";
+				else if(item[column.dataField]=="3")
+					return "酒店";
+				else if(item[column.dataField]=="4")
+					return "广告业主";
+				else 
+					return "未知";
+			}
+	
+			private function formatRewardTypeToName(item:Object,column:DataGridColumn):String{
+				
+				if(item[column.dataField]=="1")
+					return "租机费";
+				else if(item[column.dataField]=="2")
+					return "广告费";
+				else if(item[column.dataField]=="3")
+					return "通话费";
+				else if(item[column.dataField]=="4")
+					return "IP话费";
+				else 
+					return "未知";
+			
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Panel x="0" y="0" width="635" height="130" layout="absolute" fontSize="13" borderColor="#028874" title="查询向导" cornerRadius="5">
+		<mx:Label x="10" y="15" text="组织名称" color="#000000" fontSize="12"/>
+		<mx:ComboBox x="67" y="13" width="103" id="org_Name_Id" fontSize="12" color="#030303" dropdownWidth="300"></mx:ComboBox>
+		<mx:Button x="550" y="15" label="查询" fontFamily="Arial" fontSize="12" color="#040404" click="doQueryOrgReward()"/>
+		<mx:Label x="8" y="50" text="组织类型" color="#030303"/>
+		<mx:Label x="182" y="50" text="业务类型" color="#030303"/>
+		<mx:Label x="182" y="15" text="酒店星级" color="#030303"/>
+		<mx:Label x="365" y="15" text="组织状态" color="#030303"/>
+		<mx:Label x="379" y="50" text="联系人" color="#030303"/>
+		<mx:ComboBox x="246" y="13" width="108" id="hotel_Grade_Id" color="#030303"></mx:ComboBox>
+		<mx:ComboBox x="429" y="13" width="94" id="org_Status_Id" color="#030303"></mx:ComboBox>
+		<mx:ComboBox x="67" y="49" width="103" id="org_Type_Id" color="#030303"></mx:ComboBox>
+		<mx:ComboBox x="246" y="49" width="108" id="reward_Type_Id" color="#030303"></mx:ComboBox>
+		<mx:TextInput x="431" y="49" width="90"  id="linkman_Name_Id" color="#030303"/>
+	</mx:Panel>
+	
+	<mx:Panel x="643" y="0" width="127" height="130" layout="absolute" borderColor="#170394" title="控制区域" fontSize="13">
+		<mx:Button x="30.5" y="14" label="修改" fontFamily="Arial" fontSize="12" color="#040404" click="doUpdateOrgReward()"/>
+		<mx:Button x="30.5" y="47" label="导出" fontFamily="Arial" fontSize="12" color="#040404" click="doExcpot()"/>
+	</mx:Panel>
+	
+	
+	<mx:Panel x="0" y="138" width="770" height="351" layout="absolute" borderColor="#0803C4" fontSize="13" title="数据">
+		<mx:DataGrid x="0" y="0" width="750" height="307" id="TableGrid" borderColor="#050505"  dataProvider="{tableGridList}" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center" click="doSelectItem()" fontSize="12" color="#030303" alternatingItemColors="[#FFFFFF, #FFFFFF]">
+			<mx:columns>
+				<mx:DataGridColumn headerText="组织ID" dataField="ORG_ID" visible="false"/>
+				<mx:DataGridColumn headerText="组织名称" dataField="ORG_NAME" width="180"/>
+				<mx:DataGridColumn headerText="组织类型" dataField="ORG_TYPE" width="180" labelFunction="formatOrgType"/>
+				<mx:DataGridColumn headerText="组织状态" dataField="STATUS" visible="false"/>
+				<mx:DataGridColumn headerText="业务名称" dataField="REWARD_TYPE" width="180" labelFunction="formatRewardTypeToName"/>
+				<mx:DataGridColumn headerText="分成比例" dataField="REWARD_PERCENT" width="150"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Panel>
+	
+	
+	
+	
+</mx:Panel>

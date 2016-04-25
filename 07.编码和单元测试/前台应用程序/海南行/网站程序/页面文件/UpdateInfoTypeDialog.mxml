@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="330" height="248" title="修改信息类型配置信息" fontSize="12" fontFamily="Arial" borderColor="#14105A">
+	
+	<mx:Label x="26.25" y="47" text="信息类型名称"/>
+		<mx:TextInput  x="111.25" y="45" width="142" maxChars="64" id="info_Name_Id" keyUp="funCheck(event)"/>
+	<mx:Button x="67.75" y="119" label="确定" fontFamily="Arial" fontSize="12" color="#040404" click="doClick()"/>
+	<mx:Button x="190.25" y="119" label="取消" fontFamily="Arial" fontSize="12" color="#040404" click="doCancle()"/>
+	
+	<mx:Script>
+		<![CDATA[
+			
+			import mx.managers.PopUpManager;
+			import cn.ucans.common.RegularExpression;
+			
+			import cn.ucans.bean.T_INFO_TYPE;
+			
+			public var infoTypeForUpdate:T_INFO_TYPE=null;
+			
+			private var regular:RegularExpression = new RegularExpression();
+			public var DOOK:Boolean = false;
+			
+			
+			public function showDialog(parent:DisplayObject,infoType:T_INFO_TYPE):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				
+				infoTypeForUpdate= new T_INFO_TYPE();
+				infoTypeForUpdate.INFO_TYPE= infoType.INFO_TYPE;
+				infoTypeForUpdate.INFO_NAME= infoType.INFO_NAME;
+				
+				this.info_Name_Id.text=infoTypeForUpdate.INFO_NAME;
+			}
+			
+			private function doClick():void{
+				var ok:Boolean = true;
+				
+				if(this.regular.trim(this.info_Name_Id.text) == ""){
+					CCSSAlert.showMessageDialog(this,"信息类型名称不能为空！");
+					ok = false;
+					this.showView(this.info_Name_Id);
+					return;
+				}
+				
+				if(ok){
+					this.infoTypeForUpdate.INFO_NAME=this.regular.trim(this.info_Name_Id.text);
+					this.DOOK = true;
+					PopUpManager.removePopUp(this);
+				}
+			}
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function showView(object:Object):void{
+				FlashContrl.target = object;
+				FlashContrl.play();
+				object.setFocus();
+			}
+			
+			public function funCheck(event:KeyboardEvent):void{
+				var		nLen:int = 0;
+				var 	n:int = 0;
+				var		nCount:int = 0;
+				if(event.keyCode == Keyboard.RIGHT || event.keyCode == Keyboard.DOWN ||
+					event.keyCode == Keyboard.BACKSPACE || event.keyCode == Keyboard.LEFT ||
+					event.keyCode == Keyboard.UP || event.keyCode == Keyboard.DELETE || 
+					event.keyCode == Keyboard.CAPS_LOCK || event.keyCode == Keyboard.TAB ||
+					event.keyCode == Keyboard.CONTROL||event.keyCode == Keyboard.SHIFT)
+				{
+					return;
+				}
+				
+				for(n = 0;n < (event.target).length;n ++)
+				{
+					if((event.target).text.charCodeAt(n) > 255)
+					{
+						nLen = nLen + 2;
+					}
+					else
+					{
+						nLen ++;
+					}
+					if(nLen > (event.target).maxChars)
+					{
+						event.target.text = event.target.text.substr(0,nCount);
+						CCSSAlert.showMessageDialog(this,"信息类型名称不能超过32汉字或64个英文字符！请重新输入！");
+						FlashContrl.target = event.target;
+						FlashContrl.play();
+						event.target.setFocus();
+					}
+					nCount ++;
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+ </mx:Sequence>
+	
+</mx:TitleWindow>

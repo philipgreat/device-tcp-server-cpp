@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"  width="1024" height="609" horizontalScrollPolicy="off" verticalScrollPolicy="off" xmlns:ns1="*">
+<mx:Fade id="HideOut" duration="1000" alphaFrom="1.0" alphaTo="0.0"/>			
+	<mx:Canvas width="100%" height="609"  verticalScrollPolicy="off" horizontalScrollPolicy="off">
+		<mx:Panel width="228" layout="absolute" title="菜单" backgroundAlpha="0.36" horizontalScrollPolicy="off" verticalScrollPolicy="off" borderColor="#96BEC2" cornerRadius="7" alpha="0.8" themeColor="#8FD4FF" color="#FFFFFF" fontSize="14" fontWeight="normal" backgroundColor="#DCFBFF" left="0" top="0" bottom="55" borderThicknessBottom="25">
+			<mx:Tree id="MenuList" x="0" y="0" width="208" height="494"  backgroundSize="100%" fontWeight="bold" backgroundAlpha="0.3" color="#98E6FA" backgroundColor="#E3FFFD" fontSize="12" alpha="0.7"></mx:Tree>	
+			<ns1:NormalTreeField id="RoleTree" x="8" y="10" width="194" height="474" fontFamily="Arial" fontSize="12" color="#030303">
+			</ns1:NormalTreeField>
+		</mx:Panel>
+	</mx:Canvas>
+	<mx:Canvas x="231" y="0" id="mainContext" width="793" height="560">
+	</mx:Canvas>
+	<mx:Script>
+ 	<![CDATA[
+ 		import cn.ucans.tree.TreeNode;
+		
+		public function setProvider(xml:XML):void{
+			this.RoleTree.dataProvider = xml;
+			this.RoleTree.click_Function = this.click_Tree_Handler;
+		}
+		
+		private function click_Tree_Handler():void{
+			var node_selected:TreeNode = this.RoleTree.selectNode;
+			if(node_selected != null && node_selected.data != "-1"){
+				switch(Number(node_selected.data)){
+					case 201:						
+						break;
+					case 202:						
+						break;
+					case 203:						
+						break;
+					case 204:						
+						break;
+					case 205:						
+						break;
+					default:
+						break;
+				}
+			}
+		}
+ 	]]>
+ </mx:Script>
+ <mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+ </mx:Sequence>
+</mx:Canvas>

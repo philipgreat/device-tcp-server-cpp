@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="setFirstFocus()" layout="absolute" width="570" height="324" fontSize="15" fontFamily="Arial" title="添加终端厂商信息" borderColor="#352690">
+	<mx:Canvas x="10" y="10" width="529" height="193" color="#0B0B0B" fontSize="12" backgroundColor="#97E3DB" borderStyle="solid" borderColor="#1B1C1C">
+		<mx:Label x="10" y="12" text="编号" fontFamily="Arial" fontSize="12" color="#FA0606"/>
+		<mx:TextInput x="47" y="10" width="73" id="Org_ID" maxChars="6" fontFamily="Arial" fontSize="12" color="#040404" toolTip="数字或英文字母"/>
+		<mx:Label x="128" y="12" text="名称" fontFamily="Arial" fontSize="12" color="#FA0606"/>
+		<mx:TextInput x="165" y="11" width="94" id="Org_Name" maxChars="32" fontFamily="Arial" fontSize="12" color="#040404"/>
+		<mx:Label x="267" y="13" text="邮编"/>
+		<mx:TextInput x="304" y="11" width="75" maxChars="6" id="Zip_Code"/>
+		<mx:Label x="10" y="43" text="地址"/>
+		<mx:TextInput x="47" y="41" id="Address" maxChars="32" width="470"/>
+		<mx:Label x="387" y="13" text="传真"/>
+		<mx:TextInput x="424" y="12" width="93" id="Fax_No" maxChars="15"/>
+		<mx:Label x="10" y="78" text="网址"/>
+		<mx:TextInput x="47" y="74" width="470" id="Website" maxChars="30"/>
+		<mx:Label x="10" y="107" text="描述"/>
+		<mx:TextArea x="10" y="126" width="507" height="49" id="Notes" maxChars="32"/>
+	</mx:Canvas>
+	<mx:Button x="187" y="227" label="确定" click="doSubmit()" fontSize="13" fontFamily="Arial"/>
+	<mx:Button x="309" y="227" label="取消" click="doCancle()" fontSize="13" fontFamily="Arial"/>
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.bean.T_ORG_INFO;
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import cn.ucans.tree.TreeNode;
+			
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			
+			public var DOOK:Boolean = false;
+			private var regular:RegularExpression = new RegularExpression();
+			public var org:T_ORG_INFO = null;
+			private var patent_node_type:int = -1;
+			
+			public function showDialog(parent:DisplayObject):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				this.org = new T_ORG_INFO();
+			}
+			
+			private function setFirstFocus():void{
+				this.Org_ID.setFocus();
+			}
+			
+			private function doSubmit():void{
+				var ok:Boolean = true;
+				
+				if(this.regular.trim(this.Org_ID.text) == ""){
+					CCSSAlert.showMessageDialog(this,"厂商编号不能为空！");
+					ok = false;
+					this.showView(this.Org_ID);
+					return;
+				}else{
+					if(!regular.isNumberORCharacter(this.Org_ID.text)){
+						CCSSAlert.showMessageDialog(this,"厂商编号只能是数字或英文字母！");
+						ok = false;
+						this.showView(this.Org_ID);
+						return;
+					}
+				}
+				
+				if(this.regular.trim(this.Org_Name.text) == ""){
+					CCSSAlert.showMessageDialog(this,"厂商名称不能为空！");
+					ok = false;
+					this.showView(this.Org_Name);
+					return;
+				}
+				
+//				if(this.regular.trim(this.Zip_Code.text) == ""){
+//					CCSSAlert.showMessageDialog(this,"邮编不能为空！");
+//					ok = false;
+//					return;
+//				}
+//				
+//				if(this.regular.trim(this.Fax_No.text) == ""){
+//					CCSSAlert.showMessageDialog(this,"传真不能为空！");
+//					ok = false;
+//					return;
+//				}
+//				
+//				if(this.regular.trim(this.Website.text) == ""){
+//					CCSSAlert.showMessageDialog(this,"网址不能为空！");
+//					ok = false;
+//					return;
+//				}
+//				
+//				if(this.regular.trim(this.Address.text) == ""){
+//					CCSSAlert.showMessageDialog(this,"地址不能为空！");
+//					ok = false;
+//					return;
+//				}
+				
+				if(ok){
+					this.org.ORG_ID = regular.trim(this.Org_ID.text);
+					this.org.ORG_NAME = regular.trim(this.Org_Name.text);
+					this.org.ZIP_CODE = regular.trim(this.Zip_Code.text);
+					this.org.FAX_NO = regular.trim(this.Fax_No.text);
+					this.org.WEBSITE = regular.trim(this.Website.text);
+					this.org.ADDRESS = regular.trim(this.Address.text);
+					this.org.NOTES = regular.trim(this.Notes.text);
+					this.org.CREATE_USER_ID = this.parentApplication.LoginUser_ID;
+					this.org.STATUS = "0";
+					this.DOOK = true;
+					PopUpManager.removePopUp(this);
+				}
+			}
+			
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function showView(object:Object):void{
+				FlashContrl.target = object;
+				FlashContrl.play();
+				object.setFocus();
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+    </mx:Sequence>
+</mx:TitleWindow>

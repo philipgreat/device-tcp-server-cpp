@@ -1,0 +1,534 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" initialize="init()" width="790" height="550" fontSize="15"  backgroundColor="#FFFFFF" borderColor="#00656E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="任务管理（平台）" xmlns:ns1="*">
+
+	<mx:DataGrid x="0" id="dg" y="182" width="770" click="onClick(event)" height="307" color="#000706" fontSize="12" horizontalScrollPolicy="auto" verticalScrollPolicy="auto"  borderColor="#020A10">
+		<mx:columns>
+			
+			<mx:DataGridColumn headerText="任务标识" dataField="TASK_ID" visible="false"/>
+			<mx:DataGridColumn headerText="任务名称" dataField="TASK_NAME" width="80"/>
+			<mx:DataGridColumn headerText="信息内容" dataField="CONTENT" width="160" >
+					<mx:itemRenderer>
+						<mx:Component>
+							<mx:TextArea text="{data.CONTENT}" textAlign="left" height="50"/>
+						</mx:Component>
+	                </mx:itemRenderer>
+				</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="发送对象群" dataField="SEND_GROUP_ID" width="120" labelFunction="doSENDGROUPID"/>
+			<mx:DataGridColumn headerText="信息语言类型" dataField="LANGUAGE" width="100" labelFunction="doLanguage"/>
+			<mx:DataGridColumn headerText="信息类型" dataField="INFO_TYPE" width="80" labelFunction="doINFOTYPE"/>
+			<mx:DataGridColumn headerText="开始发送时间" dataField="START_TIME" width="130"/>
+			<mx:DataGridColumn headerText="发送截止时间" dataField="END_TIME" width="130"/>
+			<mx:DataGridColumn headerText="套餐类型" dataField="PAY_TYPE" visible="false" width="80"/>
+			<mx:DataGridColumn headerText="任务状态" dataField="STATUS" width="80" labelFunction="doStuats"/>
+			<mx:DataGridColumn headerText="计划发布短信条数" dataField="SEND_PLAN" width="130"/>
+			<mx:DataGridColumn headerText="已发布短信条数" dataField="SEND_ALREADY" width="130"/>
+			<mx:DataGridColumn headerText="优先级" dataField="PRIORITY" width="80" labelFunction="doPRIORITY"/>
+			<mx:DataGridColumn headerText="状态报告" dataField="RETURN_REPORT" width="80" labelFunction="doRETURN_REPORT"/>
+			<mx:DataGridColumn headerText="流量" dataField="FLOW_RATE" width="70"/>
+			<mx:DataGridColumn headerText="创建组织" dataField="ORG_ID" visible="false" width="80"/>
+			<mx:DataGridColumn headerText="创建用户" dataField="USER_ID" width="80"/>
+			<mx:DataGridColumn headerText="创建/修改日期" dataField="CREATE_TIME" width="130"/>
+			<mx:DataGridColumn headerText="任务的审核员" dataField="AUDITOR_ID" width="110"/>
+			<mx:DataGridColumn headerText="审核时间" dataField="AUDIT_TIME"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Panel x="0" y="0" width="411" height="174" layout="absolute" headerHeight="15" title="                    功能列表" fontSize="13" color="#F30A2B">
+		<mx:Canvas x="0" y="0" width="391" height="147" fontSize="12" color="#030303" borderColor="#272D26" backgroundColor="#C8F4C7" borderStyle="solid">
+			<mx:Button x="156" y="10" label="修改" fontFamily="Arial" fontSize="12" color="#040404" click="addBlackInfo()" width="78"/>
+			<mx:Button x="285" y="10" label="删除" fontFamily="Arial" fontSize="12" color="#040404" click="deleteBlackInfo()" width="78"/>
+			<mx:Button x="25" y="10" label="查询" fontFamily="Arial" fontSize="12" color="#040404" click="queryTaskInfo()" width="78"/>
+			<mx:Button x="25" y="53" label="提交审核" fontFamily="Arial" fontSize="12" color="#040404" click="submitTaskInfo()" width="78"/>
+			<mx:Button x="25" y="99" label="任务取消" fontFamily="Arial" fontSize="12" color="#040404" click="cancelDeleteBlackInfo()" width="78"/>
+			<mx:Button x="156" y="99" label="暂停" fontFamily="Arial" fontSize="12" color="#040404" click="stopTaskInfo()" width="78"/>
+			<mx:Button x="285" y="99" label="继续" fontFamily="Arial" fontSize="12" color="#040404" click="continueTaskInfo()" width="78"/>
+			<mx:Button x="156" y="53" label="挂起" fontFamily="Arial" fontSize="12" color="#040404" click="suspensionTaskInfo()" width="78"/>
+			<mx:Button x="285" y="53" label="取消挂起" fontFamily="Arial" fontSize="12" color="#040404" click="CancelsSuspensionTaskInfo()"/>
+		</mx:Canvas>
+	</mx:Panel>
+	<mx:RemoteObject id="getDataService" destination="oTaskInfoSendService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	
+	<mx:DateFormatter id="df" formatString="YYYY-MM-DD JJ:NN:SS"/>
+	<mx:DateFormatter id="df1" formatString="YYYY-MM-DD"/>
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+    </mx:Sequence>
+    <mx:Script>
+    	<![CDATA[
+    		import cn.ucans.bean.T_INFO_SEND_TASK;
+    		import mx.controls.TextInput;
+    		import cn.ucans.flex.FlexReponse;
+    		import mx.collections.ArrayCollection;
+    		import cn.ucans.common.RegularExpression;
+    		import cn.ucans.flex.FlexRequest;
+    		import cn.ucans.common.ArrayFactory;
+    		import mx.events.CloseEvent;
+    		import mx.controls.Alert;
+    		private var otherBool:Boolean = true;
+    		
+    		private var flowRate:String = "";
+    		private var orgId:String = "";
+    		private var sendAready:String = "";
+    		private var status2:String = "";
+    		private var taskName:String = "";
+    		private var taskId:String = "";
+    		private var arrInfoTypeCon:ArrayCollection = new ArrayCollection();
+    		private var arrSendGroupIDCon:ArrayCollection = new ArrayCollection();
+    		private var arrCon:ArrayCollection = new ArrayCollection();
+    		private var langueTypeCon:ArrayCollection = new ArrayCollection();
+    		private var reg:RegularExpression = new RegularExpression();
+    		
+    		private var dialog_confirm:CCSSConfirm = null;	
+			private var arrTaskStatusCon:ArrayCollection = new ArrayCollection([{label:"全部",data:""},{label:"制定完成",data:"0"},{label:"待审核",data:"1"},{label:"正在审核",data:"2"},{label:"待发送",data:"3"},{label:"挂起",data:"4"},{label:"暂停",data:"5"},{label:"发布中",data:"6"}]);	
+			private var arrPriorityCon:ArrayCollection = new ArrayCollection([{label:"最高优先级",data:"0"},{label:"最低优先级",data:"9"}]);
+			private var arrReturnReportCon:ArrayCollection = new ArrayCollection([{label:"不需要",data:"0"},{label:"需要",data:"1"}]);		
+    		
+    		public var taskDialog:UpdateTaskDialogAll = new UpdateTaskDialogAll();
+    		
+    		private function doResult(data:Object):void{
+    			this.enabled = true;
+    			var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 2018:
+						if(reponse.sign == 0){
+							arrCon = reponse.result.list as ArrayCollection;
+							dg.dataProvider = arrCon;
+							if(otherBool){
+								if(arrCon.length <1){
+									CCSSAlert.showMessageDialog(this,"没有查询到数据，请更换查询条件或去历史任务查询界面重新查询！");
+									return;
+								}
+								otherBool = true;
+							}
+							return;
+						}else{
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}	
+						break;
+					case 2014:
+						if(reponse.sign == 0){
+							langueTypeCon = reponse.result.list as ArrayCollection;
+							return;
+						}
+						break;
+					case 2019:
+						if(reponse.sign == 0){
+							arrSendGroupIDCon = reponse.result.list as ArrayCollection;
+							arrInfoTypeCon = reponse.result.list1 as ArrayCollection;
+							return;
+						}
+						break;
+//					case 2020:
+//						if(reponse.sign == 0){
+//							arrInfoTypeCon = reponse.result.list as ArrayCollection;
+//							return;
+//						}
+//						break;
+					case 2028:
+						if(reponse.sign == 0){
+							this.queryTaskInfo();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 2024:
+						if(reponse.sign == 0){
+							if(this.dialog_confirm.YES){
+								arrCon.removeItemAt(dg.selectedIndex);
+								CCSSAlert.showMessageDialog(this,reponse.message);
+							}
+							return;
+						}else{
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 2025:
+						if(reponse.sign == 0){
+							this.queryTaskInfo();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 2026:
+						if(reponse.sign == 0){
+							this.queryTaskInfo();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 2027:
+						if(reponse.sign == 0){
+							this.queryTaskInfo();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 2029:
+						if(reponse.sign == 0){
+							this.queryTaskInfo();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 2030:
+						if(reponse.sign == 0){
+							this.queryTaskInfo();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;
+				}
+    		}
+    		private function continueTaskInfo():void{
+    			if(this.dg.selectedIndex < 0){
+    				CCSSAlert.showMessageDialog(this,"请在列表中选择一条记录，再进行继续！");
+    				FlashContrl.target = dg;
+					FlashContrl.play();
+					dg.setFocus();	
+    			}
+    			else if(status2 != "5"){
+    				CCSSAlert.showMessageDialog(this,"请选择一条(暂停)状态的记录,再进行继续！");
+    			}
+    			else{
+    				var request:FlexRequest = new FlexRequest();
+					request.ope_id = 2030;
+					request.menu_id = this.parentApplication.LoginMenu_ID;	
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					var delSendTask:T_INFO_SEND_TASK = new T_INFO_SEND_TASK();
+					delSendTask.TASK_ID = taskId;
+					delSendTask.STATUS = status2;
+					delSendTask.TASK_NAME = taskName;
+					request.form.delSendTask = delSendTask;
+					this.dialog_confirm = new CCSSConfirm();
+					this.dialog_confirm.showDialog(this,"您确认要将<"+taskName+">任务继续发送吗？",request);
+					this.dialog_confirm.addEventListener(Event.REMOVED,doDeleteBlackTypeHandler);
+    			}
+    		}
+    		private function stopTaskInfo():void{
+    			if(this.dg.selectedIndex < 0){
+    				CCSSAlert.showMessageDialog(this,"请在列表中选择一条记录，再进行暂停！");
+    				FlashContrl.target = dg;
+					FlashContrl.play();
+					dg.setFocus();	
+    			}
+    			else if(status2 != "6"){
+    				CCSSAlert.showMessageDialog(this,"请选择一条(发布中)状态的记录,再进行暂停！");
+    			}
+    			else{
+    				var request:FlexRequest = new FlexRequest();
+					request.ope_id = 2029;
+					request.menu_id = this.parentApplication.LoginMenu_ID;	
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					var delSendTask:T_INFO_SEND_TASK = new T_INFO_SEND_TASK();
+					delSendTask.TASK_ID = taskId;
+					delSendTask.STATUS = status2;
+					delSendTask.TASK_NAME = taskName;
+					request.form.delSendTask = delSendTask;
+					this.dialog_confirm = new CCSSConfirm();
+					this.dialog_confirm.showDialog(this,"您确认要将<"+taskName+">任务暂停发送吗？",request);
+					this.dialog_confirm.addEventListener(Event.REMOVED,doDeleteBlackTypeHandler);
+    			}
+    		}
+    		private function CancelsSuspensionTaskInfo():void{
+    			if(this.dg.selectedIndex < 0){
+    				CCSSAlert.showMessageDialog(this,"请在列表中选择一条记录，再进行取消挂起！");
+    				FlashContrl.target = dg;
+					FlashContrl.play();
+					dg.setFocus();	
+    			}
+    			else if(status2 != "4"){
+    				CCSSAlert.showMessageDialog(this,"请选择一条(挂起)状态的记录,再进行取消挂起！");
+    			}
+    			else{
+    				var request:FlexRequest = new FlexRequest();
+					request.ope_id = 2027;
+					request.menu_id = this.parentApplication.LoginMenu_ID;	
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					var delSendTask:T_INFO_SEND_TASK = new T_INFO_SEND_TASK();
+					delSendTask.TASK_ID = taskId;
+					delSendTask.STATUS = status2;
+					delSendTask.TASK_NAME = taskName;
+					request.form.delSendTask = delSendTask;
+					this.dialog_confirm = new CCSSConfirm();
+					this.dialog_confirm.showDialog(this,"您确认要将<"+taskName+">任务取消挂起吗？",request);
+					this.dialog_confirm.addEventListener(Event.REMOVED,doDeleteBlackTypeHandler);
+    			}
+    		}
+    		private function suspensionTaskInfo():void{
+    			if(this.dg.selectedIndex < 0){
+    				CCSSAlert.showMessageDialog(this,"请在列表中选择一条记录，再进行挂起！");
+    				FlashContrl.target = dg;
+					FlashContrl.play();
+					dg.setFocus();	
+    			}
+    			else if(status2 != "3"){
+    				CCSSAlert.showMessageDialog(this,"请选择一条(待发送)状态的记录,再进行挂起！");
+    			}
+    			else{
+    				var request:FlexRequest = new FlexRequest();
+					request.ope_id = 2026;
+					request.menu_id = this.parentApplication.LoginMenu_ID;	
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					var delSendTask:T_INFO_SEND_TASK = new T_INFO_SEND_TASK();
+					delSendTask.TASK_ID = taskId;
+					delSendTask.STATUS = status2;
+					delSendTask.TASK_NAME = taskName;
+					request.form.delSendTask = delSendTask;
+					this.dialog_confirm = new CCSSConfirm();
+					this.dialog_confirm.showDialog(this,"您确认要将<"+taskName+">任务挂起吗？",request);
+					this.dialog_confirm.addEventListener(Event.REMOVED,doDeleteBlackTypeHandler);
+    			}
+    		}
+    		private function submitTaskInfo():void{
+    			if(this.dg.selectedIndex < 0){
+    				CCSSAlert.showMessageDialog(this,"请在列表中选择一条记录，再进行提交审核！");
+    				FlashContrl.target = dg;
+					FlashContrl.play();
+					dg.setFocus();	
+    			}
+    			else if(status2 != "0"){
+    				CCSSAlert.showMessageDialog(this,"请选择一条(制定完成)状态的记录,再进行提交审核！");
+    			}
+    			else{
+    				var request:FlexRequest = new FlexRequest();
+					request.ope_id = 2025;
+					request.menu_id = this.parentApplication.LoginMenu_ID;	
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					var delSendTask:T_INFO_SEND_TASK = new T_INFO_SEND_TASK();
+					delSendTask.TASK_ID = taskId;
+					delSendTask.STATUS = status2;
+					delSendTask.TASK_NAME = taskName;
+					request.form.delSendTask = delSendTask;
+					this.dialog_confirm = new CCSSConfirm();
+					this.dialog_confirm.showDialog(this,"您确认任务<"+taskName+">内容无误，想要提交审核吗？",request);
+					this.dialog_confirm.addEventListener(Event.REMOVED,doDeleteBlackTypeHandler);
+    			}
+    		}
+    		private function deleteBlackInfo():void{
+    			if(this.dg.selectedIndex < 0){
+    				CCSSAlert.showMessageDialog(this,"请在列表中选择一条记录，再进行删除！");
+    				FlashContrl.target = dg;
+					FlashContrl.play();
+					dg.setFocus();	
+    			}
+    			else if(status2 != "0"){
+    				CCSSAlert.showMessageDialog(this,"请选择一条(制定完成)状态的记录,再进行删除！");
+    			}
+    			else{
+    				var request:FlexRequest = new FlexRequest();
+					request.ope_id = 2024;
+					request.menu_id = this.parentApplication.LoginMenu_ID;	
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					var delSendTask:T_INFO_SEND_TASK = new T_INFO_SEND_TASK();
+//					CCSSAlert.showMessageDialog(this,taskId);
+					delSendTask.TASK_ID = taskId;
+					delSendTask.STATUS = status2;
+					delSendTask.TASK_NAME = taskName;
+					request.form.delSendTask = delSendTask;
+					this.dialog_confirm = new CCSSConfirm();
+					this.dialog_confirm.showDialog(this,"您确认要删除<"+taskName+">任务吗？",request);
+					this.dialog_confirm.addEventListener(Event.REMOVED,doDeleteBlackTypeHandler);
+    			}
+    		}
+    		private function cancelDeleteBlackInfo():void{
+    			if(this.dg.selectedIndex < 0){
+    				CCSSAlert.showMessageDialog(this,"请在列表中选择一条记录，再进行任务取消！");
+    			}
+    			else if(status2 != "3" && status2 != "4" && status2 != "5"){
+    				CCSSAlert.showMessageDialog(this,"可进行任务取消的状态有<挂起、待发送、暂停>状态！");
+    			}
+    			else{
+    				var request:FlexRequest = new FlexRequest();
+					request.ope_id = 2024;
+					request.menu_id = this.parentApplication.LoginMenu_ID;	
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					var delSendTask:T_INFO_SEND_TASK = new T_INFO_SEND_TASK();
+//					CCSSAlert.showMessageDialog(this,taskId);
+					delSendTask.TASK_ID = taskId;
+					delSendTask.STATUS = status2;
+					delSendTask.TASK_NAME = taskName;
+					delSendTask.ORG_ID = orgId;
+					delSendTask.SEND_ALREADY = sendAready;
+					delSendTask.FLOW_RATE = flowRate;
+					
+					
+					request.form.delSendTask = delSendTask;
+					this.dialog_confirm = new CCSSConfirm();
+					this.dialog_confirm.showDialog(this,"您确认要将<"+taskName+">任务取消吗？",request);
+					this.dialog_confirm.addEventListener(Event.REMOVED,doDeleteBlackTypeHandler);
+    			}
+    		}
+    		private function doDeleteBlackTypeHandler(event:Event):void{
+    			if(this.dialog_confirm.YES){
+					var request:FlexRequest = this.dialog_confirm.object as FlexRequest;
+					this.getDataService.doTransaction(request);
+					otherBool = false;
+					this.enabled = false;
+				}
+    		}
+    		private function onClick(e:Event):void{
+    			var item:Object = dg.selectedItem;
+    			if(dg.selectedIndex == -1){
+    				return;
+    			}else{
+    				flowRate = item.FLOW_RATE;
+    				orgId = item.ORG_ID;
+    				sendAready = item.SEND_ALREADY;
+    				taskName = item.TASK_NAME;
+    				status2 = item.STATUS;
+    				taskId = item.TASK_ID;
+    			}	
+    		}
+    		private function addBlackInfo():void{
+    			if(dg.selectedIndex == -1){
+    				CCSSAlert.showMessageDialog(this,"请查询出数据后选中一条记录，再进行修改！");
+					FlashContrl.target = dg;
+					FlashContrl.play();
+					dg.setFocus();	
+    			}
+    			else if(status2 != "0"){
+    				CCSSAlert.showMessageDialog(this,"请选择一条(制定完成)状态的记录,再进行修改！");
+    			}
+    			else{
+    				var item:Object = dg.selectedItem;
+					this.taskDialog = new UpdateTaskDialogAll();
+				 	this.taskDialog.showDialog(this,langueTypeCon,item,arrSendGroupIDCon,arrInfoTypeCon,arrPriorityCon,arrReturnReportCon);
+					this.taskDialog.addEventListener(Event.REMOVED,doAddListHandler);
+    			}
+    		}
+    		private function doAddListHandler(event:Event):void{
+    			if(this.taskDialog.DOOK){
+	    			var request:FlexRequest = new FlexRequest();
+	    			request.ope_id = 2028;
+	    			request.menu_id = this.parentApplication.LoginMenu_ID;
+	    			request.org_id = this.parentApplication.LoginORG_ID;
+	    			request.user_id = this.parentApplication.LoginUser_ID;
+	    			
+	    			var sendTask:T_INFO_SEND_TASK = new T_INFO_SEND_TASK();
+	    			sendTask = this.taskDialog.sendTask;
+	    			request.form.sendTask = sendTask;
+	    			this.getDataService.doTransaction(request);
+			    	this.enabled = false;
+		    	}
+		    	
+		    	
+    		}
+    		private function queryTaskInfo():void{
+    			var request:FlexRequest = new FlexRequest();
+    			request.ope_id = 2018;
+    			request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+    			var sendTask:T_INFO_SEND_TASK = new T_INFO_SEND_TASK();
+    			sendTask.TASK_NAME = reg.trim(tiTaskNameId.text);
+    			sendTask.STATUS = cbbStatusId.selectedItem.data;
+    			sendTask.START_TIME = df.format(start_Time_SendId.getTime());
+    			sendTask.END_TIME = df.format(end_Time_SendId.getTime());
+    			if(this.parentApplication.LoginORG_ID == "HAPPY"){
+    				sendTask.ORG_ID = "";
+    				sendTask.USER_ID = "";
+    			}else{
+    				sendTask.ORG_ID = this.parentApplication.LoginORG_ID;
+    				sendTask.USER_ID = this.parentApplication.LoginUser_ID;
+    			}
+    			if(tiUserId.text.length>0){
+    				sendTask.USER_ID = reg.trim(tiUserId.text);
+    			}
+    			
+    			request.form.sendTask = sendTask;
+    			this.getDataService.doTransaction(request);
+    			this.enabled = false;
+    		}
+			private function doLanguage(item:Object,column:DataGridColumn):String{
+    			return ArrayFactory.getValueFroamArrayCollection(langueTypeCon,item.LANGUAGE);
+			}
+			private function doStuats(item:Object,column:DataGridColumn):String{
+    			return ArrayFactory.getValueFroamArrayCollection(arrTaskStatusCon,item.STATUS);
+			}
+			private function doSENDGROUPID(item:Object,column:DataGridColumn):String{
+    			return ArrayFactory.getValueFroamArrayCollection(arrSendGroupIDCon,item.SEND_GROUP_ID);
+			}
+			private function doINFOTYPE(item:Object,column:DataGridColumn):String{
+    			return ArrayFactory.getValueFroamArrayCollection(arrInfoTypeCon,item.INFO_TYPE);
+			}
+			private function doPRIORITY(item:Object,column:DataGridColumn):String{
+    			return ArrayFactory.getValueFroamArrayCollection(arrPriorityCon,item.PRIORITY);
+			}
+			private function doRETURN_REPORT(item:Object,column:DataGridColumn):String{
+    			return ArrayFactory.getValueFroamArrayCollection(arrReturnReportCon,item.RETURN_REPORT);
+			}
+    		private function init():void{
+    			var date:Date = new Date();
+				cbbStatusId.dataProvider = arrTaskStatusCon;
+				end_Time_SendId.setTime("23:59:59");
+				start_Time_SendId.setTime("00:00:00");
+				var request:FlexRequest = new FlexRequest();
+    			request.user_id = this.parentApplication.LoginUser_ID;
+    			request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.ope_id = 2014;
+    			this.getDataService.doTransaction(request);
+    			request.ope_id = 2019;
+    			this.getDataService.doTransaction(request);
+//    			request.ope_id = 2020;
+//    			this.getDataService.doTransaction(request);
+    			this.enabled = false;
+    		}
+    		private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+    	]]>
+    </mx:Script>
+    <mx:Panel x="419" y="0" width="351" height="174" layout="absolute" headerHeight="15" title="                     查询向导" color="#F21313" fontSize="13">
+        <mx:Canvas x="0" y="0" width="331" height="147" fontSize="12" color="#050505" borderStyle="solid" borderColor="#121313" backgroundColor="#DAD3F6">
+        	<mx:Label x="10" y="12" text="任务名称"/>
+        	<mx:Label x="167" y="12" text="制定用户"/>
+        	<mx:TextInput id="tiUserId" x="225" y="10" maxChars="16" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)" width="94"/>
+        	<mx:Label id="hotelName0" x="10" y="80" text="开始时间"/>
+        	<mx:Label id="hotelName1" x="10" y="109" text="结束时间"/>
+        	<mx:TextInput id="tiTaskNameId" x="65" y="10" maxChars="64" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)" width="94"/>
+        	<ns1:TimeField id="start_Time_SendId" x="66" y="77">
+        	</ns1:TimeField>
+        	<ns1:TimeField id="end_Time_SendId" x="66" y="108">
+        	</ns1:TimeField>
+        	<mx:Label id="hotelName" x="10" y="46" text="任务状态"/>
+        	<mx:ComboBox id="cbbStatusId" x="66" y="43" width="141"></mx:ComboBox>
+        </mx:Canvas>
+    </mx:Panel>
+</mx:Panel>

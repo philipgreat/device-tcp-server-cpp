@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="500" height="348" fontSize="15" color="#E7F2F4" fontFamily="Arial" title="终端视图" borderColor="#15084D">
+	<mx:DataGrid x="10" y="53" width="451" height="239" textAlign="center" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" borderColor="#010101" color="#000706" themeColor="#1970A8" alternatingItemColors="[#FFFFFF, #DFF3FF]" fontSize="12" alpha="1.0" fontFamily="Arial" fontWeight="normal" id="TableGrid">
+		<mx:columns>
+			<mx:DataGridColumn headerText="IMEI号" dataField="IMEI_NUMBER"  width="120"/>
+			<mx:DataGridColumn headerText="UIM卡号" dataField="UIM_NUMBER" width="120"/>
+			<mx:DataGridColumn headerText="手机号码" dataField="MSISDN" width="100" />	
+			<mx:DataGridColumn headerText="状态" dataField="STATUS" width="100" labelFunction="doStatus"/>	
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Label x="10" y="13" text="信息" fontSize="12" color="#FB0A0A" id="LaeblMessage"/>
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import cn.ucans.common.ArrayFactory;
+			import mx.managers.PopUpManager;
+			
+			private var list_status:ArrayCollection = null;
+			
+			public function showDialog(parent:DisplayObject,message:String,arrayCollection:ArrayCollection,list_status:ArrayCollection):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				this.list_status = list_status;
+				this.TableGrid.dataProvider = arrayCollection;
+				this.LaeblMessage.text = message;
+			}
+			
+			private function doStatus(item:Object,column:DataGridColumn):String{
+				return ArrayFactory.getValueFroamArrayCollection(this.list_status,item.STATUS);
+			}
+			
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+	<mx:Button x="383" y="11" label="关闭窗口" fontSize="12" color="#030303" click="doCancle()"/>
+</mx:TitleWindow>

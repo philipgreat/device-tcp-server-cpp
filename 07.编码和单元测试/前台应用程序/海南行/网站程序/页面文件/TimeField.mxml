@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="202" height="22" xmlns:ns1="cn.ucans.common.*" initialize="init()" backgroundColor="#F5F5F9" borderStyle="solid" borderColor="#F5D5D5" fontFamily="Arial" fontSize="12">
+	<mx:DateField x="0" y="0" width="92" id="DateSet" height="22" monthNames="['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']"
+								  dayNames="['日', '一', '二', '三', '四', '五', '六']" formatString="YYYY-MM-DD" color="#040404"/>
+	<ns1:TimeInputEx x="100" y="0" width="100" id="TimeSet" hours="0" minutes="0" seconds="0" Caption="00:00:00" height="22" color="#0A0A0A"/>
+	<mx:Script>
+		<![CDATA[
+		
+			private var ymd:String = null;
+			private var hms:String = null;
+			
+			public function setTime(time:String = "00:00:00"):void{
+				this.TimeSet.Caption = time;
+			}
+			
+			private function init():void{
+				var date:Date = new Date();
+				this.DateSet.data = date;
+				this.setTime("00:00:01");
+			}
+			
+			public function set editable(ok:Boolean):void{
+				this.DateSet.editable = ok;
+				this.TimeSet.enabled = ok;
+			}
+			
+			public function setDate(ymd:String="2008-01-01"):void{
+				this.DateSet.text = ymd;
+			}
+			
+			public function doClear():void{
+				this.DateSet.text = "";
+				this.TimeSet.hours = 0;
+				this.TimeSet.minutes = 0;
+				this.TimeSet.seconds = 0;
+			}
+			
+			public function getTime():String{
+				return this.DateSet.text + " "+this.TimeSet.hours+":"+this.TimeSet.minutes+":"+this.TimeSet.seconds;
+			}
+		]]>
+	</mx:Script>
+</mx:Canvas>

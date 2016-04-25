@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="634" height="404" title="当前选中终端的详细信息" fontSize="15" fontFamily="Arial" color="#F1F9FB" borderColor="#1A0A4F">
+	<mx:DateFormatter id="df" formatString="YYYY-MM-DD"/>
+	<mx:Button x="501.5" y="10" label="关闭窗口" fontFamily="Arial" fontSize="12" color="#040404" click="doCancle()"/>
+	<mx:Script>
+		<![CDATA[
+			
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import cn.ucans.common.ArrayFactory;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.bean.T_TERMINAL_INFO;
+			
+			private var regular:RegularExpression = new RegularExpression();
+			
+			public var terminal:T_TERMINAL_INFO = null;
+			public var DOOK:Boolean = false;
+			
+			public function showDialog(parent:DisplayObject,item:Object,list_status:ArrayCollection,list_type:ArrayCollection,list_factory:ArrayCollection,list_hotel:ArrayCollection):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				terminal = new T_TERMINAL_INFO();
+				
+				
+				this.Terminal_Type.dataProvider = list_type;
+				
+				this.Imei_Number.text = item.IMEI_NUMBER;
+				this.Uim_Number.text = item.UIM_NUMBER;
+				this.Msisdn.text = item.MSISDN;
+				this.Content_Version.text = item.CONTENT_VERSION;
+				
+				this.Terminal_Type.selectedItem = ArrayFactory.getComboBoxSelectedItemFromArrayCollection(list_type,item.TERMINAL_TYPE);
+				this.Status.text = ArrayFactory.getValueFroamArrayCollection(list_status,item.STATUS);
+				if(item.PRODUCT_DATE != ""){
+					var t1:String = item.PRODUCT_DATE;
+					var date1:Date = new Date(Number(t1.substr(0,4)),Number(t1.substr(4,2)),Number(t1.substr(6,2)));
+					this.Product_Date.text = this.df.format(date1);
+				}
+				
+				if(item.MAINTAIN_LIMITED_DATE != ""){
+					var t2:String = item.MAINTAIN_LIMITED_DATE;
+					var date2:Date = new Date(Number(t2.substr(0,4)),Number(t2.substr(4,2)),Number(t2.substr(6,2)));
+					this.Maintain_Limited_Date.text = this.df.format(date2);
+				}
+				
+				if(item.STATUS == "12"){
+					this.Current_Hire_Time.text = item.CURRENT_HIRE_TIME;
+				}
+				this.Distribute_User_ID.text = item.DISTRIBUTE_USER_ID;
+				this.Distribute_Time.text = item.DISTRIBUTE_TIME;
+				this.Hotel_Receiver.text = item.HOTEL_RECEIVER;
+				this.Room_No.text = item.ROOM_NO;
+				this.Content_Version.text = item.CONTENT_VERSION;
+			}
+			
+			private function doClick():void{
+				var ok:Boolean = true;
+				
+				if(ok){
+					this.terminal.CONTENT_VERSION = this.regular.trim(this.Content_Version.text);
+					this.terminal.PRODUCT_DATE = this.regular.trim(this.Product_Date.text);
+					this.terminal.TERMINAL_TYPE = this.Terminal_Type.selectedItem.data;
+					this.terminal.MAINTAIN_LIMITED_DATE = this.regular.trim(this.Maintain_Limited_Date.text);
+					this.terminal.HOTEL_RECEIVER = this.regular.trim(this.Hotel_Receiver.text);
+					this.terminal.IMEI_NUMBER = this.regular.trim(this.Imei_Number.text);
+					this.terminal.UIM_NUMBER = this.regular.trim(this.Uim_Number.text);
+					this.DOOK = true;
+					PopUpManager.removePopUp(this);
+				}
+			}
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas x="31.5" y="43" width="548" height="127" fontSize="12" color="#040404" borderStyle="solid" borderColor="#040404" backgroundColor="#D0F3D0" fontFamily="Arial">
+		<mx:Label x="32" y="22" text="终端IMEI号" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="43" y="51" text="UIM卡号" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="307" y="78" text="终端型号" color="#010101" fontFamily="Arial" fontSize="12" fontWeight="bold"/>
+		<mx:Label x="294" y="51" text="内容版本号" color="#010101" fontFamily="Arial" fontSize="12" fontWeight="bold"/>
+		<mx:Label x="38" y="80" text="终端状态" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="307" y="22" text="手机号码" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="107" y="22" text="未设置" id="Imei_Number"/>
+		<mx:Label x="376" y="22" text="未设置" id="Msisdn"/>
+		<mx:Label x="107" y="51" text="未设置" id="Uim_Number"/>
+		<mx:Label x="376" y="51" text="未设置" id="Content_Version"/>
+		<mx:ComboBox x="376" y="75" id="Terminal_Type" enabled="false"></mx:ComboBox>
+		<mx:Label x="107" y="80" text="未设置" id="Status"/>
+	</mx:Canvas>
+	<mx:Canvas x="299.5" y="190" width="280" height="77" borderStyle="solid" borderColor="#4D428D" backgroundColor="#D7CACA" fontSize="12" color="#040404" fontFamily="Arial">
+		<mx:Label x="19" y="40" text="保修截止日期" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="19" y="10" text="终端生产日期" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="110" y="10" text="未设置" id="Product_Date"/>
+		<mx:Label x="110" y="40" text="未设置" id="Maintain_Limited_Date"/>
+	</mx:Canvas>
+	<mx:Canvas x="31.5" y="190" width="237" height="149" borderStyle="solid" backgroundColor="#B4C9B3" borderColor="#424649" fontSize="12" color="#040404" fontFamily="Arial">
+		<mx:Label x="10" y="10" text="分发到酒店人" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="35" y="40" text="分发时间" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="21" y="73" text="酒店领用人" color="#010101" fontFamily="Arial" fontSize="12" fontWeight="bold"/>
+		<mx:Label x="10" y="114" text="终端所在房间" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="102" y="114" text="未设置" id="Room_No"/>
+		<mx:Label x="102" y="73" text="未设置" id="Hotel_Receiver"/>
+		<mx:Label x="102" y="40" text="未设置" id="Distribute_Time"/>
+		<mx:Label x="102" y="10" text="未设置" id="Distribute_User_ID"/>
+	</mx:Canvas>
+	<mx:Canvas x="299.5" y="288" width="280" height="51" fontSize="12" color="#040404" borderStyle="solid" borderColor="#0B0B0B" backgroundColor="#B3BDB9" fontFamily="Arial">
+		<mx:Label x="22" y="18" text="本次开通时间" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="118.5" y="18" text="未设置" id="Current_Hire_Time"/>
+	</mx:Canvas>
+</mx:TitleWindow>

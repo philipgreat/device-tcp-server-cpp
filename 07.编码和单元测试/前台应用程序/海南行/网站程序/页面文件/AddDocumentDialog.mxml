@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="422" height="350" title="添加文件" fontFamily="Arial" fontSize="15" borderColor="#1106F6" creationComplete="init()" backgroundColor="#FFFFFF" xmlns:ns1="*" color="#F0F5F6" x="189" y="109">
+     <mx:RemoteObject id="org_service" destination="OrgFlexService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+     <mx:Script>
+         <![CDATA[
+         	 import cn.ucans.bean.T_ORG_DOCUMENT;
+         	 import mx.collections.ArrayCollection;
+         	 import mx.managers.PopUpManager;
+ 			 import cn.ucans.common.RegularExpression;
+             import flash.net.FileReference;   
+             import mx.controls.Alert;   
+             import mx.events.CloseEvent;  
+             import cn.ucans.flex.FlexRequest;
+	 		 import cn.ucans.flex.FlexReponse; 
+             import flash.events.*;   
+             
+             public var DOOK:Boolean = false;
+             public var document_org:T_ORG_DOCUMENT = null;
+    
+             private var file: FileReference; 
+             private var regular:RegularExpression = new RegularExpression();
+             private var fileName:String = "";
+             private var dialog_confirm:CCSSConfirm = null;
+ 
+             private function init(): void{
+             		
+				
+             }
+             
+             private function upload(): void{   
+             	 var ok:Boolean = true;
+             	 if(this.Org_ID.org_id == ""){
+             	 	CCSSAlert.showMessageDialog(this,"请先选择一个组织！");
+             	 	ok = false;
+             	 	return;
+             	 }
+             	 if(this.regular.trim(this.Document_Type.text) == ""){
+             	 	CCSSAlert.showMessageDialog(this,"文档类型不能为空！");
+             	 	ok = false;
+             	 	return;
+             	 }
+             	 if(ok){
+             	 	 file.browse();   
+             	 }
+             }  
+             
+             public function showDialog(parent:DisplayObject):void{
+             	PopUpManager.addPopUp(this,parent,false);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				
+				this.document_org = new T_ORG_DOCUMENT();
+				Security.allowDomain("*");   
+                file = new FileReference();   
+                file.addEventListener(ProgressEvent.PROGRESS, onProgress);   
+                file.addEventListener(Event.SELECT, onSelect);   
+                
+             }
+             
+             private function onSelect(e: Event): void{
+             	this.dialog_confirm = new CCSSConfirm();
+             	this.dialog_confirm.showDialog(this,"上传 " + file.name + " (共 "+Math.round(file.size)+" 字节)?",null);
+             	this.dialog_confirm.addEventListener(Event.REMOVED,proceedWithUpload);
+//             	Alert.show("上传 " + file.name + " (共 "+Math.round(file.size)+" 字节)?",
+//                "确认上传",
+//                Alert.YES|Alert.NO,
+//                null,
+//                proceedWithUpload);
+             }
+             
+             private function onProgress(e: ProgressEvent): void{
+                 var proc: uint = e.bytesLoaded / e.bytesTotal * 100;
+                 bar.setProgress(proc, 100);
+                 bar.label= "进度: " + " " + proc + "%";
+             }
+             
+             private function proceedWithUpload(e:Event): void{
+                 if (this.dialog_confirm.YES){
+                 	 var uri:String = this.parentApplication.strPubURL+"/DocumentFileUploadServlet?UserID="+this.parentApplication.LoginUser_ID+"&Org_ID="+this.Org_ID.org_id;
+                     var request: URLRequest = new URLRequest(uri);
+                     try{
+                     	 file.upload(request);  
+                     	 file.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA,doUploadCompleteHandler);
+                     	 //this.enabled = false;      
+                     }catch(error:Error){                     	 
+                     	 CCSSAlert.showMessageDialog(this,error.message);   
+                     	 this.enabled = true;  
+                     	 return; 
+                     }             
+                 }
+             }
+             
+             private function doUploadCompleteHandler(event:DataEvent):void{
+             	//this.enabled = true;
+             	var xml_str:String = event.data as String;             	
+             	var xml:XML = new XML(xml_str);
+             	this.bar.setProgress(0,100);
+             	this.bar.label = "进度: 0%";
+             	var code:String = xml.@code;
+             	var message:String = xml.@message;
+             	var url:String = xml.@url;
+         		if(code == "0"){
+         			this.document_org.DOCUMENT_TYPE = regular.trim(this.Document_Type.text);
+         			this.document_org.DOCUMENT_NAME = file.name;
+         			this.document_org.ORG_ID = this.Org_ID.org_id;
+         			this.fileName = file.name;
+         			this.document_org.NOTES = regular.trim(this.Notes.text);
+         			this.document_org.DOCUMENT_PATH = url;
+         			
+         			var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1011;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.document = this.document_org;
+					this.org_service.doTransaction(request);
+					this.enabled = false;
+         		}else{
+             		CCSSAlert.showMessageDialog(this,message); 
+             		return;
+         		}
+             }
+             
+             private function doCancle():void{
+             	PopUpManager.removePopUp(this);
+             }
+             
+             private function doResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1011:
+						if(reponse.sign == 0){
+							this.DOOK = true;
+							PopUpManager.removePopUp(this);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+             
+         ]]>
+     </mx:Script>
+     <mx:Canvas x="28" y="10" width="346" height="225" backgroundColor="#BEEFBF" borderStyle="solid" borderColor="#060606">
+          <mx:Label x="26" y="81" text="选择组织" fontFamily="Arial" fontSize="12" color="#020202"/>
+          <ns1:SelectOrgTreeField x="87" y="78" id="Org_ID" fontFamily="Arial" fontSize="12" color="#070707">
+          </ns1:SelectOrgTreeField>
+          <mx:Label x="26" y="124" text="文档类型" fontSize="12" color="#030303"/>
+          <mx:TextInput x="87" y="121" width="224" id="Document_Type" fontFamily="Arial" fontSize="12" color="#070707" maxChars="16"/>
+          <mx:Canvas x="26" y="10" width="285" height="48" backgroundColor="#CDD3FC" fontSize="12" color="#030303" borderStyle="solid" borderColor="#190F63">
+               <mx:ProgressBar id="bar" labelPlacement="bottom" themeColor="#F20D7A"
+                  minimum="0" visible="true" maximum="100" label="进度: 0%"  
+                  direction="right" mode="manual" width="250" fontFamily="Arial" fontSize="12" x="23" y="10" borderColor="#7EADCD" fontWeight="normal" color="#1605FA"/>
+          </mx:Canvas>
+          <mx:Label x="50" y="165" text="说明" fontSize="12" color="#000000"/>
+          <mx:TextArea x="87" y="162" width="224" height="51" id="Notes" maxChars="32" fontFamily="Arial" fontSize="12" color="#070707"/>
+     </mx:Canvas>
+     <mx:Button x="240.5" y="260" label="关闭窗口" fontFamily="Arial" fontSize="12" color="#040404" click="doCancle()"/>
+     <mx:Button label="选择文件并上传" click="upload()" fontFamily="Arial" fontSize="12" x="83.5" y="260" color="#060606"/>
+</mx:TitleWindow>

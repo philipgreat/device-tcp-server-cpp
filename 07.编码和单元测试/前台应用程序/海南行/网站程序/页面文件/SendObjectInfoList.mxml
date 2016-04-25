@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" initialize="init()" width="790" height="550" fontSize="15"  backgroundColor="#FFFFFF" borderColor="#00656E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="提取发送对象" xmlns:ns1="*">
+	<mx:Panel x="0" y="0" width="770" height="91" layout="absolute" headerHeight="15" title="                                                     功能列表" fontSize="13" color="#F30A2B">
+		<mx:Canvas x="0" y="0" width="750" height="64" fontSize="12" color="#030303" borderColor="#272D26" backgroundColor="#C8F4C7" borderStyle="solid">
+			<mx:Button x="20" y="10" label="提取" fontFamily="Arial" fontSize="12" color="#040404" click="addBlackInfoDialog()"/>
+			<mx:Button x="125" y="10" label="重置" fontFamily="Arial" fontSize="12" color="#040404" click="clear()"/>
+		</mx:Canvas>
+	</mx:Panel>
+	<mx:Panel x="0" y="99" width="770" height="390" layout="absolute" headerHeight="15" title="编辑向导                                                                                                        您的组织已发送的对象群体信息" color="#F21313" fontSize="13">
+		<mx:Canvas x="0" y="0" width="750" height="363" fontSize="12" color="#050505" borderStyle="solid" borderColor="#121313" backgroundColor="#DAD3F6">
+			<mx:Label x="10" y="45" text="发送清单名称"/>
+			<mx:Label x="10" y="91" text="选择酒店星级" width="99"/>
+			<mx:Label x="202" y="92" text="选择酒店名称" width="99"/>
+			<mx:TextInput x="95" y="43" width="171" maxChars="64" id="blackPhoneNumberId" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)"/>
+			<mx:Label id="hotelName" x="10" y="14" text="终端语言名称"/>
+			<mx:ComboBox id="teminLangNameId" x="95" y="11" width="171"></mx:ComboBox>
+			<mx:List id="hotelLevelId" x="10" y="114" click="onClickLevel()" allowMultipleSelection="true" width="164" height="187"></mx:List>
+			<mx:List id="hotelNameId" x="202" y="114" click="onClickName()" allowMultipleSelection="true" height="187" width="164"></mx:List>
+			<mx:DataGrid x="387" id="dg" y="0" width="361" height="361" color="#000706" fontSize="12" borderColor="#01070B">
+				<mx:columns>
+					<mx:DataGridColumn headerText="发送对象群名称" dataField="SEND_GROUP_NAME"/>
+					<mx:DataGridColumn headerText="终端数目" dataField="AMOUNT"/>
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+	</mx:Panel>
+	<mx:RemoteObject id="getDataService" destination="oTaskInfoSendService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	
+	<mx:DateFormatter id="df" formatString="YYYY-MM-DD JJ:NN:SS"/>
+	<mx:DateFormatter id="df1" formatString="YYYY-MM-DD"/>
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+    </mx:Sequence>
+    <mx:Script>
+    	<![CDATA[
+    		import cn.ucans.bean.T_INFO_NUMBER_OBJECT;
+    		import cn.ucans.flex.FlexReponse;
+    		import mx.collections.ArrayCollection;
+    		import cn.ucans.common.RegularExpression;
+    		import cn.ucans.flex.FlexRequest;
+    		import cn.ucans.common.ArrayFactory;
+    		import mx.events.CloseEvent;
+    		import mx.controls.Alert;
+    		
+    		private var count:int = 0;
+    		private var blackDialog:SendTaskConutDialog = null;
+    		private var arrobjectNameCountCon:ArrayCollection = new ArrayCollection();
+    		private var arrHotelName:ArrayCollection = new ArrayCollection();
+    		private var arrHotelLevel:ArrayCollection = new ArrayCollection();
+    		private var reg:RegularExpression = new RegularExpression();
+    		private var arrCon:ArrayCollection = new ArrayCollection();
+    		private var hotelCon:ArrayCollection = new ArrayCollection();
+    		private var langueTypeCon:ArrayCollection = new ArrayCollection();
+    		private var hotelConLevel:Array =[{label:"三星级",data:"3"},{label:"四星级",data:"4"},{label:"五星级",data:"5"},{label:"连锁商务酒店",data:"9"}];
+    		
+    		private function doResult(data:Object):void{
+    			this.enabled = true;
+    			var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 2013:
+						if(reponse.sign == 0){
+							hotelCon = reponse.result.list as ArrayCollection;
+							hotelNameId.dataProvider = hotelCon;
+//							hotelNameId.selectedItems = ArrayFactory.getArrayFromArrayCollection(hotelCon);
+//							-------------------------------------
+							hotelLevelId.dataProvider = hotelConLevel;
+//    						hotelLevelId.selectedItems = hotelConLevel;
+							return;
+						}
+						break;
+					case 2014:
+						if(reponse.sign == 0){
+							langueTypeCon = reponse.result.list as ArrayCollection;
+							teminLangNameId.dataProvider = langueTypeCon;
+							return;
+						}else{
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}	
+						break;
+					case 2015:
+						if(reponse.sign == 0){
+							hotelCon = reponse.result.list as ArrayCollection;
+							hotelNameId.dataProvider = hotelCon;
+							hotelNameId.selectedItems = ArrayFactory.getArrayFromArrayCollection(hotelCon);
+							if(hotelLevelId.selectedIndex >-1){
+								hotelNameId.selectedIndex = -1;
+							}
+							return;
+						}	
+						break;
+					case 2016:
+						if(reponse.sign == 0){
+							arrobjectNameCountCon = reponse.result.list as ArrayCollection;
+							dg.dataProvider = arrobjectNameCountCon;
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}	
+						break;
+					case 2017:
+						if(reponse.sign == 0){
+							count = reponse.result.count as int;
+							if(count > 0){
+								this.blackDialog = new SendTaskConutDialog();
+								this.blackDialog.showDialog(this,count);
+								this.blackDialog.addEventListener(Event.REMOVED,addBlackInfo);
+								return;
+							}else{
+								CCSSAlert.showMessageDialog(this,"没有查询到相关酒店的的终端手机号码！");
+								return;
+							}
+						}else{
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}	
+						break;
+					default:
+						break;
+				}
+    		}
+    		private function addBlackInfo(event:Event):void{
+    			if(this.blackDialog.DOOK){
+	    				var date:Date = new Date();
+	    				var sendObject:T_INFO_NUMBER_OBJECT = new T_INFO_NUMBER_OBJECT();
+		    			var request:FlexRequest = new FlexRequest();
+		    			request.ope_id = 2016;
+		    			request.menu_id = this.parentApplication.LoginMenu_ID;
+		    			request.user_id = this.parentApplication.LoginUser_ID;
+		    			request.org_id = this.parentApplication.LoginORG_ID;
+		    			sendObject.SEND_GROUP_NAME = reg.trim(blackPhoneNumberId.text);
+		    			sendObject.MODE_TYPE = "0";
+		    			sendObject.USER_ID = this.parentApplication.LoginUser_ID;
+		    			sendObject.ORG_ID = this.parentApplication.LoginORG_ID;
+		    			sendObject.INSERT_TIME = df.format(date).substr(0,4).concat(df.format(date).substr(5,2));
+		    			sendObject.LANGUAGE = teminLangNameId.selectedItem.data;
+		    			request.form.arrHotelLevel = arrHotelLevel;
+		    			request.form.arrHotelName = arrHotelName;
+		    			request.form.sendObject = sendObject;
+		    			this.getDataService.doTransaction(request);
+		    			this.enabled = false;
+		    	}
+    		}
+    		private function init():void{
+    			var request:FlexRequest = new FlexRequest();
+    			request.user_id = this.parentApplication.LoginUser_ID;
+    			request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.ope_id = 2013;
+    			this.getDataService.doTransaction(request);
+    			request.ope_id = 2014;
+    			this.getDataService.doTransaction(request);
+    			this.enabled = false;
+    		}
+    		private function CurrGoToLogin(e:KeyboardEvent):void
+			{
+				if(e.keyCode.toString()  == '13')
+				{
+//					queryBlackInfo();
+				}
+			}
+			private function onClickLevel():void{
+				var request:FlexRequest = new FlexRequest();
+				request.user_id = this.parentApplication.LoginUser_ID;
+    			request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.ope_id = 2015;
+    				var arrar:Array = hotelLevelId.selectedItems;
+    				arrHotelLevel = new ArrayCollection();
+    			for(var i:int=0;i<arrar.length;i++){	
+	    			arrHotelLevel.addItem(arrar[i]);
+    			}
+    			request.form.arrHotelLevel = arrHotelLevel;
+    			this.getDataService.doTransaction(request);
+    			this.enabled = false;
+			}
+			private function onClickName():void{
+				if(hotelNameId.selectedIndex > -1){
+					hotelLevelId.selectedIndex = -1;
+					var arrar:Array = hotelNameId.selectedItems;
+	    				arrHotelName = new ArrayCollection();
+	    			for(var i:int=0;i<arrar.length;i++){	
+		    			arrHotelName.addItem(arrar[i]);
+	    			}
+				}
+			}
+    		private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			private function clear():void{
+				blackPhoneNumberId.text = "";
+				teminLangNameId.dataProvider = langueTypeCon;
+				this.init();
+			}
+			
+//			SendTaskConutDialog
+			private function addBlackInfoDialog():void{
+//				var dNow:String = df.format(dateNow).substr(0,4).concat(df.format(dateNow).substr(5,2)).concat(df.format(dateNow).substr(8,2)).concat(df.format(dateNow).substr(11,2)).concat(df.format(dateNow).substr(14,2)).concat(df.format(dateNow).substr(17,2));
+//				var dResult:String = df.format(dateResult).substr(0,4).concat(df.format(dateResult).substr(5,2)).concat(df.format(dateResult).substr(8,2)).concat(df.format(dateResult).substr(11,2)).concat(df.format(dateResult).substr(14,2)).concat(df.format(dateResult).substr(17,2));
+//				var dResultNestDate:String = df.format(dateResultNestDate).substr(0,4).concat(df.format(dateResultNestDate).substr(5,2)).concat(df.format(dateResultNestDate).substr(8,2)).concat(df.format(dateResultNestDate).substr(11,2)).concat(df.format(dateResultNestDate).substr(14,2)).concat(df.format(dateResultNestDate).substr(17,2));
+				var date:Date = new Date();
+				var dateNow:Date = new Date(date.getFullYear(),date.getMonth(),date.getDate(),date.getHours(),date.getMinutes(),date.getSeconds());
+				var dateResult:Date = new Date(date.getFullYear(),date.getMonth(),date.getDate(),23,0,1);
+				var dateResultNestDate:Date = new Date(date.getFullYear(),date.getMonth(),date.getDate(),1,0,1);
+				
+				if(dateNow >= dateResult ||dateNow<=dateResultNestDate){
+					CCSSAlert.showMessageDialog(this,"系统在当天晚上23点至次日凌晨1点之间不能提取发送对象！");
+					return;
+				}
+    			if(hotelLevelId.selectedIndex == -1){
+	    			arrHotelLevel = new ArrayCollection();
+	    			}
+    			if( hotelNameId.selectedIndex == -1){
+    				arrHotelName = new ArrayCollection();
+    			}
+    			if(reg.trim(blackPhoneNumberId.text).length < 1){
+    				CCSSAlert.showErrorDialog(this,"发送清单名称不能为空，请输入！");
+    				FlashContrl.target = blackPhoneNumberId;
+					FlashContrl.play();
+					blackPhoneNumberId.setFocus();	
+					return;
+    			}
+    			if(hotelLevelId.selectedIndex == -1 && hotelNameId.selectedIndex == -1){
+    				CCSSAlert.showErrorDialog(this,"酒店星级或酒店名称必须选中一个！");
+    				FlashContrl.target = hotelLevelId;
+					FlashContrl.play();
+					hotelLevelId.setFocus();
+//					－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－	
+					FlashContrl.target = hotelNameId;
+					FlashContrl.play();
+					hotelNameId.setFocus();
+					return;
+    			
+    			}else{
+    				var request:FlexRequest = new FlexRequest();
+						request.ope_id = 2017;
+						request.menu_id = this.parentApplication.LoginMenu_ID;
+						request.user_id = this.parentApplication.LoginUser_ID;
+						request.org_id = this.parentApplication.LoginORG_ID;
+    				var sendObject:T_INFO_NUMBER_OBJECT = new T_INFO_NUMBER_OBJECT();
+    					sendObject.LANGUAGE = teminLangNameId.selectedItem.data;
+		    			request.form.arrHotelLevel = arrHotelLevel;
+		    			request.form.arrHotelName = arrHotelName;
+		    			request.form.sendObject = sendObject;
+		    			this.getDataService.doTransaction(request);
+		    			this.enabled = false;
+    			}	
+    		}
+    	]]>
+    </mx:Script>
+</mx:Panel>

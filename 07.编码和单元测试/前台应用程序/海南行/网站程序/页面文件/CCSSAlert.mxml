@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="438" height="168" fontFamily="Arial" fontSize="13" color="#060606" backgroundColor="#E9F4F0" backgroundAlpha="1.0" borderColor="#2F26ED">
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			
+			public static var dialog:CCSSAlert = new CCSSAlert();
+			
+			public var YES:Boolean = false;
+			public var NO:Boolean = false;
+			
+			public static function showErrorDialog(parent:DisplayObject,message:String):void{
+				PopUpManager.addPopUp(dialog,parent,true);
+				dialog.x = (dialog.screen.width - dialog.width)/2;
+				dialog.y = (dialog.screen.height - dialog.height)/2;
+				dialog.title = "错误提示窗口";
+				dialog.textarea_01.text = message;
+				dialog.textarea_01.setFocus();
+				dialog.Alert_images.source = "img/error.png";
+				return;
+			} 
+			
+			public static function showMessageDialog(parent:DisplayObject,message:String):void{
+				PopUpManager.addPopUp(dialog,parent,true);
+				dialog.x = (dialog.screen.width - dialog.width)/2;
+				dialog.y = (dialog.screen.height - dialog.height)/2;
+				dialog.title = "信息提示窗口";
+				
+				dialog.textarea_01.text  = message;
+				dialog.Alert_images.source = "img/message.png";
+				return;
+			} 
+			
+			public function showYesNoDialog(parent:DisplayObject,message:String):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				this.title = "确认操作窗口";
+				
+				this.textarea_01.text  = message;
+				this.Alert_images.source = "img/question.gif";
+				this.Alert_button_YES.x = 80;
+				this.Alert_button_YES.y = 93;
+				this.Alert_button_NO.x = 150;
+				this.Alert_button_NO.x = 93;
+				this.Alert_button_confirm.visible = false;
+				return;
+			} 
+			
+			private function doClick():void{
+				//Alert.show("XX","XX",4);
+				PopUpManager.removePopUp(this);
+				return;
+			}
+			
+			private function doYES():void{
+				this.YES = true;
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function doNO():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+//			public static function showErrorDialog():void{
+//			} 
+		]]>
+	</mx:Script>
+	<mx:Image x="32" y="21" id="Alert_images" width="40" height="40"/>
+	<mx:Button x="174" y="93" label="确定" id="Alert_button_confirm" fontFamily="Arial" fontSize="12" width="70" height="25" click="doClick()"/>
+	<mx:TextArea x="92" y="21" width="283" height="51" id="textarea_01" fontFamily="Arial" fontSize="12" themeColor="#F1F5F8" borderColor="#FFFFFF" editable="false" color="#000000"/>
+	<mx:Button x="252" y="92" label="取消" width="70" height="25" id="Alert_button_YES" click="doYES()" visible="false"/>
+	<mx:Button x="252" y="92" label="取消" width="70" height="25" id="Alert_button_NO" click="doNO()" visible="false"/>
+</mx:TitleWindow>

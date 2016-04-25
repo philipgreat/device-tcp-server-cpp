@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute"  initialize="init()" width="790" height="550" fontSize="15"  backgroundColor="#FFFFFF" borderColor="#00656E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="收入日报表" xmlns:ns1="*">
+	<mx:Panel x="0" y="0" width="399" height="121" layout="absolute" title="查询向导" borderColor="#0F0842">
+		<mx:Label x="6" y="14" text="代销商" fontFamily="Arial" fontSize="12" color="#060606"/>
+		<mx:Label x="16" y="44" text="酒店" fontFamily="Arial" fontSize="12" color="#060606"/>
+		<mx:ComboBox x="51" y="42" fontSize="12" fontFamily="Arial" color="#030303" id="Hotel_ID" width="150"></mx:ComboBox>
+		<mx:ComboBox x="51" y="11" fontSize="12" fontFamily="Arial" color="#030303" id="Broker_ID" width="150"></mx:ComboBox>
+		<mx:DateField x="277" y="42" fontFamily="Arial" fontSize="12" color="#030303" width="96" id="Create_Time" monthNames="['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']"
+								  dayNames="['日', '一', '二', '三', '四', '五', '六']" formatString="YYYY-MM-DD" change="doDateChage()"/>
+		<mx:Label x="220" y="44" text="选择日期" fontFamily="Arial" fontSize="12" color="#030303"/>
+	</mx:Panel>
+	<mx:Panel x="407" y="0" width="122" height="121" layout="absolute" title="分类选择" borderColor="#4C1E46">
+		<mx:CheckBox x="10" y="10" label="代销商分类" fontFamily="Arial" fontSize="12" color="#000000" id="BrokerGroup" click="doCheck()"/>
+		<mx:CheckBox x="10" y="40" label="酒店分类" fontFamily="Arial" fontSize="12" color="#000000" id="HotelGroup" click="doCheck()"/>
+	</mx:Panel>
+	<mx:Panel x="537" y="0" width="233" height="121" layout="absolute" title="控制区域" borderColor="#3C585A">
+		<mx:Button x="10" y="40" label="统计" fontFamily="Arial" fontSize="12" color="#030303" click="doQuery()"/>
+		<mx:Button x="80.5" y="40" label="导出" fontFamily="Arial" fontSize="12" color="#030303" click="doLead()"/>
+		<mx:Button x="151" y="40" label="打印" fontFamily="Arial" fontSize="12" color="#030303" click="doPrint()"/>
+	</mx:Panel>
+	<mx:Panel x="0" y="129" width="770" height="360" layout="absolute" borderColor="#151257" title="数据">
+		<mx:DataGrid x="0" y="0" width="750" height="314" fontSize="12" color="#000000" id="TableGrid" borderStyle="solid" borderColor="#000000"  horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center" >
+			<mx:columns>
+				<mx:DataGridColumn id="c1" headerText="代销商" dataField="BROKER_ID" labelFunction="doBROKER_ID" width="200"/>
+				<mx:DataGridColumn id="c2" headerText="酒店" dataField="HOTEL_ID" labelFunction="doHOTEL_ID" width="200"/>
+				<mx:DataGridColumn headerText="总金额（元）" dataField="REAL_PAY_CASH" labelFunction="doREAL_PAY_CASH"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Panel>
+	<mx:DateFormatter id="df" formatString="YYYY-MM-DD"/> 
+	<mx:RemoteObject id="report_service" destination="PlatformReportTableFlexService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.table.RowItem;
+			import cn.ucans.table.XMLTable;
+			
+			import cn.ucans.bean.T_SERVICE_CASH;
+			import cn.ucans.flex.FlexRequest;
+			import cn.ucans.flex.FlexReponse;
+    		import mx.collections.ArrayCollection;
+    		import cn.ucans.common.RegularExpression;
+    		import cn.ucans.common.ArrayFactory;
+    		
+    		private var arrayCollection:ArrayCollection = null;
+    		private var TimeFormat:String = "yyyy-mm-dd"
+//    		private var TimeFormat:String = "yyyy-mm"\
+			private var FormSQL:String = "";
+			private var FormType:int = 0;
+			private var FormColumn:Array = null;
+			private var FormTitle:String = "";
+			private var UserName:String = "";
+			private var OrgName:String = "";
+			private var FormSolution:String = "";
+
+			private var collection_list_hotel_edit:ArrayCollection = null;
+			private var collection_list_broker_edit:ArrayCollection = null;
+			
+			private var collection_list_hotel_query:ArrayCollection = null;
+			private var collection_list_broker_query:ArrayCollection = null;
+			
+			private var regular:RegularExpression = new RegularExpression();
+			
+			private function init():void{
+				var date:Date = new Date();
+				this.Create_Time.data = date;	
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1500;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				this.report_service.doTransaction(request);
+				this.enabled = false;	
+				this.BrokerGroup.selected = true;
+				this.HotelGroup.selected = true;
+			}
+			
+			private function getExtSolution():String{
+				var dateString:String = this.Create_Time.text;
+				var notbefore:String = dateString + " 00:00:00";
+				var notafter:String = dateString + " 23:59:59";
+				var solution:String = " Create_Time >= to_date('"+notbefore+"','yyyy-mm-dd hh24:mi:ss') and Create_Time <= to_date('"+notafter+"','yyyy-mm-dd hh24:mi:ss') and (REAL_PAY_CASH is not null or REAL_PAY_CASH>=0)";
+				var Broker_ID_data:String = this.Broker_ID.selectedItem.data;
+				var Hotel_ID_data:String = this.Hotel_ID.selectedItem.data;
+				if(Broker_ID_data == "" && Hotel_ID_data == ""){
+					
+//					solution += " and Broker_ID='"+Broker_ID_data+"' and Hotel_ID='"+Hotel_ID_data+"' ";
+					
+				}else if(Broker_ID_data != "" && Hotel_ID_data == ""){
+					
+					solution += " and Broker_ID='"+Broker_ID_data+"'";
+					
+				}else if(Broker_ID_data == "" && Hotel_ID_data != ""){
+					
+					solution += " and Hotel_ID='"+Hotel_ID_data+"' ";
+					
+				}else if(Broker_ID_data != "" && Hotel_ID_data != ""){
+					
+					solution += " ";
+					
+				}
+				this.FormSolution = solution;
+				return solution;
+			}
+			
+			private function doCheck():void{
+				var b1:Boolean = this.BrokerGroup.selected;
+				var b2:Boolean = this.HotelGroup.selected;
+				
+				if(b1 && b2){
+					this.FormType = 1;
+					this.FormSQL = "select Broker_ID,Hotel_ID,sum(Real_Pay_Cash) as REAL_PAY_CASH from (select Broker_ID,Hotel_ID,Real_Pay_Cash from V_Service_Cash where  "+this.getExtSolution()+") group by Broker_ID,Hotel_ID";
+					this.FormTitle = "代销商,酒店,总金额（元）";
+					this.c1.visible = true;
+					this.c2.visible = true;
+				}else if(!b1 && b2){
+					this.FormType = 2;
+					this.FormSQL = "select Hotel_ID,sum(Real_Pay_Cash) as Real_Pay_Cash from (select Broker_ID,Hotel_ID,Real_Pay_Cash from V_Service_Cash where "+this.getExtSolution()+") group by Hotel_ID";
+					this.FormTitle = "酒店,总金额（元）";
+					this.c1.visible = false;
+					this.c2.visible = true;
+				}else if(b1 && !b2){
+					this.FormType = 3;
+					this.FormSQL = "select Broker_ID,sum(Real_Pay_Cash) as Real_Pay_Cash from (select Broker_ID,Hotel_ID,Real_Pay_Cash from V_Service_Cash where "+this.getExtSolution()+") group by Broker_ID";
+					this.FormTitle = "代销商,总金额（元）";
+					this.c1.visible = true;
+					this.c2.visible = false;
+				}else if(!b1 && !b2){
+					this.FormType = 4;
+					this.FormSQL = "select sum(Real_Pay_Cash) as Real_Pay_Cash from (select Broker_ID,Hotel_ID,Real_Pay_Cash from V_Service_Cash where "+this.getExtSolution()+")";
+					this.FormTitle = "总金额（元）";
+					this.c1.visible = false;
+					this.c2.visible = false;
+				}
+				var array_format:Array = this.TableGrid.columns;
+				this.FormColumn = new Array();
+				for(var i:int=0;i<array_format.length;i++){
+					var column:DataGridColumn = array_format[i] as DataGridColumn;
+					if(column.visible != false){
+						this.FormColumn.push(column);
+					}
+				}
+			}
+			
+			private function doREAL_PAY_CASH(item:Object,column:DataGridColumn):String{
+				return this.regular.trackNumber(item.REAL_PAY_CASH,100);
+			}
+			private function doBROKER_ID(item:Object,column:DataGridColumn):String{
+				return ArrayFactory.getValueFroamArrayCollection(this.collection_list_broker_edit,item.BROKER_ID);
+			}
+			private function doHOTEL_ID(item:Object,column:DataGridColumn):String{
+				return ArrayFactory.getValueFroamArrayCollection(this.collection_list_hotel_edit,item.HOTEL_ID);
+			}
+			
+			private function doDateChage():void{	
+//				var startDate:String = this.Create_Time.text;					
+//				var strYear:String = startDate.substring(0,4);
+//				var strMonth:String = startDate.substring(5,7);
+//				var strDate:String = startDate.substring(8,10);					
+//				this.notafter.text = strYear+"-"+ (Number(strMonth)+1).toString()+"-"+strDate;
+			}
+			
+			private function doQuery():void{
+				this.doCheck();		
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1501;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				var cash:T_SERVICE_CASH = new T_SERVICE_CASH();
+				cash.CREATE_TIME = this.Create_Time.text;
+				request.form.sql = this.FormSQL;
+				request.form.solution = this.FormSolution;
+				this.report_service.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			private function doLead():void{
+				if(this.arrayCollection == null || this.arrayCollection.length==0){
+					CCSSAlert.showMessageDialog(this,"请先统计出数据，再执行本操作！");
+					return;
+				}else{
+					var table:XMLTable = new XMLTable();
+					table.addTitle(this.FormTitle);
+					for(var i:int=0;i<this.arrayCollection.length;i++){
+						var row:RowItem = new RowItem();
+						var item:Object = this.arrayCollection.getItemAt(i);
+						if(this.c1.visible){
+							row.setValue("BROKER_ID",item.BROKER_ID);
+						}
+						if(this.c2.visible){
+							row.setValue("HOTEL_ID",item.HOTEL_ID);
+						}
+						row.setValue("REAL_PAY_CASH",this.regular.trackNumber(item.REAL_PAY_CASH,100));
+					}
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1502;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.xml = table.toXMLString();
+					this.report_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doPrint():void{
+				if(this.arrayCollection == null || this.arrayCollection.length==0){
+					CCSSAlert.showMessageDialog(this,"请先统计出数据，再执行本操作！");
+					return;
+				}else{
+					PrintDataGridView.doPrint(this.UserName,this.arrayCollection,""+this.Create_Time.text+" "+this.OrgName+" 平台日报表",this.FormColumn);
+				}
+			}
+			
+			private function doResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1500:
+						if(reponse.sign == 0){
+							this.collection_list_broker_query = reponse.result.list_broker_query as ArrayCollection;
+							this.Broker_ID.dataProvider = this.collection_list_broker_query;
+							this.collection_list_hotel_query = reponse.result.list_hotel_query as ArrayCollection;
+							this.Hotel_ID.dataProvider = this.collection_list_hotel_query;
+							
+							this.collection_list_hotel_edit = reponse.result.list_hotel_edit as ArrayCollection;
+							this.collection_list_broker_edit = reponse.result.list_broker_edit as ArrayCollection;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1501:
+						if(reponse.sign == 0){
+							this.UserName = reponse.result.UserName as String;
+							this.OrgName = reponse.result.OrgName as String;
+							this.arrayCollection = reponse.result.list as ArrayCollection;
+							this.TableGrid.dataProvider = this.arrayCollection;
+							if(this.arrayCollection.length < 1){
+								CCSSAlert.showMessageDialog(this,"没有找到任何数据！");
+								return;
+							}
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1502:
+						if(reponse.sign == 0){
+							var url:String = reponse.result.url as String;
+							var request:URLRequest = new URLRequest(url);
+							navigateToURL(request, "_top");
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+		]]>
+	</mx:Script>
+</mx:Panel>

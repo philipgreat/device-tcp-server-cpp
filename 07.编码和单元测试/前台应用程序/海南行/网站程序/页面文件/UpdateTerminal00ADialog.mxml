@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="624" height="514" title="更新终端信息" fontSize="15" fontFamily="Arial" color="#F1F9FB" borderColor="#1A0A4F">
+	<mx:Canvas x="28" y="22" width="551" height="118" fontSize="12" color="#040404" borderStyle="solid" borderColor="#040404" backgroundColor="#D0F3D0" fontFamily="Arial">
+		<mx:Label x="35" y="22" text="终端IMEI号" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="47" y="51" text="UIM卡号" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="313" y="80" text="终端型号" color="#010101" fontFamily="Arial" fontSize="12" fontWeight="bold"/>
+		<mx:Label x="301" y="51" text="内容版本号" color="#010101" fontFamily="Arial" fontSize="12" fontWeight="bold"/>
+		<mx:Label x="44" y="80" text="终端状态" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="313" y="22" text="手机号码" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="106" y="22" text="未设置" id="Imei_Number"/>
+		<mx:Label x="105" y="51" text="未设置" id="Uim_Number"/>
+		<mx:Label x="105" y="83" text="未设置" id="Status"/>
+		<mx:Label x="374" y="22" text="未设置" id="Msisdn"/>
+		<mx:TextInput x="374" y="46" id="Content_Version" maxChars="15"/>
+		<mx:ComboBox x="374" y="76" id="Terminal_Type"></mx:ComboBox>
+	</mx:Canvas>
+	<mx:Button x="192" y="411" label="确定" fontFamily="Arial" fontSize="12" color="#040404" click="doClick()"/>
+	<mx:Button x="331" y="411" label="取消" fontFamily="Arial" fontSize="12" color="#040404" click="doCancle()"/>
+	<mx:DateFormatter id="df" formatString="YYYY-MM-DD"/>
+	<mx:Script>
+		<![CDATA[
+			
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import cn.ucans.common.ArrayFactory;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.bean.T_TERMINAL_INFO;
+			
+			private var regular:RegularExpression = new RegularExpression();
+			
+			public var terminal:T_TERMINAL_INFO = null;
+			public var DOOK:Boolean = false;
+			public var old_selected_item:Object = null;
+			
+			public function showDialog(parent:DisplayObject,item:Object,list_status:ArrayCollection,list_type:ArrayCollection,list_factory:ArrayCollection,list_hotel:ArrayCollection):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				terminal = new T_TERMINAL_INFO();				
+				this.old_selected_item = item;
+				this.Terminal_Type.dataProvider = list_type;
+				
+				this.Imei_Number.text = item.IMEI_NUMBER;
+				this.Uim_Number.text = item.UIM_NUMBER;
+				this.Msisdn.text = item.MSISDN;
+				this.Content_Version.text = item.CONTENT_VERSION;
+				
+				this.Terminal_Type.selectedItem = ArrayFactory.getComboBoxSelectedItemFromArrayCollection(list_type,item.TERMINAL_TYPE);
+				this.Status.text = ArrayFactory.getValueFroamArrayCollection(list_status,item.STATUS);
+				
+				if(item.PRODUCT_DATE != ""){
+					var t1:String = item.PRODUCT_DATE;
+					var date1:Date = new Date(Number(t1.substr(0,4)),Number(t1.substr(4,2)),Number(t1.substr(6,2)));
+					this.Product_Date.text = this.df.format(date1);
+				}
+				
+				if(item.MAINTAIN_LIMITED_DATE != ""){
+					var t2:String = item.MAINTAIN_LIMITED_DATE;
+					var date2:Date = new Date(Number(t2.substr(0,4)),Number(t2.substr(4,2)),Number(t2.substr(6,2)));
+					this.Maintain_Limited_Date.text = this.df.format(date2);
+				}
+				
+//				var t1:String = item.PRODUCT_DATE;
+//				var t2:String = item.MAINTAIN_LIMITED_DATE;
+//				var date1:Date = new Date(Number(t1.substr(0,4)),Number(t1.substr(4,2)),Number(t1.substr(6,2)));
+//				var date2:Date = new Date(Number(t2.substr(0,4)),Number(t2.substr(4,2)),Number(t2.substr(6,2)));
+//				this.Product_Date.text = this.df.format(date1);
+//				this.Maintain_Limited_Date.text = this.df.format(date2);
+				this.Join_User_ID.text = item.JOIN_TIME;
+				this.Distribute_User_ID.text = item.DISTRIBUTE_USER_ID;
+				this.Join_Time.text = item.JOIN_TIME;
+				if(item.STATUS == "12"){
+					this.Current_Hire_Time.text = item.CURRENT_HIRE_TIME;
+				}
+				this.Distribute_Time.text = item.DISTRIBUTE_TIME;
+				this.Hotel_ID.text = ArrayFactory.getValueFroamArrayCollection(list_hotel,item.HOTEL_ID);
+				this.Hotel_Receiver.text = item.HOTEL_RECEIVER;
+				this.Room_No.text = item.ROOM_NO;
+			}
+			
+			private function doClick():void{
+				var ok:Boolean = true;
+				
+				if(ok){
+					this.terminal.CONTENT_VERSION = this.regular.trim(this.Content_Version.text);
+					this.terminal.PRODUCT_DATE = this.regular.trim(this.Product_Date.text);
+					this.terminal.TERMINAL_TYPE = this.Terminal_Type.selectedItem.data;
+					this.terminal.MAINTAIN_LIMITED_DATE = this.regular.trim(this.Maintain_Limited_Date.text);
+					this.terminal.HOTEL_RECEIVER = this.regular.trim(this.Hotel_Receiver.text);
+					this.terminal.IMEI_NUMBER = this.regular.trim(this.Imei_Number.text);
+					this.terminal.UIM_NUMBER = this.regular.trim(this.Uim_Number.text);
+					this.terminal.MSISDN = this.Msisdn.text;
+					this.DOOK = true;
+					PopUpManager.removePopUp(this);
+				}
+			}
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas x="299" y="202" width="280" height="77" borderStyle="solid" borderColor="#4D428D" backgroundColor="#D7CACA" fontSize="12" color="#040404" fontFamily="Arial">
+		<mx:Label x="10" y="14" text="终端生产日期" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:DateField x="95" y="10" id="Product_Date"  monthNames="['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']"
+								  dayNames="['日', '一', '二', '三', '四', '五', '六']" formatString="YYYY-MM-DD" />
+		<mx:Label x="10" y="47" text="保修截止日期" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:DateField x="95" y="43" id="Maintain_Limited_Date"  monthNames="['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']"
+								  dayNames="['日', '一', '二', '三', '四', '五', '六']" formatString="YYYY-MM-DD" />
+	</mx:Canvas>
+	<mx:Canvas x="28" y="202" width="237" height="163" borderStyle="solid" backgroundColor="#B4C9B3" borderColor="#424649" fontSize="12" color="#040404" fontFamily="Arial">
+		<mx:Label x="23" y="91" text="酒店领用人" color="#010101" fontFamily="Arial" fontSize="12" fontWeight="bold"/>
+		<mx:Label x="36" y="64" text="分发时间" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="10" y="38" text="分发到酒店人" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="103.5" y="64" text="未设置" id="Distribute_Time"/>
+		<mx:Label x="103.5" y="38" text="未设置" id="Distribute_User_ID"/>
+		<mx:TextInput x="105.5" y="90" id="Hotel_Receiver" maxChars="8"/>
+		<mx:Label x="24.5" y="10" text="分发到酒店" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="103.5" y="10" text="未设置" id="Hotel_ID"/>
+		<mx:Label x="10" y="121" text="终端所在房间" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="101" y="121" text="未设置" id="Room_No"/>
+	</mx:Canvas>
+	<mx:Canvas x="299" y="306" width="280" height="59" fontSize="12" color="#040404" borderStyle="solid" borderColor="#0B0B0B" backgroundColor="#B3BDB9" fontFamily="Arial">
+		<mx:Label x="11" y="19" text="本次开通时间" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="101" y="19" text="未设置" id="Current_Hire_Time"/>
+	</mx:Canvas>
+	<mx:Canvas x="28" y="148" width="551" height="46" borderStyle="solid" borderColor="#1F2224" backgroundColor="#EFCBCB" fontSize="12" color="#040404" fontFamily="Arial">
+		<mx:Label x="310" y="11" text="入库时间" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="374" y="11" text="未设置" id="Join_Time"/>
+		<mx:Label x="26" y="11" text="入库操作员" fontFamily="Arial" fontSize="12" color="#010101" fontWeight="bold"/>
+		<mx:Label x="104" y="11" text="未设置" id="Join_User_ID"/>
+	</mx:Canvas>
+</mx:TitleWindow>

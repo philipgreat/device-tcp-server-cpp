@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="324" height="262" title="添加语言类型配置" fontSize="12" fontFamily="Arial" borderColor="#14105A">
+	
+	<mx:Label x="71.35" y="27" text="语言ID"/>
+	<mx:TextInput  x="142.6" y="25" width="126" maxChars="2" id="Language_Id_XH" keyUp="funCheck(event)"/>
+	
+	<mx:Label x="35.35" y="105" text="语言类型名称"/>
+	<mx:TextInput x="142.6" y="103" width="126.25" maxChars="64" id="language_Name_Id"/>
+	<mx:Label x="59.35" y="65" text="语言类型"/>
+	<mx:TextInput  x="142.6" y="63" width="126" maxChars="2" id="Language_Id" keyUp="funCheck(event)"/>
+	<mx:Button x="63" y="160" label="确定" fontFamily="Arial" fontSize="12" color="#040404" click="doClick()"/>
+	<mx:Button x="171.5" y="160" label="取消" fontFamily="Arial" fontSize="12" color="#040404" click="doCancle()"/>
+	
+	<mx:Script>
+		<![CDATA[
+			
+			import mx.managers.PopUpManager;
+			import cn.ucans.common.RegularExpression;
+			
+			import cn.ucans.bean.T_INFO_LANGUAGE_LIST;
+			
+			public var languageInfoTypeForAdd:T_INFO_LANGUAGE_LIST=null;
+			
+			private var regular:RegularExpression = new RegularExpression();
+			public var DOOK:Boolean = false;
+			
+			
+			public function showDialog(parent:DisplayObject):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				
+				languageInfoTypeForAdd= new T_INFO_LANGUAGE_LIST();
+			}
+			
+			private function doClick():void{
+				var ok:Boolean = true;
+				
+				if(this.regular.trim(this.Language_Id.text) == ""){
+					CCSSAlert.showMessageDialog(this,"语言类型不能为空！");
+					ok = false;
+					this.showView(this.Language_Id);
+					return;
+				}
+				
+				if(this.regular.trim(this.language_Name_Id.text) == ""){
+					CCSSAlert.showMessageDialog(this,"语言类型名称不能为空！");
+					ok = false;
+					this.showView(this.language_Name_Id);
+					return;
+				}
+				
+				if(this.regular.trim(this.Language_Id_XH.text) == ""){
+					CCSSAlert.showMessageDialog(this,"语言ID不能为空！");
+					ok = false;
+					this.showView(this.Language_Id_XH);
+					return;
+				}
+				
+				if(this.regular.trim(this.Language_Id.text).length >2){
+					CCSSAlert.showMessageDialog(this,"语言类型长度不能大于2个字符！");
+					ok = false;
+					this.showView(this.Language_Id);
+					return;
+				}
+				
+				if(this.regular.trim(this.language_Name_Id.text).length > 64){
+					CCSSAlert.showMessageDialog(this,"语言类型名称不能大于64个字符！");
+					ok = false;
+					this.showView(this.language_Name_Id);
+					return;
+				}
+				
+				if(this.regular.trim(this.Language_Id_XH.text).length>2){
+					CCSSAlert.showMessageDialog(this,"语言ID不能大于2个字符！");
+					ok = false;
+					this.showView(this.Language_Id_XH);
+					return;
+				}
+				
+				if(!this.regular.isNumber(this.Language_Id_XH.text)){
+					CCSSAlert.showMessageDialog(this,"语言ID必须是数字类型！！");
+					ok = false;
+					this.showView(this.Language_Id_XH);
+					return;
+				}
+				
+				if(ok){
+					this.languageInfoTypeForAdd.LANGUAGE_NO=this.regular.trim(this.Language_Id_XH.text);
+					this.languageInfoTypeForAdd.LANGUAGE=this.regular.trim(this.Language_Id.text);
+					this.languageInfoTypeForAdd.LANGUAGE_NAME=this.regular.trim(this.language_Name_Id.text);
+					this.DOOK = true;
+					PopUpManager.removePopUp(this);
+				}
+			}
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function showView(object:Object):void{
+				FlashContrl.target = object;
+				FlashContrl.play();
+				object.setFocus();
+			}
+			
+			public function funCheck(event:KeyboardEvent):void{
+				var		nLen:int = 0;
+				var 	n:int = 0;
+				var		nCount:int = 0;
+				if(event.keyCode == Keyboard.RIGHT || event.keyCode == Keyboard.DOWN ||
+					event.keyCode == Keyboard.BACKSPACE || event.keyCode == Keyboard.LEFT ||
+					event.keyCode == Keyboard.UP || event.keyCode == Keyboard.DELETE || 
+					event.keyCode == Keyboard.CAPS_LOCK || event.keyCode == Keyboard.TAB ||
+					event.keyCode == Keyboard.CONTROL||event.keyCode == Keyboard.SHIFT)
+				{
+					return;
+				}
+				
+				for(n = 0;n < (event.target).length;n ++)
+				{
+					if((event.target).text.charCodeAt(n) > 255)
+					{
+						nLen = nLen + 2;
+					}
+					else
+					{
+						nLen ++;
+					}
+					if(nLen > (event.target).maxChars)
+					{
+						event.target.text = event.target.text.substr(0,nCount);
+//						CCSSAlert.showMessageDialog(this,"信息类型名称不能超过32汉字或64个英文字符！请重新输入！");
+						FlashContrl.target = event.target;
+						FlashContrl.play();
+						event.target.setFocus();
+					}
+					nCount ++;
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+ </mx:Sequence>
+	
+</mx:TitleWindow>

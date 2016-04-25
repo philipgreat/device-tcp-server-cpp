@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<service id="remoting-service" 
+    class="flex.messaging.services.RemotingService">
+
+    <adapters>
+        <adapter-definition id="java-object" class="flex.messaging.services.remoting.adapters.JavaAdapter" default="true"/>
+    </adapters>
+
+    <default-channels>
+        <channel ref="my-amf"/>
+    </default-channels>
+
+	<!-- 郭建辉 --> 
+	<destination id="InfoTypeService">
+		<properties>
+			<source>cn.ucans.flex.services.InfoTypeService</source>
+		</properties>
+	</destination>
+	<destination id="InfoPayTypeParmService">
+		<properties>
+			<source>cn.ucans.flex.services.InfoPayTypeParmService</source>
+		</properties>
+	</destination>
+	<destination id="PublicParmInfoService">
+		<properties>
+			<source>cn.ucans.flex.services.PublicParmInfoService</source>
+		</properties>
+	</destination>
+	<destination id="OrgRewardService">
+		<properties>
+			<source>cn.ucans.flex.services.OrgRewardService</source>
+		</properties>
+	</destination>
+	<destination id="TerminalTypeService">
+		<properties>
+			<source>cn.ucans.flex.services.TerminalTypeService</source>
+		</properties>
+	</destination>
+	<destination id="TerminalServicePoint">
+		<properties>
+			<source>cn.ucans.flex.services.TerminalServicePoint</source>
+		</properties>
+	</destination>
+	<destination id="TerminalParmService">
+		<properties>
+			<source>cn.ucans.flex.services.TerminalParmService</source>
+		</properties>
+	</destination>
+	
+	<destination id="InfoLanguageService">
+		<properties>
+			<source>cn.ucans.flex.services.InfoLanguageService</source>
+		</properties>
+	</destination>
+	
+	<destination id="StatementOfTerminalandRoomCountService">
+		<properties>
+			<source>cn.ucans.flex.services.StatementOfTerminalandRoomCountService</source>
+		</properties>
+	</destination>
+	
+	<destination id="StatementOfUsabilityService">
+		<properties>
+			<source>cn.ucans.flex.services.StatementOfUsabilityService</source>
+		</properties>
+	</destination>
+	
+	<destination id="StatementRetalHistoryForHotelService">
+		<properties>
+			<source>cn.ucans.flex.services.StatementRetalHistoryForHotelService</source>
+		</properties>
+	</destination>
+	
+	<destination id="StatementRetalHistoryForPlatformService">
+		<properties>
+			<source>cn.ucans.flex.services.StatementRetalHistoryForPlatformService</source>
+		</properties>
+	</destination>
+	
+	<destination id="StatementOfDayForPersonService">
+		<properties>
+			<source>cn.ucans.flex.services.StatementOfDayForPersonService</source>
+		</properties>
+	</destination>
+	
+	<destination id="StatementOfMonthForPersonService">
+		<properties>
+			<source>cn.ucans.flex.services.StatementOfMonthForPersonService</source>
+		</properties>
+	</destination>
+	
+	<destination id="StatementOfDayForAgentService">
+		<properties>
+			<source>cn.ucans.flex.services.StatementOfDayForAgentService</source>
+		</properties>
+	</destination>
+	
+	<destination id="StatementOfMonthForAgentService">
+		<properties>
+			<source>cn.ucans.flex.services.StatementOfMonthForAgentService</source>
+		</properties>
+	</destination>
+
+	
+	<!-- 韩勇 -->
+	<destination id="OrgFlexService">
+		<properties>
+			<source>cn.ucans.flex.services.OrgFlexService</source>
+		</properties>
+	</destination>
+	<destination id="TerminalServiceFlexService">
+		<properties>
+			<source>cn.ucans.flex.services.TerminalServiceFlexService</source>
+		</properties>
+	</destination>
+	<destination id="LinkManFlexService">
+		<properties>
+			<source>cn.ucans.flex.services.LinkManFlexService</source>
+		</properties>
+	</destination>
+	<destination id="HappyConfigFlexService">
+		<properties>
+			<source>cn.ucans.flex.services.HappyConfigFlexService</source>
+		</properties>
+	</destination>
+	<destination id="UserInfoRoleFlexService">
+		<properties>
+			<source>cn.ucans.flex.services.UserInfoRoleFlexService</source>
+		</properties>
+	</destination>
+	<destination id="ParamFlexService">
+		<properties>
+			<source>cn.ucans.flex.services.ParamFlexService</source>
+		</properties>
+	</destination>
+	<destination id="CustomerServiceFlexService">
+		<properties>
+			<source>cn.ucans.flex.services.CustomerServiceFlexService</source>
+		</properties>
+	</destination>
+	<destination id="SettlementServiceFlexService">
+		<properties>
+			<source>cn.ucans.flex.services.SettlementServiceFlexService</source>
+		</properties>
+	</destination>
+	<destination id="PlatformReportTableFlexService">
+		<properties>
+			<source>cn.ucans.flex.services.PlatformReportTableFlexService</source>
+		</properties>
+	</destination>
+	
+	<!-- 宁海洋 -->
+	<destination id="blackConfigFlexService">
+		<properties>
+			<source>cn.ucans.flex.services.BlackTypeManagerFlexService</source>
+		</properties>
+	</destination>
+	<destination id="oTaskInfoSendService">
+		<properties>
+			<source>cn.ucans.flex.services.TaskInfoSendService</source>
+		</properties>
+	</destination>
+	<destination id="oHotelTerminalReportService">
+		<properties>
+			<source>cn.ucans.flex.services.HotelTerminalReportService</source>
+		</properties>
+	</destination>
+	<destination id="oCashReportManagerFlexService">
+		<properties>
+			<source>cn.ucans.flex.services.CashReportManagerFlexService</source>
+		</properties>
+	</destination>
+</service>

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="528" height="268" fontFamily="Arial" fontSize="12" color="#0A090B" borderColor="#42356B" title="添加用户">
+	<mx:Canvas x="10" y="51" width="488" height="102" borderStyle="solid" borderColor="#2C3236" backgroundColor="#D8F3F4">
+		<mx:Label x="10" y="12" text="用户账号"/>
+		<mx:TextInput x="71" y="10" maxChars="16" id="User_ID" width="156"  toolTip="数字和大小写英文字符"/>
+		<mx:Label x="256" y="14" text="输入姓名"/>
+		<mx:TextInput x="317" y="10" width="159" id="User_Name" maxChars="9"/>
+		<mx:Label x="10" y="53" text="输入密码" />
+		<mx:Label x="256" y="55" text="确认密码"/>
+		<mx:TextInput x="71" y="51" width="156" id="Password" maxChars="16" displayAsPassword="true"/>
+		<mx:TextInput x="317" y="51" width="159" id="Password_Confirm" maxChars="16" displayAsPassword="true"/>
+	</mx:Canvas>
+	<mx:Button x="152.5" y="178" label="确定" click="doClick()"/>
+	<mx:Button x="303.5" y="178" label="取消" click="doCancle()"/>
+	<mx:RemoteObject id="param_service" destination="ParamFlexService"  
+		result="doRoleResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import cn.ucans.common.MD5;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.bean.T_USER_INFO;
+			import cn.ucans.flex.FlexRequest;
+ 			import cn.ucans.flex.FlexReponse;
+			
+			public var DOOK:Boolean = false;
+			private var regular:RegularExpression = new RegularExpression();
+			public var user:T_USER_INFO = null;
+			
+			public function showDialog(parent:DisplayObject,org_id:String,org_name:String):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				this.user = new T_USER_INFO();
+				this.user.ORG_ID = org_id;
+				this.SelectOrgNote.text = org_name;
+				this.init();
+			}
+			
+			private function init():void{
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 9001;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				request.form.type_01 = "1";
+				request.form.type_02 = "1";
+				this.param_service.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			private function doClick():void{
+				var ok:Boolean = true;
+				if(this.regular.trim(this.User_ID.text) == ""){
+					CCSSAlert.showMessageDialog(this,"用户编号不能为空！");
+					ok = false;
+					return;
+				}else{
+					if(!this.regular.isNumberORCharacter(this.User_ID.text)){
+						CCSSAlert.showMessageDialog(this,"用户编号只能为数字或大小写英文字符！");
+						ok = false;
+						return;
+					}
+				}
+				
+				if(this.regular.trim(this.User_Name.text) == ""){
+					CCSSAlert.showMessageDialog(this,"用户名称不能为空！");
+					ok = false;
+					return;
+				}
+				
+				if(this.regular.trim(this.Password.text) == ""){
+					CCSSAlert.showMessageDialog(this,"输入密码不能为空！");
+					ok = false;
+					return;
+				}
+				
+				if(this.regular.trim(this.Password_Confirm.text) == ""){
+					CCSSAlert.showMessageDialog(this,"确认密码不能为空！");
+					ok = false;
+					return;
+				}
+				
+				if(this.regular.trim(this.Password_Confirm.text) != this.regular.trim(this.Password.text)){
+					CCSSAlert.showMessageDialog(this,"输入密码和确认密码不一致！");
+					ok = false;
+					return;
+				}
+				
+				if(ok){
+					this.user.USER_ID = this.regular.trim(this.User_ID.text);
+					this.user.USER_NAME = this.regular.trim(this.User_Name.text);
+					this.user.USER_AREA_CODE = "0898";
+					this.user.ROLE_ID = this.Role_ID.selectedItem.data;
+					this.user.PASSWORD = MD5.encrypt(this.regular.trim(this.Password.text));
+					this.DOOK = true;
+					PopUpManager.removePopUp(this);
+				}
+			}
+			
+			private function doRoleResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 9001:
+						if(reponse.sign == 0){
+							var list_role_id:ArrayCollection = reponse.result.list_role_id as ArrayCollection;
+							var list_area_code:ArrayCollection = reponse.result.list_area_code as ArrayCollection;
+							this.Role_ID.dataProvider = list_role_id;
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label x="10" y="14" text="当前选中的组织：" fontWeight="bold"/>
+	<mx:Label x="118" y="14" text="未确定" id="SelectOrgNote"/>
+	<mx:Label x="282" y="14" text="选择角色" fontFamily="Arial" fontSize="12" color="#030303"/>
+	<mx:ComboBox x="342" y="10" id="Role_ID" width="156" fontFamily="Arial" fontSize="12" color="#030303"></mx:ComboBox>
+</mx:TitleWindow>

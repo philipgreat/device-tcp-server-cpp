@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" initialize="init()" layout="absolute" width="790" height="550" borderColor="#00656E" title="联系人" color="#F3F5F6" fontSize="15" fontFamily="Arial" xmlns:ns1="*">
+	<mx:RemoteObject id="human_service" destination="LinkManFlexService"  
+		result="doHumanResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.table.XMLTable;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import cn.ucans.bean.T_ORG_INFO;
+	 		import cn.ucans.bean.T_ORG_LINKMAN;
+	 		import cn.ucans.tree.TreeNode;
+	 		import cn.ucans.table.RowItem;
+	 		import cn.ucans.table.XMLTable;
+	 		import mx.collections.ArrayCollection;
+	 		import cn.ucans.flex.FlexRequest;
+	 		import cn.ucans.flex.FlexReponse;
+	 		import cn.ucans.common.RegularExpression;
+	 		import cn.ucans.common.DataProvider;
+	 		import cn.ucans.common.ArrayFactory;
+	 		
+	 		private var regular:RegularExpression = new RegularExpression();
+	 		private var dialog_add:AddLinkManDialog = null; 
+	 		private var dialog_confirm:CCSSConfirm = null;
+	 		private var dialog_update:UpdateLinkManDialog = null;
+	 		private var arrayCollection:ArrayCollection = new ArrayCollection();
+			
+			private function init():void{
+				this.Status.dataProvider = DataProvider.combobox_array_Org_Status_Query;
+			}
+			
+			private function doAddLinMan():void{
+				this.dialog_add = new AddLinkManDialog();
+				this.dialog_add.showDialog(this);
+				this.dialog_add.addEventListener(Event.REMOVED,doAddLinManHandler);
+			}
+			
+			private function doAddLinManHandler(event:Event):void{
+				if(this.dialog_add.DOOK){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1006;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.human = this.dialog_add.human;
+					this.human_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doExport():void{
+				if(this.arrayCollection.length > 0){
+
+					var xmltable:XMLTable = new XMLTable();
+					xmltable.addTitle("组织名称,姓名,称呼,职位,部门,手机,创建时间,最近更新时间,组织状态");
+								
+					for(var i:int=0;i<this.arrayCollection.length;i++){
+						var item:Object = this.arrayCollection.getItemAt(i);
+						var rowItem:RowItem = new RowItem();						
+						rowItem.setValue("ORG_NAME",item.ORG_NAME);
+						rowItem.setValue("LINKMAN_NAME",item.LINKMAN_NAME);
+						rowItem.setValue("TITLE",item.TITLE);
+						rowItem.setValue("POSITION",item.POSITION);
+						rowItem.setValue("DEPARTMENT",item.DEPARTMENT);
+						rowItem.setValue("MOBILE_NO",item.MOBILE_NO);
+						rowItem.setValue("CREATE_TIME",item.CREATE_TIME);
+						rowItem.setValue("LAST_UPDATE_TIME",item.LAST_UPDATE_TIME);
+						rowItem.setValue("STATUS",ArrayFactory.getValueFromArray(DataProvider.combobox_array_Org_Status_Edit,item.STATUS));
+						xmltable.addRowItem(rowItem);
+					}
+					
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1010;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.xml = xmltable.toXMLString();					
+					this.human_service.doTransaction(request);
+					this.enabled = false;
+				}else{
+					CCSSAlert.showMessageDialog(this,"请先设置好查询条件查询出数据，再进行本操作！");
+					return;
+				}				
+			}
+			
+			private function doUpdateLinkMan():void{
+				if(this.TableGrid.selectedIndex>-1){				
+					var item:Object = this.TableGrid.selectedItem;
+					if(item.STATUS == "1"){
+						this.dialog_confirm = new CCSSConfirm();
+						this.dialog_confirm.showDialog(this,"当前人员所在组织已经被注销，您想继续更新操作吗？",item);
+						this.dialog_confirm.addEventListener(Event.REMOVED,doUpdateLinkManConfirmHandler);
+					}else{
+						this.dialog_update = new UpdateLinkManDialog();
+						this.dialog_update.showDialog(this,item);
+						this.dialog_update.addEventListener(Event.REMOVED,doUpdateLinkManHandler);
+					}					
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在人员列表中选中一条信息，再进行本操作！");
+					return;
+				}		
+			}
+			
+			public function doUpdateLinkManConfirmHandler(event:Event):void{
+				if(this.dialog_confirm.YES){
+					this.dialog_update = new UpdateLinkManDialog();
+					this.dialog_update.showDialog(this,this.dialog_confirm.object);
+					this.dialog_update.addEventListener(Event.REMOVED,doUpdateLinkManHandler);
+				}
+			}
+			
+			private function doUpdateLinkManHandler(event:Event):void{
+				if(this.dialog_update.DOOK){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1007;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.human = this.dialog_update.human;
+					this.human_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doDeleteLinkMan():void{
+				if(this.TableGrid.selectedIndex>-1){
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1008;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					var human:T_ORG_LINKMAN = new T_ORG_LINKMAN();
+					var item:Object = this.TableGrid.selectedItem;
+					human.ID = item.ID;
+					request.form.human = human;
+					this.dialog_confirm = new CCSSConfirm();
+					this.dialog_confirm.showDialog(this,"您确认要删除人员（"+item.LINKMAN_NAME+"）吗？",request);
+					this.dialog_confirm.addEventListener(Event.REMOVED,doDeleteLinkManCCSSConfirmHandler);
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在人员列表中选中一条信息，再进行本操作！");
+					return;
+				}
+				
+			}
+			
+			private function doDeleteLinkManCCSSConfirmHandler(event:Event):void{
+				if(this.dialog_confirm.YES){
+					var request:FlexRequest = this.dialog_confirm.object as FlexRequest;
+					this.human_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doQueryHuman():void{
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1009;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				var human:T_ORG_LINKMAN = new T_ORG_LINKMAN();
+				if(this.Org_ID.org_id != ""){
+					human.ORG_ID = this.Org_ID.org_id;
+				}
+				human.LINKMAN_NAME = regular.trim(this.Linkman_Name.text);	
+				var org:T_ORG_INFO = new T_ORG_INFO();
+				org.STATUS = this.Status.selectedItem.data;		
+				request.form.human = human;
+				request.form.org = org;
+				this.human_service.doTransaction(request);
+				this.enabled = false;
+			}
+			
+			private function doHumanResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1006:
+						if(reponse.sign == 0){
+							this.doQueryHuman();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1007:
+						if(reponse.sign == 0){
+							var item:Object = reponse.result.map;
+							this.doQueryHuman();
+							
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1008:
+						if(reponse.sign == 0){
+							this.doQueryHuman();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1009:
+						if(reponse.sign == 0){
+							this.arrayCollection = reponse.result.list as ArrayCollection;
+							this.TableGrid.dataProvider = this.arrayCollection;
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1010:
+						if(reponse.sign == 0){
+							var url:String = reponse.result.url as String;
+							var request:URLRequest = new URLRequest(url);
+							navigateToURL(request, "_top");
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			
+			private function showView(object:Object):void{
+				FlashContrl.target = object;
+				FlashContrl.play();
+				object.setFocus();
+			}
+			
+			private function doSTATUS(item:Object,column:DataGridColumn):String{
+				return ArrayFactory.getValueFromArray(DataProvider.combobox_array_Org_Status_Query,item.STATUS);
+			}
+		]]>
+	</mx:Script>
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+ 	</mx:Sequence>
+	<mx:Panel x="0" y="0" width="489" height="120" layout="absolute" fontSize="15" borderColor="#392DA9" title="查询向导" color="#F7F7F8">
+		<mx:Label x="31" y="10" text="姓名" fontFamily="Arial" fontSize="12" color="#080808"/>
+		<mx:Label x="316" y="43" text="组织状态" fontFamily="Arial" fontSize="12" color="#080808"/>
+		<mx:Label x="3" y="42" text="选择组织" fontFamily="Arial" fontSize="12" color="#080808" height="22"/>
+		<mx:TextInput x="60" y="8" width="118" fontFamily="Arial" fontSize="12" color="#020202" id="Linkman_Name"/>
+		<mx:ComboBox x="377" y="41" width="82" fontSize="12" color="#020202" id="Status" fontFamily="Arial"></mx:ComboBox>
+		<ns1:SelectOrgTreeField x="60" y="39" id="Org_ID">
+		</ns1:SelectOrgTreeField>
+		<mx:Button x="407" y="8" label="查询" color="#000000" fontSize="12" click="doQueryHuman()"/>
+	</mx:Panel>
+	<mx:Panel x="0" y="128" width="770" height="376" layout="absolute" title="数据" color="#F5F5FA" borderColor="#0A104A">
+		<mx:DataGrid x="0" y="0" width="750"  horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center" height="330" id="TableGrid" fontSize="12" color="#030303" borderColor="#060606" >
+			<mx:columns>
+				<mx:DataGridColumn headerText="人员编号" dataField="ID" width="90" visible="false"/>
+				<mx:DataGridColumn headerText="组织名称" dataField="ORG_NAME" width="140"/>
+				<mx:DataGridColumn headerText="姓名" dataField="LINKMAN_NAME" width="70"/>
+				<mx:DataGridColumn headerText="称呼" dataField="TITLE" width="80"/>
+				<mx:DataGridColumn headerText="职位" dataField="POSITION" width="100"/>
+				<mx:DataGridColumn headerText="部门" dataField="DEPARTMENT" width="160"/>						
+				<mx:DataGridColumn headerText="手机" dataField="MOBILE_NO" width="120"/>		
+				<mx:DataGridColumn headerText="创建时间" dataField="CREATE_TIME" width="130"/>
+				<mx:DataGridColumn headerText="最近更新时间" dataField="LAST_UPDATE_TIME" width="130"/>		
+				<mx:DataGridColumn headerText="组织状态" dataField="STATUS" width="100" labelFunction="doSTATUS"/>		
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Panel>
+	<mx:Panel x="497" y="0" width="273" height="120" layout="absolute" title="控制区域" borderColor="#0F0D61">
+		<mx:Button x="10" y="39" label="添加" fontFamily="Arial" fontSize="12" color="#060606" click="doAddLinMan()"/>
+		<mx:Button x="190" y="39" label="导出" fontFamily="Arial" fontSize="12" color="#060606" click="doExport()"/>
+		<mx:Button x="130" y="39" label="删除" fontFamily="Arial" fontSize="12" color="#060606" click="doDeleteLinkMan()"/>
+		<mx:Button x="70" y="39" label="更新" fontFamily="Arial" fontSize="12" color="#060606" click="doUpdateLinkMan()"/>	
+	</mx:Panel>
+</mx:Panel>

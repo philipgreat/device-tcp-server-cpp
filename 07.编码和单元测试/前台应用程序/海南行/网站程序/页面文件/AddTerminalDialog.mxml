@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="628" height="288" title="添加一个终端" fontSize="15" fontFamily="Arial" borderColor="#0B064C" xmlns:ns1="*" color="#F0F7F8">
+	<mx:Canvas x="13" y="22" width="585" height="131" borderStyle="solid" backgroundColor="#CDF3E8" fontSize="12" color="#000000" id="Cavas02">
+		<mx:Label x="10" y="12" text="终端IMEI号" color="#FC0101"/>
+		<mx:Label x="176" y="92" text="保修截止日期"/>
+		<mx:Label x="21" y="91" text="生产日期"/>
+		<mx:Label x="21" y="52" text="手机号码" color="#F30606"/>
+		<mx:Label x="303" y="12" text="UIM卡号" color="#F31212"/>
+		<mx:TextInput x="82" y="10" width="183" maxChars="15" id="Imei_Number"/>
+		<mx:TextInput x="419" y="91" width="125" maxChars="15" id="Content_Version"/>
+		<mx:TextInput x="361" y="10" width="183" maxChars="15"  id="Uim_Number"/>
+		<mx:TextInput x="82" y="50" maxChars="11" width="183" id="Msisdn"/>
+		<mx:Label x="355" y="93" text="内容版本号"/>
+		<mx:Label x="300" y="52" text="终端型号" fontFamily="Arial" fontSize="12" color="#F90707"/>
+		<mx:ComboBox x="361" y="49" width="183" id="Terminal_Type"></mx:ComboBox>
+		<mx:DateField x="82" y="89" id="Product_Date" monthNames="['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']"
+								  dayNames="['日', '一', '二', '三', '四', '五', '六']" formatString="YYYY-MM-DD" />
+		<mx:DateField x="261" y="90" id="Maintain_Limited_Date"  monthNames="['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']"
+								  dayNames="['日', '一', '二', '三', '四', '五', '六']" formatString="YYYY-MM-DD" />
+	</mx:Canvas>
+	<mx:Button x="219" y="184" label="确定" click="doClick()" fontSize="12" fontFamily="Arial" color="#000000"/>
+	<mx:Button x="337" y="184" label="取消" click="doCancle()" fontSize="12" fontFamily="Arial" color="#000000"/>
+	<mx:Script>
+		<![CDATA[
+			
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.bean.T_TERMINAL_INFO
+			
+			public var DOOK:Boolean = false;
+			private var regular:RegularExpression = new RegularExpression();
+			public var terminal:T_TERMINAL_INFO = null;
+			
+			public function showDialog(parent:DisplayObject,list_org_id:ArrayCollection,list_terminal_type:ArrayCollection):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				terminal = new T_TERMINAL_INFO();
+				//this.Product_Org_ID.dataProvider = list_org_id;
+				this.Terminal_Type.dataProvider = list_terminal_type;
+			}
+			
+			private function doClick():void{
+				var ok:Boolean = true;
+				if(regular.trim(this.Imei_Number.text) == ""){
+					CCSSAlert.showMessageDialog(this,"终端IMEI号不能为空！");
+					ok = false;
+					this.showView(this.Imei_Number);
+					return;
+				}else{
+					if(!regular.isNumber(this.Imei_Number.text)){
+						CCSSAlert.showMessageDialog(this,"终端IMEI号必须为数字！");
+						ok = false;
+						this.showView(this.Imei_Number);
+						return;
+					}
+					if(!regular.isLengthSizeOK(this.Imei_Number.text,15)){
+						CCSSAlert.showMessageDialog(this,"终端IMEI号必须为15为数字！");
+						ok = false;
+						this.showView(this.Imei_Number);
+						return;
+					}
+				}
+				if(regular.trim(this.Uim_Number.text) == ""){
+					CCSSAlert.showMessageDialog(this,"UIM卡号不能为空！");
+					ok = false;
+					this.showView(this.Uim_Number);
+					return;
+				}else{
+					if(!regular.isNumber(this.Uim_Number.text)){
+						CCSSAlert.showMessageDialog(this,"UIM卡号必须为数字！");
+						ok = false;
+						this.showView(this.Uim_Number);
+						return;
+					}
+					if(!regular.isLengthSizeOK(this.Uim_Number.text,15)){
+						CCSSAlert.showMessageDialog(this,"UIM卡号必须为15为数字！");
+						ok = false;
+						this.showView(this.Uim_Number);
+						return;
+					}
+				}
+				
+				if(regular.trim(this.Msisdn.text) == ""){
+					CCSSAlert.showMessageDialog(this,"手机号不能为空！");
+					ok = false;
+					this.showView(this.Msisdn);
+					return;
+				}else{
+					if(!regular.isChineseMobileTelephone(this.Msisdn.text)){
+						CCSSAlert.showMessageDialog(this,"手机号格式错误！");
+						ok = false;
+						this.showView(this.Msisdn);
+						return;
+					}
+				}
+	
+				if(ok){
+					this.terminal.IMEI_NUMBER = this.regular.trim(this.Imei_Number.text);
+					this.terminal.UIM_NUMBER = this.regular.trim(this.Uim_Number.text);
+					this.terminal.MSISDN = this.regular.trim(this.Msisdn.text);
+					//this.terminal.PRODUCT_ORG_ID = this.Product_Org_ID.selectedItem.data;
+					this.terminal.TERMINAL_TYPE = this.Terminal_Type.selectedItem.data;
+					this.terminal.PRODUCT_DATE= this.Product_Date.text
+					this.terminal.MAINTAIN_LIMITED_DATE = this.Maintain_Limited_Date.text;
+					this.terminal.CONTENT_VERSION = this.regular.trim(this.Content_Version.text);
+					this.DOOK = true;
+					PopUpManager.removePopUp(this);
+				}
+			}
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function showView(object:Object):void{
+				FlashContrl.target = object;
+				FlashContrl.play();
+				object.setFocus();
+			}
+		]]>
+	</mx:Script>
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+ </mx:Sequence>
+</mx:TitleWindow>

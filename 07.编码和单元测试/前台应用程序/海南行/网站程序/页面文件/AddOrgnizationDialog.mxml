@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="setFirstFocus()" layout="absolute" width="788" height="486" fontSize="15" fontFamily="Arial" title="添加组织信息" borderColor="#352690">
+	<mx:Canvas x="10" y="42" width="529" height="216" color="#0B0B0B" fontSize="12" backgroundColor="#97E3DB" borderStyle="solid" borderColor="#1B1C1C">
+		<mx:Label x="247.5" y="3" text="基本信息" fontWeight="bold" color="#F92B03" fontSize="13"/>
+		<mx:Label x="10" y="36" text="编号" fontFamily="Arial" fontSize="12" color="#FA0606"/>
+		<mx:TextInput x="47" y="34" width="92" id="Org_ID" maxChars="8" fontFamily="Arial" fontSize="12" color="#040404" toolTip="数字或英文字母"/>
+		<mx:Label x="147" y="38" text="名称" fontFamily="Arial" fontSize="12" color="#FA0606"/>
+		<mx:TextInput x="184" y="35" width="333" id="Org_Name" maxChars="32" fontFamily="Arial" fontSize="12" color="#040404"/>
+		<mx:Label x="286" y="69" text="类型"/>
+		<mx:ComboBox x="323" y="65" width="194" id="Org_Type" change="doOrg_TypeChange()"></mx:ComboBox>
+		<mx:Label x="10" y="66" text="邮编"/>
+		<mx:TextInput x="47" y="64" width="92" maxChars="6" id="Zip_Code"/>
+		<mx:Label x="286.5" y="98" text="地址"/>
+		<mx:TextInput x="323.5" y="95" id="Address" maxChars="32" width="193.5"/>
+		<mx:Label x="147" y="66" text="传真"/>
+		<mx:TextInput x="184" y="65" width="93" id="Fax_No" maxChars="15"/>
+		<mx:Label x="10" y="99" text="网址"/>
+		<mx:TextInput x="47" y="95" width="230" id="Website" maxChars="30"/>
+		<mx:Label x="10" y="158" text="描述"/>
+		<mx:TextArea x="47" y="157" width="470" height="47" id="Notes" maxChars="32"/>
+		<mx:Label x="10" y="130" text="短信   最多"/>
+		<mx:NumericStepper x="76" y="128" width="73" id="Send_SM_Max_Daily" minimum="0" stepSize="1" maximum="99999"/>
+		<mx:Label x="152" y="130" text="（条/天）"/>
+	</mx:Canvas>
+	<mx:Canvas x="547" y="42" width="211" height="216" fontSize="12" color="#020202" borderStyle="solid" borderColor="#12153B" backgroundColor="#9AD28B" id="OrgExtendInfoPanel">
+		<mx:Label x="32" y="5" text="附加信息（酒店所属）" fontSize="13" color="#FA0606" fontWeight="bold"/>
+		<mx:Label x="10" y="69" text="房间数量"/>
+		<mx:NumericStepper x="71" y="64" id="Room_Count" minimum="0" width="73" stepSize="1" maximum="10000"/>
+		<mx:Label x="10" y="98" text="平均房价"/>
+		<mx:NumericStepper x="71" y="94" width="73" minimum="0" stepSize="1" id="Average_Price" maximum="99999"/>
+		<mx:Label x="141" y="69" text="（间）"/>
+		<mx:Label x="141" y="98" text="（元）"/>
+		<mx:Label x="10" y="39" text="酒店级别" color="#F70303"/>
+		<mx:DateField x="71" y="179" width="103"  monthNames="['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']"
+						  dayNames="['日', '一', '二', '三', '四', '五', '六']" formatString="YYYY-MM-DD"  id="Contract_Date"/>
+		<mx:Label x="10" y="152" text="合同编号"/>
+		<mx:TextInput x="71" y="148" width="103" id="Contract_No"/>
+		<mx:Label x="10" y="183" text="签署日期"/>
+		<mx:ComboBox x="71" y="34" width="106" id="Hotel_Grade"></mx:ComboBox>
+	</mx:Canvas>
+	<mx:Button x="250" y="387" label="确定" click="doSubmit()" fontSize="13" fontFamily="Arial"/>
+	<mx:Button x="464" y="387" label="取消" click="doCancle()" fontSize="13" fontFamily="Arial"/>
+	<mx:Script>
+		<![CDATA[
+			import cn.ucans.bean.T_ORG_INFO;
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import cn.ucans.tree.TreeNode;
+			
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			
+			public var DOOK:Boolean = false;
+			private var regular:RegularExpression = new RegularExpression();
+			public var org:T_ORG_INFO = null;
+			private var patent_node_type:int = -1;
+			
+			public var parm:Object = null;
+			
+			public function showDialog(parent:DisplayObject,top_id:int,parent_id:String,type:int,parent_name:String,list_reward_array:ArrayCollection):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				if(type == 0){
+					this.Org_Type.dataProvider = DataProvider.combobox_array_Org_Type_Edit_AddUnderPlatform;
+					this.OrgExtendInfoPanel.enabled = false;
+					this.CCDS.enabled = false;
+				}else if(type == 2){
+					this.Org_Type.dataProvider = DataProvider.combobox_array_Org_Type_Edit_AddUnderAgent;
+					this.OrgExtendInfoPanel.enabled = true;
+				}else{
+					this.Org_Type.dataProvider = DataProvider.combobox_array_Area_Code_Type_Edit;
+					this.OrgExtendInfoPanel.enabled = true;
+				}
+				this.Hotel_Grade.dataProvider = DataProvider.combobox_array_Hotel_Grade_Edit;
+				this.org = new T_ORG_INFO();
+				this.org.TOP_LEVEL = top_id+"";
+				this.org.SUPERIOR_ORG_ID = parent_id;
+				this.patent_node_type = type;	
+				this.SuperOrgNode.text = parent_name;	
+				this.setFENCHENG(list_reward_array);	
+				parm = new Object();
+				
+			}
+			
+			private function setFENCHENG(arrayCollection:ArrayCollection):void{
+			//'Reward_SM','Reward_Hire','Reward_FEE','Reward_IPFEE'
+				for(var i:int=0;i<arrayCollection.length;i++){
+					var item:Object = arrayCollection.getItemAt(i);
+					var key:String = item.PARM_KEY;
+					var value:String = item.PARM_VALUES;
+					if(key == "Reward_SM"){
+						this.Reward_SM.value = Number(value);
+						continue;
+					}else if(key == "Reward_HIRE"){
+						this.Reward_HIRE.value = Number(value);
+						continue;
+					}else if(key == "Reward_FEE"){
+						this.Reward_FEE.value = Number(value);
+						continue;
+					}else if(key == "Reward_IPFEE"){
+						this.Reward_IPFEE.value = Number(value);
+						continue;
+					}
+				}
+			}
+			
+			private function setFirstFocus():void{
+				this.Org_ID.setFocus();
+			}
+			
+			private function doSubmit():void{
+				var ok:Boolean = true;
+				
+				if(this.regular.trim(this.Org_ID.text) == ""){
+					CCSSAlert.showMessageDialog(this,"组织编号不能为空！");
+					ok = false;
+					this.showView(this.Org_ID);
+					return;
+				}else{
+					if(!regular.isNumberORCharacter(this.Org_ID.text)){
+						CCSSAlert.showMessageDialog(this,"组织编号只能是数字或英文字母！");
+						ok = false;
+						this.showView(this.Org_ID);
+						return;
+					}
+				}
+				
+				if(this.regular.trim(this.Org_Name.text) == ""){
+					CCSSAlert.showMessageDialog(this,"组织名称不能为空！");
+					ok = false;
+					this.showView(this.Org_Name);
+					return;
+				}
+				
+				if(this.Reward_HIRE.value >= 100){
+					CCSSAlert.showMessageDialog(this,"分成比例不能取大于等于100的值!");
+					ok = false;
+					this.showView(this.Reward_HIRE);
+					return;
+				}
+				
+				if(this.Reward_IPFEE.value >= 100){
+					CCSSAlert.showMessageDialog(this,"分成比例不能取大于等于100的值!");
+					ok = false;
+					this.showView(this.Reward_IPFEE);
+					return;
+				}
+				
+				if(this.Reward_FEE.value >= 100){
+					CCSSAlert.showMessageDialog(this,"分成比例不能取大于等于100的值!");
+					ok = false;
+					this.showView(this.Reward_FEE);
+					return;
+				}
+				
+				if(this.Reward_SM.value >= 100){
+					CCSSAlert.showMessageDialog(this,"成比例不能取大于等于100的值!");
+					ok = false;
+					this.showView(this.Reward_SM);
+					return;
+				}
+				
+				if(ok){
+					this.org.ORG_ID = regular.trim(this.Org_ID.text);
+					this.org.ORG_NAME = regular.trim(this.Org_Name.text);
+					this.org.ZIP_CODE = regular.trim(this.Zip_Code.text);
+					this.org.FAX_NO = regular.trim(this.Fax_No.text);
+					this.org.ORG_TYPE = regular.trim(this.Org_Type.selectedItem.data);
+					this.org.WEBSITE = regular.trim(this.Website.text);
+					this.org.ADDRESS = regular.trim(this.Address.text);
+					this.org.NOTES = regular.trim(this.Notes.text);
+					this.org.SEND_SM_MAX_DAILY = this.Send_SM_Max_Daily.data.toString();
+					//CCSSAlert.showMessageDialog(this,"XXXXXXXXXXXX");
+					if(this.Org_Type.selectedItem.data == "3"){
+						this.org.HOTEL_GRADE = ""+this.Hotel_Grade.selectedItem.data;
+						this.org.ROOM_COUNT = this.Room_Count.data.toString();
+						this.org.AVERAGE_PRICE = this.Average_Price.data.toString();
+						
+						this.org.CONTRACT_NO = regular.trim(this.Contract_No.text);
+						this.org.CONTRACT_DATE = this.Contract_Date.text;
+					}
+					this.org.CREATE_USER_ID = this.parentApplication.LoginUser_ID;
+					this.org.STATUS = "0";
+					
+					//'Reward_SM','Reward_Hire','Reward_FEE','Reward_IPFEE'
+					this.parm.Reward_SM = ""+this.Reward_SM.value;
+					this.parm.Reward_HIRE = ""+this.Reward_HIRE.value;
+					this.parm.Reward_FEE = ""+this.Reward_FEE.value;
+					this.parm.Reward_IPFEE = ""+this.Reward_IPFEE.value;
+					
+					this.DOOK = true;
+					PopUpManager.removePopUp(this);
+				}
+			}
+			
+			private function doOrg_TypeChange():void{
+				if(this.Org_Type.selectedItem.data == "3"){
+					this.OrgExtendInfoPanel.enabled = true;
+				}else{
+					this.OrgExtendInfoPanel.enabled = false;
+				}
+			}
+			
+			private function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function showView(object:Object):void{
+				FlashContrl.target = object;
+				FlashContrl.play();
+				object.setFocus();
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+    </mx:Sequence>
+	<mx:Label x="10" y="10" text="上级组织名称：" fontFamily="Arial" fontSize="12" color="#030303" fontWeight="bold"/>
+	<mx:Label x="114" y="10" text="未设置" fontFamily="Arial" fontSize="12" color="#030303" id="SuperOrgNode"/>
+	<mx:Canvas x="10" y="275" width="748" height="81" borderStyle="solid" borderColor="#0D084F" backgroundColor="#F8F6DE" fontSize="12" color="#040404" id="CCDS">
+		<mx:Label x="10" y="29" text="租机费分成比例"/>
+		<mx:NumericStepper x="104" y="27" width="68" id="Reward_HIRE" stepSize="0.01" minimum="0" maximum="100" maxChars="5"/>
+		<mx:Label x="386" y="32" text="通话费分成比例"/>
+		<mx:Label x="572" y="31" text="IP话费分成比例"/>
+		<mx:Label x="192" y="30" text="广告费分成比例"/>
+		<mx:NumericStepper x="668" y="29" width="68" id="Reward_IPFEE" minimum="0" maximum="100" stepSize="0.01" maxChars="5"/>
+		<mx:NumericStepper x="483" y="29" width="68" id="Reward_FEE" minimum="0" maximum="100" stepSize="0.01" maxChars="5"/>
+		<mx:NumericStepper x="289" y="28" width="68" id="Reward_SM" minimum="0" maximum="100" stepSize="0.01" maxChars="5"/>
+	</mx:Canvas>
+</mx:TitleWindow>

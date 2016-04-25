@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" initialize="init()" layout="absolute" width="790" height="550" borderColor="#00656E" title="终端管理" color="#F3F5F6" fontSize="15" fontFamily="Arial" xmlns:ns1="*" backgroundColor="#B0C1F0">
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+ 	</mx:Sequence>
+	<mx:RemoteObject id="terminal_service" destination="TerminalServiceFlexService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import cn.ucans.table.RowItem;
+			import cn.ucans.table.XMLTable;
+			import cn.ucans.bean.T_TERMINAL_INFO;
+			import cn.ucans.bean.T_ORG_INFO;
+	 		import cn.ucans.tree.TreeNode;
+	 		import mx.collections.ArrayCollection;
+	 		import cn.ucans.flex.FlexRequest;
+	 		import cn.ucans.flex.FlexReponse;
+	 		import cn.ucans.common.RegularExpression;
+	 		import cn.ucans.common.DataProvider;
+	 		import cn.ucans.common.ArrayFactory;
+	 		
+	 		private var NextPageNO:int = 0;
+	 		private var CurrentPageNO:int = 0;
+	 		private var SuperPageNO:int = 0;
+			
+			private var list_factory_edit:ArrayCollection = null;
+			private var list_factory_query:ArrayCollection = null;
+			private var list_hotel_query:ArrayCollection = null;
+			private var list_hotel_edit:ArrayCollection = null;
+			private var list_terminal_status_edit:ArrayCollection = null;
+			private var list_terminal_status_query:ArrayCollection = null;
+			private var list_terminal_type_edit:ArrayCollection = null;
+			private var list_terminal_type_query:ArrayCollection = null;
+		
+			private var regular:RegularExpression = new RegularExpression();
+			private var collection_terminal:ArrayCollection = null;
+			private var dialog_update:UpdateTerminalHotelDialog = null;
+			private var dialog_fenfa:FenFaTerminalDialog = null;
+			private var dialog_reason:AddBackHireReasonDialog = null;
+			private var arrayCollection:ArrayCollection = null;
+			
+			private function init():void{	
+				this.TableGrid.addEventListener(MouseEvent.CLICK,doTableGridClickHandler);
+				var date:Date = new Date();
+				var request:FlexRequest = new FlexRequest();
+				request.ope_id = 1220;
+				request.menu_id = this.parentApplication.LoginMenu_ID;
+				request.org_id = this.parentApplication.LoginORG_ID;
+				request.user_id = this.parentApplication.LoginUser_ID;
+				this.terminal_service.doTransaction(request);
+				this.enabled = false;
+				//CCSSAlert.showMessageDialog(this,this.parentApplication.LoginORG_ID+","+this.parentApplication.LoginUser_ID);
+			}
+			
+			private function doUpdateTerminalInfo():void{
+				if(this.TableGrid.selectedIndex>-1){
+					this.dialog_update = new UpdateTerminalHotelDialog();
+					this.dialog_update.showDialog(this,this.TableGrid.selectedItem,this.list_terminal_status_edit,this.list_terminal_type_edit,this.list_factory_edit,this.list_hotel_edit);
+					this.dialog_update.addEventListener(Event.REMOVED,doUpdateTerminalInfoHandler);
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在列表中选中一条记录，再进行本操作！");
+					return;
+				}
+			}
+			
+			private function showViewTerminalDialog(message:String,list:ArrayCollection):void{
+				var dialog:ViewTerminalListDialog = new ViewTerminalListDialog();
+				dialog.showDialog(this,message,list,this.list_terminal_status_edit);
+			}
+			
+			private function doUpdateTerminalInfoHandler(event:Event):void{
+				if(this.dialog_update.DOOK){
+				    var item:Object = this.TableGrid.selectedItem;
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1225;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.terminal = this.dialog_update.terminal;
+					request.form.item = item;
+					this.terminal_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doTableGridClickHandler(event:MouseEvent):void{
+				if(this.TableGrid.selectedIndex>-1){
+					var item:Object = this.TableGrid.selectedItem;
+//					this.Join_Time.text = item.JOIN_TIME;
+//					this.Distribute_Time.text = item.DISTRIBUTE_TIME;
+//					this.Hotel_Receiver.text = item.HOTEL_RECEIVER;
+//					this.Label_TERMINAL_TYPE.text = item.TERMINAL_TYPE;
+				}
+			}
+			
+			private function doQueryTerminal(type:int):void{
+				var requestPgeNo:int = 1;
+				if(type == 1){
+					requestPgeNo = 1;
+				}else if(type == 2){
+					requestPgeNo = this.SuperPageNO;
+				}else if(type == 3){
+					this.CurrentPageNO = Number(this.SelectPage.selectedItem.data)
+					requestPgeNo = this.CurrentPageNO;
+				}else if(type == 4){
+					requestPgeNo = this.NextPageNO;
+				}else if(type == 5){
+					requestPgeNo = 99999999;
+				}
+				
+				var ok:Boolean = true;
+				if(regular.trim(this.Msisdn.text) != ""){
+					if(!regular.isChineseMobileTelephone(this.Msisdn.text)){
+						CCSSAlert.showMessageDialog(this,"手机号格式错误！");
+						ok = false;
+						this.showView(this.Msisdn);
+						return;
+					}
+				}
+				if(ok){
+					var request:FlexRequest = new FlexRequest();
+					request.form.CURRENT_PAGE_NO = ""+requestPgeNo;
+					request.ope_id = 1221;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					var terminal:T_TERMINAL_INFO = new T_TERMINAL_INFO();
+					terminal.ROOM_NO = this.regular.trim(this.Room_No.text);
+					terminal.STATUS = this.Status.selectedItem.data;
+					terminal.MSISDN = this.regular.trim(this.Msisdn.text);
+					terminal.HOTEL_ID = this.Hotel_ID.selectedItem.data;
+					request.form.terminal = terminal;
+					this.terminal_service.doTransaction(request);
+					this.enabled = false;
+				}				
+			}
+	        
+	        private function doStatus(item:Object,column:DataGridColumn):String{
+				return ArrayFactory.getValueFroamArrayCollection(this.list_terminal_status_query,item.STATUS);
+			}
+			
+			private function doHotel_ID(item:Object,column:DataGridColumn):String{
+				if(item.HOTEL_ID == null || regular.trim(item.HOTEL_ID).length==0){
+					return "";
+				}else{
+					return ArrayFactory.getValueFroamArrayCollection(this.list_hotel_query,item.HOTEL_ID);
+				}
+			}
+			
+			private function doProduct_Org_ID(item:Object,column:DataGridColumn):String{
+				if(item.PRODUCT_ORG_ID == null || regular.trim(item.PRODUCT_ORG_ID).length==0){
+					return "";
+				}else{
+					return ArrayFactory.getValueFroamArrayCollection(this.list_factory_query,item.PRODUCT_ORG_ID);
+				}
+			}
+			
+			private function doTERMINAL_TYPE(item:Object,column:DataGridColumn):String{
+				return ArrayFactory.getValueFroamArrayCollection(this.list_terminal_type_query,item.TERMINAL_TYPE);
+			}
+
+			private function doResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1220:
+						if(reponse.sign == 0){
+							this.list_factory_edit = reponse.result.list_factory_edit as ArrayCollection;
+							this.list_factory_query = reponse.result.list_factory_query as ArrayCollection;
+							this.list_hotel_query = reponse.result.list_hotel_query as ArrayCollection;
+							this.list_hotel_edit = reponse.result.list_hotel_edit as ArrayCollection;
+							this.list_terminal_status_edit = reponse.result.list_terminal_status_edit as ArrayCollection;
+							this.list_terminal_status_query = reponse.result.list_terminal_status_query as ArrayCollection;
+							this.list_terminal_type_edit = reponse.result.list_terminal_type_edit as ArrayCollection;
+							this.list_terminal_type_query = reponse.result.list_terminal_type_query as ArrayCollection;
+							
+							this.Hotel_ID.dataProvider = this.list_hotel_query;
+							this.Status.dataProvider = this.list_terminal_status_query;
+							//CCSSAlert.showMessageDialog(this,this.list_factory_edit.length+"");
+							this.Hotel_ID.selectedItem = ArrayFactory.getComboBoxSelectedItemFromArrayCollection(this.list_hotel_query,this.parentApplication.LoginORG_ID);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1221:
+						if(reponse.sign == 0){
+							var CURRENT_PAGE_NO:int = reponse.result.map.CURRENT_PAGE_NO as int;
+							var PAGE_COUNT:int = reponse.result.map.PAGE_COUNT as int;
+							var ROW_COUNT:int = reponse.result.map.ROW_COUNT as int;
+							this.collection_terminal = reponse.result.map.DATA_LIST as ArrayCollection;
+							this.setPageTableControl(CURRENT_PAGE_NO,PAGE_COUNT,ROW_COUNT,this.collection_terminal);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1222:
+						if(reponse.sign == 0){
+							this.doQueryTerminal(3);
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1223:
+						if(reponse.sign == 0){
+							this.doQueryTerminal(3);
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1224:
+						if(reponse.sign == 0){
+							this.doQueryTerminal(3);
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					case 1225:
+						if(reponse.sign == 0){
+							this.doQueryTerminal(3);
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function setPageTableControl(CURRENT_PAGE_NO:int,PAGE_COUNT:int,ROW_COUNT:int,arrayCollection:ArrayCollection):void{
+				//CCSSAlert.showMessageDialog(this,CURRENT_PAGE_NO+","+PAGE_COUNT+","+ROW_COUNT+","+arrayCollection.length);
+				this.SuperPageNO = CURRENT_PAGE_NO - 1;
+				this.CurrentPageNO = CURRENT_PAGE_NO - 1;
+				this.NextPageNO = CURRENT_PAGE_NO + 1;
+				this.TableGrid.dataProvider = arrayCollection;
+				var array:Array = new Array();
+				for(var i:int=1;i<=PAGE_COUNT;i++){
+					array.push({label:"第"+i+"页",data:""+i});
+				}
+				this.SelectPage.dataProvider = array;
+				if(CURRENT_PAGE_NO>0){
+					this.SelectPage.selectedItem = ArrayFactory.getComboBoxSelectedItemFromArray(array,""+CURRENT_PAGE_NO);
+				}			
+				this.TableRowCount.text = ROW_COUNT+"";
+			}
+			
+			private function doOpenTerminal():void{
+				if(this.TableGrid.selectedIndex>-1){
+					var item:Object = this.TableGrid.selectedItem;
+					if(item.STATUS == '10'){
+						var request:FlexRequest = new FlexRequest();
+						request.ope_id = 1222;
+						request.menu_id = this.parentApplication.LoginMenu_ID;
+						request.org_id = this.parentApplication.LoginORG_ID;
+						request.user_id = this.parentApplication.LoginUser_ID;
+						var terminal:T_TERMINAL_INFO = new T_TERMINAL_INFO();
+						terminal.IMEI_NUMBER = item.IMEI_NUMBER;
+						terminal.UIM_NUMBER = item.UIM_NUMBER;
+						request.form.terminal = terminal;
+						this.terminal_service.doTransaction(request);
+						this.enabled = false;
+					}else{
+						CCSSAlert.showMessageDialog(this,"处于未开通状态的终端才能进行“预开通”操作！");
+						return;
+					}
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在数据表中选中一条或多条记录，再进行本操作！");
+					return;
+				}
+			}
+			
+			private function releaseRealdyOpenTerminal():void{
+				if(this.TableGrid.selectedIndex>-1){
+					var item:Object = this.TableGrid.selectedItem;
+					if(item.STATUS == '11'){
+						var request:FlexRequest = new FlexRequest();
+						request.ope_id = 1223;
+						request.menu_id = this.parentApplication.LoginMenu_ID;
+						request.org_id = this.parentApplication.LoginORG_ID;
+						request.user_id = this.parentApplication.LoginUser_ID;
+						var terminal:T_TERMINAL_INFO = new T_TERMINAL_INFO();
+						terminal.IMEI_NUMBER = item.IMEI_NUMBER;
+						terminal.UIM_NUMBER = item.UIM_NUMBER;
+						request.form.terminal = terminal;
+						this.terminal_service.doTransaction(request);
+						this.enabled = false;
+					}else{
+						CCSSAlert.showMessageDialog(this,"处于预开通状态的终端才能进行“取消预开通”操作！");
+						return;
+					}
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在数据表中选中一条或多条记录，再进行本操作！");
+					return;
+				}
+			}
+			
+			private function backHireTerminal():void{
+				if(this.TableGrid.selectedIndex>-1){
+					var item:Object = this.TableGrid.selectedItem;
+					if(item.STATUS == '12'){
+						this.dialog_reason = new AddBackHireReasonDialog();
+						this.dialog_reason.showDialog(this,item.MSISDN,item);
+						this.dialog_reason.addEventListener(Event.REMOVED,doBackHireTerminalHandler);
+					}else{
+						CCSSAlert.showMessageDialog(this,"处于开通状态的终端才能进行“退租”操作！");
+						return;
+					}
+				}else{
+					CCSSAlert.showMessageDialog(this,"请在数据表中选中一条或多条记录，再进行本操作！");
+					return;
+				}
+			}
+			
+			private function doBackHireTerminalHandler(event:Event):void{
+				if(this.dialog_reason.DOOK){
+					var item:Object = this.dialog_reason.object;
+					var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1224;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					var terminal:T_TERMINAL_INFO = new T_TERMINAL_INFO();
+					terminal.IMEI_NUMBER = item.IMEI_NUMBER;
+					terminal.UIM_NUMBER = item.UIM_NUMBER;
+					terminal.MSISDN = item.MSISDN;
+					terminal.CURRENT_HIRE_TIME = item.CURRENT_HIRE_TIME;
+					request.form.terminal = terminal;
+					request.form.reason = this.dialog_reason.reason;
+					this.terminal_service.doTransaction(request);
+					this.enabled = false;
+				}
+			}
+			
+			private function doViewSingleTerminal():void{
+				if(this.TableGrid.selectedIndex>-1){
+					var dialog:ViewSingleHotelTerminalDialog = new ViewSingleHotelTerminalDialog();
+						dialog.showDialog(this,this.TableGrid.selectedItem,this.list_terminal_status_edit,this.list_terminal_type_edit,this.list_factory_edit,this.list_hotel_edit);
+				}else{
+					CCSSAlert.showMessageDialog(this,"请先在数据表中选中一条数据，再进行本操作！");
+					return;
+				}
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			
+			private function showView(object:Object):void{
+				FlashContrl.target = object;
+				FlashContrl.play();
+				object.setFocus();
+			}
+			
+			private function doCURRENT_HIRE_TIME(item:Object,column:DataGridColumn):String{
+				if(item.STATUS=="12"){
+					return item.CURRENT_HIRE_TIME;
+				}else{
+					return "";
+				}
+			}
+
+		]]>
+	</mx:Script>
+	<mx:Panel x="0" y="0" width="512" height="138" layout="absolute" borderColor="#4F7EF6" title="查询向导" color="#F9F8F8" fontSize="14">
+		<mx:Button x="428" y="59" label="查询" fillAlphas="[1.0, 1.0]" fillColors="[#859AF3, #F2B2B2]" click="doQueryTerminal(1)" color="#323FC0" fontSize="12"/>
+		<mx:Label x="222" y="62" text="酒店名称" color="#0D0C0C" fontSize="12"/>
+		<mx:ComboBox x="280" y="59" width="139" id="Hotel_ID" color="#0D0C0C" fontSize="12" enabled="false"></mx:ComboBox>
+		<mx:Label x="20.5" y="21" text="房间号码" color="#0D0C0C" fontSize="12"/>
+		<mx:TextInput x="75.5" y="19" width="138.5" maxChars="8" id="Room_No" color="#0D0C0C" fontSize="12"/>
+		<mx:TextInput x="75" y="59" width="139" maxChars="11" id="Msisdn" color="#0D0C0C" fontSize="12"/>
+		<mx:Label x="18" y="61" text="手机号码" color="#0D0C0C" fontSize="12"/>
+		<mx:ComboBox x="279" y="19" width="139" id="Status" fontSize="12" color="#070707"></mx:ComboBox>
+		<mx:Label x="222" y="21" text="终端状态" color="#0D0C0C" fontSize="12"/>
+	</mx:Panel>
+	<mx:DataGrid x="10" y="201" width="748" height="293" textAlign="center" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" borderColor="#010101" color="#000706" themeColor="#1970A8" alternatingItemColors="[#FFFFFF, #DFF3FF]" fontSize="12" alpha="1.0" fontFamily="Arial" fontWeight="normal" id="TableGrid">
+		<mx:columns>
+			<mx:DataGridColumn headerText="房间号码" dataField="ROOM_NO" width="90" />	
+			<mx:DataGridColumn headerText="手机号码" dataField="MSISDN" width="90" />
+			<mx:DataGridColumn headerText="状态" dataField="STATUS" width="100" labelFunction="doStatus"/>
+			<mx:DataGridColumn headerText="开通时间" dataField="CURRENT_HIRE_TIME" width="130" labelFunction="doCURRENT_HIRE_TIME"/>
+			<mx:DataGridColumn headerText="终端型号" dataField="TERMINAL_TYPE" width="100" labelFunction="doTERMINAL_TYPE"/>	
+			<mx:DataGridColumn headerText="生产厂家" dataField="ORG_ID" width="130" labelFunction="doProduct_Org_ID"/>			
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Label x="10" y="167" text="总数：" fontWeight="bold" color="#F30A2B" fontSize="12"/>
+	<mx:Label x="62" y="167" fontWeight="bold" color="#141212" id="TableRowCount" fontSize="12"/>
+	<mx:Button x="535" y="162" label="上一页" click="doQueryTerminal(2)" color="#141212" fontSize="12"/>
+	<mx:ComboBox x="608" y="162" width="80" id="SelectPage" change="doQueryTerminal(3)" color="#141212" fontSize="12"></mx:ComboBox>
+	<mx:Button x="695" y="162" label="下一页" click="doQueryTerminal(4)" color="#141212" fontSize="12"/>
+	<mx:Panel x="520" y="0" width="250" height="138" layout="absolute" title="控制区域" borderColor="#0E0A60">
+		<mx:Button x="15.5" y="58" label="预开通" fontFamily="Arial" fontSize="12" color="#020202" click="doOpenTerminal()"/>
+		<mx:Button x="15.5" y="19" label="查看" fontSize="12" color="#050505" click="doViewSingleTerminal()"/>
+		<mx:Button x="162.5" y="58" label="更新" fontFamily="Arial" fontSize="12" color="#020202" click="doUpdateTerminalInfo()"/>
+		<mx:Button x="123.5" y="19" label="取消预开通" fontFamily="Arial" fontSize="12" color="#020202" click="releaseRealdyOpenTerminal()"/>
+		<mx:Button x="94.5" y="58" label="退租" fontFamily="Arial" fontSize="12" color="#020202" click="backHireTerminal()"/>
+	</mx:Panel>
+</mx:Panel>

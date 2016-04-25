@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="500" height="170" title="信息确认" fontFamily="Arial" fontSize="15" color="#EBF3F5" borderColor="#1A258E">
+	<mx:Image x="70" y="24" source="img/question.gif" width="32" height="32"/>
+	<mx:TextArea x="120" y="24" width="299" height="32" id="Context" color="#060606" fontSize="12" editable="false"/>
+	<mx:Button x="156.5" y="73" label="确认" fontSize="12" color="#070707" fontWeight="normal" click="doYes()"/>
+	<mx:Button x="273.5" y="73" label="取消" color="#080808" fontWeight="normal" fontSize="12" click="doNO()"/>
+	<mx:Script>
+		<![CDATA[
+			import mx.managers.PopUpManager;
+		
+			public var YES:Boolean = false;
+			public var object:Object = null;
+			public function showDialog(parent:DisplayObject,message:String,object_input:Object):void{
+				PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				this.Context.text = message;
+				this.object = object_input;
+			}
+			
+			private function doYes():void{
+				this.YES = true;
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function doNO():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+		]]>
+	</mx:Script>
+</mx:TitleWindow>

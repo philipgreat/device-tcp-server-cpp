@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" initialize="init()" width="790" height="550" fontSize="15"  backgroundColor="#FFFFFF" borderColor="#00656E" color="#FFFFFF" fontFamily="Arial" borderThicknessBottom="25" backgroundAlpha="0.8" title="历史任务查询(平台)" xmlns:ns1="*">
+
+	<mx:DataGrid x="0" id="dg" y="174" width="770" height="315" color="#000706" fontSize="12" horizontalScrollPolicy="auto" verticalScrollPolicy="auto"  borderColor="#020D14">
+		<mx:columns>
+			
+			<mx:DataGridColumn headerText="任务标识" dataField="TASK_ID" visible="false"/>
+			<mx:DataGridColumn headerText="任务名称" dataField="TASK_NAME" width="80"/>
+			<mx:DataGridColumn headerText="信息内容" dataField="CONTENT" width="160" >
+					<mx:itemRenderer>
+						<mx:Component>
+							<mx:TextArea text="{data.CONTENT}" textAlign="left" height="50"/>
+						</mx:Component>
+	                </mx:itemRenderer>
+				</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="开始发送时间" dataField="START_TIME" width="130"/>
+			<mx:DataGridColumn headerText="发送总条数" dataField="SEND_PLAN" width="100"/>
+			<mx:DataGridColumn headerText="发送成功条数" dataField="SEND_SUC" width="100"/>
+			<mx:DataGridColumn headerText="发送失败条数" dataField="SEND_FAULT" width="100"/>
+<mx:DataGridColumn headerText="所属组织" dataField="ORG_ID" labelFunction="doSENDGROUPID" width="80"/>
+<mx:DataGridColumn headerText="存档时间" dataField="INSERT_TIME" width="130"/>			
+<mx:DataGridColumn headerText="存档原因" dataField="RECORD_CAUSE" width="130"/>
+<mx:DataGridColumn headerText="打回原因" dataField="RETURN_CAUSE"/>
+			
+			<mx:DataGridColumn headerText="发送截止时间" visible="false" dataField="END_TIME" width="130"/>
+			
+			<mx:DataGridColumn headerText="发送对象群" visible="false" dataField="SEND_GROUP_ID" width="120" labelFunction="doSENDGROUPID"/>
+			<mx:DataGridColumn headerText="信息语言类型" visible="false" dataField="LANGUAGE" width="100" labelFunction="doLanguage"/>
+			<mx:DataGridColumn headerText="信息类型" visible="false" dataField="INFO_TYPE"  width="80" labelFunction="doINFOTYPE"/>
+			<mx:DataGridColumn headerText="套餐类型"  visible="false" dataField="PAY_TYPE"  width="80"/>
+			<mx:DataGridColumn headerText="任务状态" visible="false" dataField="STATUS" width="80" labelFunction="doStuats"/>
+			<mx:DataGridColumn headerText="优先级"   visible="false" dataField="PRIORITY" width="80" labelFunction="doPRIORITY"/>
+			<mx:DataGridColumn headerText="状态报告" visible="false" dataField="RETURN_REPORT" width="80" labelFunction="doRETURN_REPORT"/>
+			<mx:DataGridColumn headerText="流量"  visible="false" dataField="FLOW_RATE" width="70"/>
+			
+			<mx:DataGridColumn headerText="创建/修改日期" visible="false" dataField="CREATE_TIME" width="130"/>
+			<mx:DataGridColumn headerText="任务的审核员" visible="false" dataField="AUDITOR_ID" width="110"/>
+			<mx:DataGridColumn headerText="审核时间"  visible="false" dataField="AUDIT_TIME"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Panel x="0" y="0" width="128" height="166" layout="absolute" headerHeight="15" title="      功能列表" fontSize="13" color="#F30A2B">
+		<mx:Canvas x="0" y="0" width="108" height="139" fontSize="12" color="#030303" borderColor="#272D26" backgroundColor="#C8F4C7" borderStyle="solid">
+			<mx:Button x="10" y="56" label="查询" fontFamily="Arial" fontSize="12" color="#040404" click="queryTaskInfo()" width="86"/>
+		</mx:Canvas>
+	</mx:Panel>
+	<mx:RemoteObject id="getDataService" destination="oTaskInfoSendService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	
+	<mx:DateFormatter id="df" formatString="YYYY-MM-DD JJ:NN:SS"/>
+	<mx:DateFormatter id="df1" formatString="YYYY-MM-DD"/>
+	<mx:Sequence id="FlashContrl">
+        <mx:Glow id="Out1" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	    <mx:Glow id="Int1" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="Out2" duration="500" alphaFrom="1.0" alphaTo="0.3" blurXFrom="0.0" blurXTo="50.0" blurYFrom="0.0" blurYTo="50.0" color="0xFF0000"/>
+	     <mx:Glow id="Int2" duration="500" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0x0000FF"/>
+	    <mx:Glow id="End" duration="0" alphaFrom="0.3" alphaTo="1.0" blurXFrom="50.0" blurXTo="0.0" blurYFrom="50.0" blurYTo="0.0" color="0xE6EEEE"/>
+    </mx:Sequence>
+    <mx:Script>
+    	<![CDATA[
+    		import cn.ucans.bean.T_INFO_SEND_TASK_HIS;
+    		import cn.ucans.bean.T_INFO_SEND_TASK;
+    		import mx.controls.TextInput;
+    		import cn.ucans.flex.FlexReponse;
+    		import mx.collections.ArrayCollection;
+    		import cn.ucans.common.RegularExpression;
+    		import cn.ucans.flex.FlexRequest;
+    		import cn.ucans.common.ArrayFactory;
+    		import mx.events.CloseEvent;
+    		import mx.controls.Alert;
+    		
+    		
+    		
+    		private var arrInfoTypeCon:ArrayCollection = new ArrayCollection();
+    		private var arrSendGroupIDCon:ArrayCollection = new ArrayCollection();
+    		private var arrCon:ArrayCollection = new ArrayCollection();
+    		private var langueTypeCon:ArrayCollection = new ArrayCollection();
+    		private var reg:RegularExpression = new RegularExpression();
+    			
+			private var arrTaskStatusCon:ArrayCollection = new ArrayCollection([{label:"全部",data:""},{label:"制定完成",data:"0"},{label:"待审核",data:"1"},{label:"正在审核",data:"2"},{label:"待发送",data:"3"},{label:"挂起",data:"4"},{label:"暂停",data:"5"},{label:"发布中",data:"6"}]);	
+			private var arrPriorityCon:ArrayCollection = new ArrayCollection([{label:"最高优先级",data:"0"},{label:"最低优先级",data:"9"}]);
+			private var arrReturnReportCon:ArrayCollection = new ArrayCollection([{label:"不需要",data:"0"},{label:"需要",data:"1"}]);		
+    		
+    		public var taskDialog:QueryTaskDialog = new QueryTaskDialog();
+    		
+    		private function doResult(data:Object):void{
+    			this.enabled = true;
+    			var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 2031:
+						if(reponse.sign == 0){
+							arrCon = reponse.result.list as ArrayCollection;
+							dg.dataProvider = arrCon;
+							if(arrCon.length <1){
+								CCSSAlert.showMessageDialog(this,"没有查询到数据，请更换查询条件！");
+								return;
+							}
+							return;
+						}else{
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}	
+						break;
+					case 2014:
+						if(reponse.sign == 0){
+							langueTypeCon = reponse.result.list as ArrayCollection;
+							return;
+						}
+						break;
+					case 2032:
+						if(reponse.sign == 0){
+							arrSendGroupIDCon = reponse.result.list1 as ArrayCollection;
+//							CCSSAlert.showMessageDialog(this,arrSendGroupIDCon.length.toString());
+							cbbORGId.dataProvider = arrSendGroupIDCon;
+							arrInfoTypeCon = reponse.result.list as ArrayCollection;
+							cbbInfoTypeId.dataProvider = arrInfoTypeCon;
+							return;
+						}
+						break;
+//					case 2020:
+//						if(reponse.sign == 0){
+//							arrInfoTypeCon = reponse.result.list as ArrayCollection;
+//							return;
+//						}
+//						break;
+					case 2022:
+						if(reponse.sign == 0){
+							this.queryTaskInfo();
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}else{
+							CCSSAlert.showErrorDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;
+				}
+    		}
+    		private function queryTaskInfo():void{
+    			var request:FlexRequest = new FlexRequest();
+    			request.ope_id = 2031;
+    			request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+    			request.user_id = this.parentApplication.LoginUser_ID;
+    			var sendTask:T_INFO_SEND_TASK_HIS = new T_INFO_SEND_TASK_HIS();
+    			sendTask.TASK_NAME = reg.trim(tiTaskNameId.text);
+    			sendTask.INFO_TYPE = cbbInfoTypeId.selectedItem.data;
+    			sendTask.START_TIME = df.format(start_Time_SendId.getTime());
+    			sendTask.END_TIME = df.format(end_Time_SendId.getTime());
+    			sendTask.ORG_ID = "";
+    			sendTask.USER_ID = "";
+    			sendTask.LANGUAGE = cbbORGId.selectedItem.data;
+    			sendTask.RECORD_CAUSE = reg.trim(taCauseId.text);
+    			sendTask.CREATE_TIME = df.format(start_SendId.getTime());
+    			sendTask.INSERT_TIME = df.format(end_SendId.getTime());
+
+    			
+    			request.form.sendTask = sendTask;
+    			this.getDataService.doTransaction(request);
+    			this.enabled = false;
+    		}
+			private function doLanguage(item:Object,column:DataGridColumn):String{
+    			return ArrayFactory.getValueFroamArrayCollection(langueTypeCon,item.LANGUAGE);
+			}
+			private function doStuats(item:Object,column:DataGridColumn):String{
+    			return ArrayFactory.getValueFroamArrayCollection(arrTaskStatusCon,item.STATUS);
+			}
+			private function doSENDGROUPID(item:Object,column:DataGridColumn):String{
+    			return ArrayFactory.getValueFroamArrayCollection(arrSendGroupIDCon,item.ORG_ID);
+			}
+			private function doINFOTYPE(item:Object,column:DataGridColumn):String{
+    			return ArrayFactory.getValueFroamArrayCollection(arrInfoTypeCon,item.INFO_TYPE);
+			}
+			private function doPRIORITY(item:Object,column:DataGridColumn):String{
+    			return ArrayFactory.getValueFroamArrayCollection(arrPriorityCon,item.PRIORITY);
+			}
+			private function doRETURN_REPORT(item:Object,column:DataGridColumn):String{
+    			return ArrayFactory.getValueFroamArrayCollection(arrReturnReportCon,item.RETURN_REPORT);
+			}
+    		private function init():void{
+    			var date:Date = new Date();
+//				cbbStatusId.dataProvider = arrTaskStatusCon;
+				end_Time_SendId.setTime("23:59:59");
+				start_Time_SendId.setTime("00:00:00");
+				end_SendId.setTime("23:59:59");
+				start_SendId.setTime("00:00:00");
+				var request:FlexRequest = new FlexRequest();
+    			request.user_id = this.parentApplication.LoginUser_ID;
+    			request.menu_id = this.parentApplication.LoginMenu_ID;
+    			request.org_id = this.parentApplication.LoginORG_ID;
+//    			request.ope_id = 2014;
+//    			this.getDataService.doTransaction(request);
+    			request.ope_id = 2032;
+    			this.getDataService.doTransaction(request);
+//    			request.ope_id = 2020;
+//    			this.getDataService.doTransaction(request);
+    			this.enabled = false;
+    		}
+    		private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+    	]]>
+    </mx:Script>
+    <mx:Panel x="136" y="0" width="634" height="166" layout="absolute" headerHeight="15" title="                                                              查询向导" color="#F21313" fontSize="13">
+    	<mx:Canvas x="0" y="0" width="614" height="139" fontSize="12" color="#050505" borderStyle="solid" borderColor="#121313" backgroundColor="#DAD3F6">
+    		<mx:Label x="22" y="10" text="任务名称"/>
+    		<mx:Label id="hotelName0" x="302" y="12" text="制定开始时间"/>
+    		<mx:Label id="hotelName1" x="302" y="46" text="制定结束时间"/>
+    		<mx:Label id="hotelName2" x="302" y="106" text="发送结束时间"/>
+    		<ns1:TimeField id="end_SendId" x="387" y="105">
+    		</ns1:TimeField>
+    		<mx:TextInput id="tiTaskNameId" x="82" y="8" maxChars="64" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)"/>
+    		<mx:Label x="21" y="109" text="存档原因"/>
+    		<ns1:TimeField id="start_Time_SendId" x="387" y="10">
+    		</ns1:TimeField>
+    		<ns1:TimeField id="end_Time_SendId" x="387" y="40">
+    		</ns1:TimeField>
+    		<mx:Label id="hotelName3" x="302" y="74" text="发送开始时间"/>
+    		<ns1:TimeField id="start_SendId" x="387" y="74">
+    		</ns1:TimeField>
+    		<mx:Label id="hotelName" x="21" y="43" text="信息类型"/>
+    		<mx:ComboBox id="cbbInfoTypeId" x="82" y="40" width="160"></mx:ComboBox>
+    		<mx:Label id="hotelName4" x="21" y="76" text="制定组织"/>
+    		<mx:ComboBox id="cbbORGId" x="82" y="71" width="160"></mx:ComboBox>
+    		<mx:TextArea id="taCauseId" x="82" y="102" height="31" keyUp="cn.ucans.common.RegularExpression.fun_Check(event)" maxChars="64"/>
+    	</mx:Canvas>
+    </mx:Panel>
+</mx:Panel>

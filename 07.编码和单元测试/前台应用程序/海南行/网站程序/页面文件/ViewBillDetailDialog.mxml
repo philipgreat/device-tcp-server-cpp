@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="756" height="404" color="#F3F6F7" fontSize="15" fontFamily="Arial" title="清单" borderColor="#1C1A6C">
+	<mx:Button x="505" y="15" label="导出" fontFamily="Arial" fontSize="12" color="#020202" click="doLeadBillDetail()"/>
+	<mx:Button x="576" y="15" label="打印" fontFamily="Arial" fontSize="12" color="#020202" click="doPrintBillDetail()"/>
+	<mx:DataGrid x="10" y="67" width="716" height="281" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" textAlign="center"   fontFamily="Arial" fontSize="12" color="#000000" borderStyle="solid" borderColor="#040404" id="TableGrid">
+		<mx:columns>
+			<mx:DataGridColumn headerText="手机号码" dataField="MSISDN" width="100"/>
+			<mx:DataGridColumn headerText="房间号码" dataField="ROOM_NO" width="80"/>
+			<mx:DataGridColumn headerText="费用类型" dataField="CASH_TYPE" width="90" labelFunction="doCASH_TYPE"/>
+			<mx:DataGridColumn headerText="费用（元）" dataField="CASH" width="70" labelFunction="doCASH"/>
+			<!--<mx:DataGridColumn headerText="当前状态" dataField="STATUS"  width="100" labelFunction="doBillStatus"/>-->
+			<mx:DataGridColumn headerText="开始时间" dataField="START_TIME"  width="130"/>
+			<mx:DataGridColumn headerText="截止时间" dataField="END_TIME"  width="130"/>
+			<mx:DataGridColumn headerText="减免标志" dataField="FREE_FLAG"  width="100" labelFunction="doFREE_FLAG"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Label x="10" y="19" text="未设置" fontFamily="Arial" fontSize="12" color="#2C167E" id="Bill_Name"/>
+	<mx:Button x="648" y="15" label="退出窗口" fontSize="12" color="#000000" click="doCancle()"/>
+	<mx:RemoteObject id="settlement_service" destination="SettlementServiceFlexService"  
+		result="doResult(event.result)" showBusyCursor="true"   
+		fault="doFault(event)">
+	</mx:RemoteObject>
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import cn.ucans.table.RowItem;
+			import cn.ucans.table.XMLTable;
+			import cn.ucans.common.RegularExpression;
+			import cn.ucans.common.DataProvider;
+			import cn.ucans.common.ArrayFactory; 
+			import cn.ucans.flex.FlexRequest;
+ 			import cn.ucans.flex.FlexReponse;
+			
+			public var DOOK:Boolean = false;
+			private var arrayCollection:ArrayCollection = null;
+			private var regular:RegularExpression = new RegularExpression();
+			
+	 		private function doBillStatus(item:Object,column:DataGridColumn):String{
+	 			return ArrayFactory.getValueFromArray(DataProvider.combobox_bill_detail_Status_Edit,item.STATUS);
+	 		}
+	 		
+	 		private function doCASH_TYPE(item:Object,column:DataGridColumn):String{
+	 			return ArrayFactory.getValueFromArray(DataProvider.combobox_bill_detail_Cash_Type_Edit,item.CASH_TYPE);
+	 		}
+	 		
+	 		private function doFREE_FLAG(item:Object,column:DataGridColumn):String{
+	 			return ArrayFactory.getValueFromArray(DataProvider.combobox_bill_detail_Free_Flag_Edit,item.FREE_FLAG);
+	 		}
+			
+			public function showDialog(parent:DisplayObject,name:String,arrayCollection:ArrayCollection):void{
+             	PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				this.arrayCollection = arrayCollection;
+				this.TableGrid.dataProvider = this.arrayCollection;
+				this.Bill_Name.text = name;				
+        	}
+        	
+        	private function doLeadBillDetail():void{
+	 			if(this.arrayCollection != null && this.arrayCollection.length > 0){
+	 				var table:XMLTable = new XMLTable();
+	 				table.addTitle("手机号码,房间号码,费用类型,费用（元）,开始时间,截止时间,减免标志");
+//	 				var item_0:Object = this.arrayCollection.getItemAt(0);
+//	 				CCSSAlert.showMessageDialog(this,regular.trackNumber(item_0.CASH,100));
+	 				for(var i:int=0;i<this.arrayCollection.length;i++){
+	 					var item:Object = this.arrayCollection.getItemAt(i);
+	 					var row:RowItem = new RowItem();
+	 					row.setValue("MSISDN",item.MSISDN);
+	 					row.setValue("ROOM_NO",item.ROOM_NO);
+	 					row.setValue("CASH_TYPE",ArrayFactory.getValueFromArray(DataProvider.combobox_bill_detail_Cash_Type_Query,item.CASH_TYPE));
+	 					row.setValue("CASH",regular.trackNumber(item.CASH,100));	 	
+//	 					row.setValue("STATUS",ArrayFactory.getValueFromArray(DataProvider.combobox_service_cash_Status_Query,item.STATUS));	
+	 					row.setValue("START_TIME",item.START_TIME); 
+	 					row.setValue("END_TIME",item.END_TIME);	 
+	 					row.setValue("FREE_FLAG",ArrayFactory.getValueFromArray(DataProvider.combobox_bill_detail_Free_Flag_Query,item.FREE_FLAG));	 				
+	 					table.addRowItem(row);
+	 				}
+	 				var request:FlexRequest = new FlexRequest();
+					request.ope_id = 1305;
+					request.menu_id = this.parentApplication.LoginMenu_ID;
+					request.org_id = this.parentApplication.LoginORG_ID;
+					request.user_id = this.parentApplication.LoginUser_ID;
+					request.form.xml = table.toXMLString();
+					this.settlement_service.doTransaction(request);
+					this.enabled = false;
+	 			}else{
+	 				CCSSAlert.showMessageDialog(this,"请先查询出数据，再进行本操作！");
+	 				return;
+	 			}
+	 		}
+	 		
+	 		private function doCASH(item:Object,column:DataGridColumn):String{
+	 			return this.regular.trackNumber(item.CASH,100);
+	 		}
+	 		
+	 		private function doPrintBillDetail():void{
+	 			if(this.arrayCollection != null && this.arrayCollection.length>0){
+	 				PrintDataGridView.doPrint(this.parentApplication.LoginUser_ID,this.arrayCollection,"账单数据表",this.TableGrid.columns);
+	 			}else{
+	 				CCSSAlert.showMessageDialog(this,"请先查询出数据，再进行本操作！");
+	 				return;
+	 			}	 			
+	 		}
+	 		
+	 		private function doResult(data:Object):void{
+				this.enabled = true;
+				var reponse:FlexReponse = data as FlexReponse;
+				switch(reponse.ope_id){
+					case 1305:
+						if(reponse.sign == 0){
+							var url:String = reponse.result.url as String;
+							var request:URLRequest = new URLRequest(url);
+							navigateToURL(request, "_top");
+						}else{
+							CCSSAlert.showMessageDialog(this,reponse.message);
+							return;
+						}
+						break;
+					default:
+						break;				
+				}
+			}
+			
+			private function doFault(event:Event):void{
+				CCSSAlert.showErrorDialog(this,event.toString());
+				return;
+			}
+			
+			public function doCancle():void{
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+</mx:TitleWindow>

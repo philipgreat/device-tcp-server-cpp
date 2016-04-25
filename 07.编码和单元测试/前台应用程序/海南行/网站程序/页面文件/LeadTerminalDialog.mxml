@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="704" height="434" title="批量导入终端信息" fontFamily="Arial" fontSize="12" borderColor="#1106F6" creationComplete="init()" backgroundColor="#FFFFFF">
+     <mx:Script>
+         <![CDATA[
+         	 import mx.collections.ArrayCollection;
+         	 import mx.managers.PopUpManager;
+ 
+             import flash.net.FileReference;   
+             import mx.controls.Alert;   
+             import mx.events.CloseEvent;   
+             import flash.events.*;   
+    
+             private var file: FileReference; 
+ 
+             private function init(): void{
+//                 Security.allowDomain("*");   
+//                 file = new FileReference();   
+//                 file.addEventListener(ProgressEvent.PROGRESS, onProgress);   
+//                 file.addEventListener(Event.SELECT, onSelect);   
+
+             }
+             
+             private function upload(): void{   
+                 file.browse();   
+             }  
+             
+             public function showDialog(parent:DisplayObject):void{
+             	PopUpManager.addPopUp(this,parent,true);
+				this.x = (this.screen.width - this.width)/2;
+				this.y = (this.screen.height - this.height)/2;
+				
+				 Security.allowDomain("*");   
+                 file = new FileReference();   
+                 file.addEventListener(ProgressEvent.PROGRESS, onProgress);   
+                 file.addEventListener(Event.SELECT, onSelect);   
+                 file.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA,doUploadCompleteHandler);
+             }
+             
+             private function onSelect(e: Event): void{
+             	if(file.name.indexOf(".xls")>-1){
+                	Alert.show("上传 " + file.name + " (共 "+Math.round(file.size)+" 字节)?",
+                            "确认上传",
+                            Alert.YES|Alert.NO,
+                            null,
+                            proceedWithUpload);
+                }else{
+                	CCSSAlert.showMessageDialog(this,"上传文件格式错误！");
+                	return;
+                }
+             }
+             
+             private function onProgress(e: ProgressEvent): void{
+                 var proc: uint = e.bytesLoaded / e.bytesTotal * 100;
+                 bar.setProgress(proc, 100);
+                 bar.label= "进度: " + " " + proc + "%";
+             }
+             
+             private function proceedWithUpload(e: CloseEvent): void{
+                 if (e.detail == Alert.YES){
+                 	 var uri:String = this.parentApplication.strPubURL+"/TerminalExcelFileUploadServlet?UserID="+this.parentApplication.LoginUser_ID;
+                     var request: URLRequest = new URLRequest(uri);
+                     try{
+                     	 file.upload(request);  
+                     	 this.enabled = false;      
+                     }catch(error:Error){                     	 
+                     	 CCSSAlert.showMessageDialog(this,error.message);   
+                     	 this.enabled = true;  
+                     	 return; 
+                     }             
+                 }
+             }
+             
+             private function doUploadCompleteHandler(event:DataEvent):void{
+             	this.enabled = true;
+             	var xml_str:String = event.data as String;
+             	//CCSSAlert.showMessageDialog(this,xml_str);
+             	var xml:XML = new XML(xml_str);
+             	this.bar.setProgress(0,100);
+             	this.bar.label = "进度: 0%";
+             	var code:String = xml.@code;
+             	var message:String = xml.@message;
+         		if(code == "0"){
+         			CCSSAlert.showMessageDialog(this,message);
+         			return;
+         		}else if(code == "-1"){
+         			this.LabelReason.text = message;
+       				this.TableGrid.dataProvider = xml.row;
+             		CCSSAlert.showMessageDialog(this,message); 
+             		return;
+         		}else if(code == "-2"){
+         			this.LabelReason.text = message;
+         			CCSSAlert.showMessageDialog(this,message);
+         			return;
+         		}else{
+         			CCSSAlert.showMessageDialog(this,"导入数据失败，没有返回任何信息！");
+             		return;
+         		}
+             }
+             
+             private function doCancle():void{
+             	PopUpManager.removePopUp(this);
+             }
+             
+             private function doDownloadModleFile():void{
+             	var downloadURL:URLRequest = new URLRequest(this.parentApplication.strPubURL + "/DownloadFile/lead_terminal.xls");
+				navigateToURL(downloadURL, "_top");
+             }
+         ]]>
+     </mx:Script>
+     <mx:Canvas x="10" y="10" width="439" height="54" backgroundColor="#CDD3FC">
+          <mx:ProgressBar id="bar" labelPlacement="bottom" themeColor="#F20D7A"
+             minimum="0" visible="true" maximum="100" label="进度: 0%"  
+             direction="right" mode="manual" width="294" fontFamily="Arial" fontSize="12" x="10" y="10" borderColor="#7EADCD" fontWeight="normal" color="#1605FA"/>
+          <mx:Button label="上传并导入文件" click="upload();" fontFamily="Arial" fontSize="12" x="312" y="10"/>
+     </mx:Canvas>
+     <mx:Button x="457" y="10" label="下载模板文件" fillAlphas="[1.0, 1.0]" fillColors="[#D1CDF5, #7F70EF]" click="doDownloadModleFile()"/>
+     <mx:Button x="596" y="10" label="关闭窗口" click="doCancle()"/>
+     <mx:Panel x="10" y="101" width="439" height="280" layout="absolute" borderColor="#060606" title="Excel中不合法的数据">
+          <mx:DataGrid x="10" y="37" width="399" height="190" borderColor="#080808" textAlign="center" horizontalScrollPolicy="auto" verticalScrollPolicy="auto" id="TableGrid">
+               <mx:columns>
+                    <mx:DataGridColumn headerText="终端IMEI号" dataField="@IMEI_NUMBER" width="120"/>
+					<mx:DataGridColumn headerText="UIM卡号" dataField="@UIM_NUMBER" width="120"/>
+					<mx:DataGridColumn headerText="手机号码" dataField="@MSISDN" width="100"/>
+					<mx:DataGridColumn headerText="终端生产厂商" dataField="@PRODUCT_ORG_ID" width="120"/>
+					<mx:DataGridColumn headerText="终端型号" dataField="@TERMINAL_TYPE" width="120"/>
+               </mx:columns>
+          </mx:DataGrid>
+          <mx:Label x="10" y="8" text="原因：" fontWeight="bold"/>
+          <mx:Label x="62" y="8" text="详细原因请看右边注意事项！" color="#FB1800" id="LabelReason"/>
+     </mx:Panel>
+     <mx:Label x="457" y="89" text="使用注意事项：" color="#F72503"/>
+     <mx:TextArea x="457" y="118" width="217" height="263" borderColor="#060606" editable="false" backgroundColor="#F4F5D1">
+          <mx:text><![CDATA[1，导入前请先下载模板，并使用
+当前模板进行数据录入。注意：数
+据从第二行开始，一直向下录入。
+
+2，错误原因：
+   ① 单元格某处数据为空；
+   ② 终端类型服务器没有被录入；
+   ③ Imei编号，Uim编号已经被录入过；
+   ④ 上传文件格式不是excel文件；
+   ⑤ 城市代码没有被录入过；
+   ⑥ 文件大于100M；
+   ⑦ Imei编号，Uim编号长度不是15位；
+   ⑧ excel中存在重复编号； 
+   ⑨ 手机号码不是11位；
+
+3，本操作包括上传，检测和导入，
+所以上传数据会花费点时间（和数
+据量有关系）。
+   ]]></mx:text>
+     </mx:TextArea>
+</mx:TitleWindow>
